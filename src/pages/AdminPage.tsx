@@ -19,7 +19,7 @@ import { API_BASE } from '../lib/applications';
 const formatMoney = (amount: number, currency: string = 'NGN') =>
   new Intl.NumberFormat('en-NG', { style: 'currency', currency }).format(amount);
 
-const formatDate = (d?: string | Date) =>
+const formatDate = (d?: string | Date | null) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
 interface AppUserRow {
