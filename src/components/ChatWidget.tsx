@@ -211,7 +211,7 @@ export default function ChatWidget() {
                   {msg.role === 'assistant' ? <MarkdownView text={msg.content} /> : msg.content}
                   {msg.action?.type === 'mentorship' && (
                     <button
-                      onClick={() => navigate('/mentorship')}
+                      onClick={() => navigate('/mentorship/interest')}
                       className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#84cc16] px-3.5 py-2 text-[13px] font-bold text-[#070e0a] shadow-[0_0_15px_rgba(132,204,22,0.35)] transition-all hover:scale-[1.02] hover:bg-[#a3e635] active:scale-95"
                     >
                       Get Mentorship Guidance <ArrowRight className="h-4 w-4" />

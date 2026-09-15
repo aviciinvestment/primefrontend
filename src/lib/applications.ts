@@ -6,6 +6,17 @@ const apiOrigin = (import.meta.env.VITE_API_ORIGIN as string | undefined)?.repla
 export const API_ORIGIN = apiOrigin;
 export const API_BASE = `${apiOrigin}/api`;
 
+// Launch / waitlist state shared by the home page and admin page.
+export interface LaunchStatus {
+  launched: boolean;
+  launchedAt: string | null;
+  welcomeUntil: string | null;
+  countdownMs: number;
+  deadline: string | null;
+  whatsappGroupUrl: string;
+  waitlistCount: number;
+}
+
 export interface Opportunity {
   _id: string;
   title: string;

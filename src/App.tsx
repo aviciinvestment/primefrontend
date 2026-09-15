@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import MentorshipGuidance from './pages/MentorshipGuidance';
+import MentorshipInterest from './pages/MentorshipInterest';
 import MentorPage from './pages/MentorPage';
 import AdminPage from './pages/AdminPage';
 
@@ -42,6 +43,7 @@ function App() {
                 <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/mentorship" element={<ProtectedRoute><MentorshipGuidance /></ProtectedRoute>} />
+                <Route path="/mentorship/interest" element={<ProtectedRoute><MentorshipInterest /></ProtectedRoute>} />
                 <Route path="/mentors" element={<ProtectedRoute><MentorPage /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
               </Routes>

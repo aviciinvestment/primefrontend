@@ -17,13 +17,15 @@ import {
   Loader2,
   SlidersHorizontal,
   ChevronDown,
-  Handshake
+  Handshake,
+  Sparkles
 } from 'lucide-react';
 import { useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MarkdownView from '../components/MarkdownView';
-import { STATUSES, STATUS_META, fetchApplications, upsertApplication, API_BASE, type ApplicationRecord } from '../lib/applications';
+import WaitlistSection from '../components/WaitlistSection';
+import { STATUSES, STATUS_META, fetchApplications, upsertApplication, API_BASE, type ApplicationRecord, type LaunchStatus } from '../lib/applications';
 export interface Opportunity {
   _id: string;
   title: string;
@@ -43,6 +45,19 @@ export default function Dashboard() {
   const searchQuery = searchParams.get('q') || '';
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
+  // Launch / waitlist state: until launched, the home page shows the waitlist.
+  const [launch, setLaunch] = useState<LaunchStatus | null>(null);
+  const [launchLoading, setLaunchLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_BASE}/launch/status`)
+      .then(r => r.json())
+      .then(data => { if (!cancelled) setLaunch(data); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLaunchLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
   
   // AI CV Advisor State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -56,6 +71,7 @@ export default function Dashboard() {
   const [appRecords, setAppRecords] = useState<Map<string, ApplicationRecord>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const programsRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const scrollToPrograms = () => {
     programsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -223,9 +239,11 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    if (launch && !launch.launched) return;
     setPage(1);
     fetchOpportunities(1, selectedTypes, selectedLevels, sortBy, searchQuery);
-  }, [selectedTypes, selectedLevels, sortBy, searchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTypes, selectedLevels, sortBy, searchQuery, launch?.launched]);
 
   // Restore the user's most recent saved CV + matches from MongoDB on load
   useEffect(() => {
@@ -347,7 +365,7 @@ export default function Dashboard() {
       category: opp.category || '',
     });
     if (opp._id) params.set('id', opp._id);
-    navigate(`/mentorship?${params.toString()}`);
+    navigate(`/mentorship/interest?${params.toString()}`);
   };
 
   const handleCvFilterToggle = () => {
@@ -388,6 +406,29 @@ export default function Dashboard() {
     setPage(nextPage);
     fetchOpportunities(nextPage, selectedTypes, selectedLevels, sortBy);
   };
+
+  // Infinite scroll: automatically load the next page when the user scrolls
+  // near the bottom of the opportunity feed (sentinel div).
+  const loadMoreRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    loadMoreRef.current = handleLoadMore;
+  });
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loading && opportunities.length > 0) {
+          loadMoreRef.current();
+        }
+      },
+      { rootMargin: '300px 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, loading, page, opportunities.length]);
 
   const toggleType = (type: string) => {
     setSelectedTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
@@ -512,8 +553,38 @@ export default function Dashboard() {
     )
   );
 
+  const showWaitlist = !!launch && !launch.launched;
+  const showWelcome = !!launch?.launched && !!launch.welcomeUntil && new Date(launch.welcomeUntil).getTime() >= Date.now();
+
+  if (launchLoading) {
+    return (
+      <div className="flex items-center justify-center py-24 text-gray-400">
+        <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…
+      </div>
+    );
+  }
+
+  if (showWaitlist) {
+    return (
+      <WaitlistSection
+        launch={launch!}
+        onCountChange={(count) => setLaunch(prev => (prev ? { ...prev, waitlistCount: count } : prev))}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 sm:gap-8 pb-10">
+      
+      {/* Welcome banner — only visible for the first 2 days after launch */}
+      {showWelcome && (
+        <div className="rounded-2xl border border-[#84cc16]/40 bg-[#84cc16]/10 px-5 py-4 flex items-center gap-3 animate-in fade-in duration-500">
+          <Sparkles className="h-5 w-5 text-[#84cc16] shrink-0" />
+          <p className="text-sm text-[#e5ffd9]">
+            <span className="font-bold text-white">Welcome!</span> Prime Opportunity is live — explore scholarships, internships, and graduate programs below. This welcome note is only available for the first 2 days after launch.
+          </p>
+        </div>
+      )}
       
       {/* Hero Section */}
       <div className="relative rounded-[2rem] bg-white/[0.02] backdrop-blur-[50px] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.1)] overflow-hidden flex flex-col md:flex-row items-center isolate min-h-[70vh] sm:min-h-[90vh] md:min-h-screen">
@@ -528,10 +599,10 @@ export default function Dashboard() {
         </div>
 
         {/* Left Content */}
-        <div className="relative z-10 p-6 sm:p-8 md:p-12 lg:p-16 flex-1 text-left">
+        <div className="relative z-10 p-6 sm:p-8 md:p-12 lg:p-16 flex-1 text-center sm:text-left">
           
           {/* Target Reticle "Hello There" */}
-          <div className="relative inline-flex items-center gap-2 px-4 sm:px-6 py-2 bg-[#84cc16]/10 border border-[#84cc16]/30 text-[#84cc16] font-bold text-xs sm:text-sm md:text-base tracking-widest uppercase shadow-[0_0_15px_rgba(132,204,22,0.15)] rounded-sm w-fit">
+          <div className="relative inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 bg-[#84cc16]/10 border border-[#84cc16]/30 text-[#84cc16] font-bold text-xs sm:text-sm md:text-base tracking-widest uppercase shadow-[0_0_15px_rgba(132,204,22,0.15)] rounded-sm w-fit mx-auto sm:mx-0 mb-3 sm:mb-5">
             <svg className="absolute -top-2 -left-2 w-4 h-4 text-[#84cc16]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M4 10V4h6" /></svg>
             <svg className="absolute -top-2 -right-2 w-4 h-4 text-[#84cc16]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M20 10V4h-6" /></svg>
             <svg className="absolute -bottom-2 -left-2 w-4 h-4 text-[#84cc16]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M4 14v6h6" /></svg>
@@ -548,10 +619,10 @@ export default function Dashboard() {
             <span className="text-[#84cc16]">{displayedText.split('\n')[1] || ""}</span>
             <span className="animate-pulse font-light text-[#84cc16]">|</span>
           </h1>
-          <p className="text-gray-400 text-base sm:text-lg md:text-xl max-w-lg leading-relaxed">
+          <p className="text-gray-400 text-base sm:text-lg md:text-xl max-w-lg leading-relaxed mx-auto sm:mx-0">
             Discover tailored scholarships, internships, and graduate programs designed for Nigerian students and early-career professionals.
           </p>
-          <div className="flex flex-wrap gap-3 sm:gap-4">
+          <div className="flex flex-wrap gap-3 sm:gap-4 justify-center sm:justify-start mt-6 sm:mt-8">
             <button
               onClick={() => {
                 if (user) {
@@ -722,9 +793,9 @@ export default function Dashboard() {
               </button>
             </div>
           )}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 relative">
+          <div className="flex flex-col sm:flex-row sm:items-end items-center justify-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 relative text-center sm:text-left">
             <div>
-              <div className="flex items-center gap-2 text-primary font-bold mb-1 sm:mb-2">
+              <div className="flex items-center justify-center sm:justify-start gap-2 text-primary font-bold mb-1 sm:mb-2">
                 <span className="w-8 h-1 bg-primary rounded-full"></span> Opportunities
               </div>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white">Delivering Value Through Our Matches</h2>
@@ -783,17 +854,17 @@ export default function Dashboard() {
               <div 
                 key={opp._id} 
                 onClick={() => promptGuidance(opp)}
-                className={`group flex flex-col glass-card hover:bg-white/10 rounded-2xl p-4 sm:p-6 cursor-pointer transition-all ${record?.clicked ? 'ring-1 ring-[#84cc16]/50 border-[#84cc16]/40' : ''}`}
+                className={`group flex flex-col glass-card hover:bg-white/10 rounded-2xl p-4 sm:p-6 cursor-pointer transition-all text-center sm:text-left ${record?.clicked ? 'ring-1 ring-[#84cc16]/50 border-[#84cc16]/40' : ''}`}
               >
                 
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary mb-4 sm:mb-6">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary mb-4 sm:mb-6 mx-auto sm:mx-0">
                   {opp.opportunityType === 'Scholarship' ? <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" /> : <Briefcase className="h-5 w-5 sm:h-6 sm:w-6" />}
                 </div>
                 
                 <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 sm:mb-2 leading-tight group-hover:text-primary transition-colors">
                   {cleanText(opp.title)}
                 </h3>
-                <div className="flex items-center gap-2 text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4">
+                <div className="flex items-center justify-center sm:justify-start gap-2 text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4">
                   <span className="font-medium text-gray-300">
                     {cleanText(opp.organization)}
                   </span>
@@ -805,19 +876,19 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 flex-grow">
-                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
                     <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 shrink-0" /> <span className="truncate">{cleanText(opp.location)}</span>
                   </div>
-                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
                     <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 shrink-0" /> <span className="truncate">{cleanText(opp.category)}</span>
                   </div>
-                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
                     <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 shrink-0" /> <span className="text-red-400/80 truncate">{formatDeadline(opp.deadline)}</span>
                   </div>
                 </div>
 
                 {opp.tags && opp.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-6">
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 sm:gap-2 mb-4 sm:mb-6">
                     {opp.tags.map((tag: string, i: number) => (
                       <span key={i} className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-white/5 text-gray-300 text-[10px] sm:text-xs font-medium border border-white/10">
                         {cleanText(tag)}
@@ -826,7 +897,7 @@ export default function Dashboard() {
                   </div>
                 )}
 
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-4 sm:mb-5">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2 mb-4 sm:mb-5">
                   {STATUSES.map(status => {
                     const Icon = STATUS_META[status].icon;
                     const active = record?.status === status;
@@ -849,7 +920,7 @@ export default function Dashboard() {
                   })}
                 </div>
 
-                <div className="mt-auto pt-3 sm:pt-4 border-t border-white/10 flex items-center justify-between">
+                <div className="mt-auto pt-3 sm:pt-4 border-t border-white/10 flex items-center justify-center sm:justify-between">
                   <span className="text-primary text-xs sm:text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
                     Read More <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </span>
@@ -887,14 +958,14 @@ export default function Dashboard() {
           )}
           
           {hasMore && (
+            <div ref={sentinelRef} className="mt-6 sm:mt-8 h-1" />
+          )}
+          {loading && page > 1 && (
             <div className="mt-6 sm:mt-8 text-center">
-              <button 
-                onClick={handleLoadMore}
-                disabled={loading}
-                className="inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 sm:h-12 px-6 sm:px-8 shadow-sm disabled:opacity-50"
-              >
-                {loading ? 'Loading...' : 'Load More Opportunities'}
-              </button>
+              <div className="inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-gray-400">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Loading more opportunities...
+              </div>
             </div>
           )}
         </div>

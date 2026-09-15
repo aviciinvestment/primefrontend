@@ -3,9 +3,12 @@ import {
   AlertTriangle,
   CheckCircle2,
   Handshake,
+  Link2,
   Loader2,
+  Rocket,
   ShieldBan,
   ShieldCheck,
+  Timer,
   Users,
   Wallet,
   XCircle,
@@ -19,7 +22,26 @@ const formatMoney = (amount: number, currency: string = 'NGN') =>
 const formatDate = (d?: string | Date) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
-interface AppUserRow { uid: string; email: string; displayName: string; role: string; createdAt: string; }
+interface AppUserRow {
+  uid: string; email: string; displayName: string; role: string; createdAt: string;
+  mentorshipInterest?: {
+    choice: 'yes' | 'no' | null;
+    source: 'opportunity' | 'general';
+    opportunityTitle: string;
+    opportunityUrl: string;
+    answeredAt?: string;
+  } | null;
+}
+interface LaunchAdmin {
+  launched: boolean;
+  launchedAt: string | null;
+  welcomeUntil: string | null;
+  countdownMs: number;
+  deadline: string | null;
+  whatsappGroupUrl: string;
+  waitlistCount: number;
+  waitlist: Array<{ email: string; joinedAt: string }>;
+}
 interface MentorRow {
   userId: string; name: string; email: string; company: string; roleType: string;
   status: 'pending' | 'approved' | 'rejected'; menteesCount: number; accountBalance: number; createdAt: string;
@@ -53,6 +75,10 @@ export default function AdminPage() {
   const [mentors, setMentors] = useState<MentorRow[]>([]);
   const [mentees, setMentees] = useState<MenteeRow[]>([]);
   const [complaints, setComplaints] = useState<ComplaintRow[]>([]);
+  const [launch, setLaunch] = useState<LaunchAdmin | null>(null);
+  const [timerInput, setTimerInput] = useState('5');
+  const [waInput, setWaInput] = useState('');
+  const [launchBusy, setLaunchBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState('');
 
@@ -61,18 +87,24 @@ export default function AdminPage() {
     setLoading(true);
     const headers = { 'x-user-uid': user.uid };
     try {
-      const [o, u, m, e, c] = await Promise.all([
+      const [o, u, m, e, c, l] = await Promise.all([
         fetch(`${API_BASE}/admin/overview`, { headers }).then(r => r.json()),
         fetch(`${API_BASE}/admin/users`, { headers }).then(r => r.json()),
         fetch(`${API_BASE}/admin/mentors`, { headers }).then(r => r.json()),
         fetch(`${API_BASE}/admin/mentees`, { headers }).then(r => r.json()),
         fetch(`${API_BASE}/admin/complaints`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE}/admin/launch`, { headers }).then(r => r.json()),
       ]);
       if (o.success) setOverview(o);
       if (u.success) setUsers(u.users);
       if (m.success) setMentors(m.mentors);
       if (e.success) setMentees(e.mentees);
       if (c.success) setComplaints(c.complaints);
+      if (l.success) {
+        setLaunch(l);
+        setTimerInput(String(Math.round((l.countdownMs || 0) / (24 * 60 * 60 * 1000))));
+        setWaInput(l.whatsappGroupUrl || '');
+      }
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -91,6 +123,25 @@ export default function AdminPage() {
       await load();
     } else {
       setNotice(data.error || 'Action failed.');
+    }
+  };
+
+  const launchPost = async (path: string, body: Record<string, unknown>, okMsg: string) => {
+    if (!user || launchBusy) return;
+    setLaunchBusy(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-uid': user.uid },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      setNotice(data.success ? okMsg : (data.error || 'Action failed.'));
+      if (data.success) await load();
+    } catch {
+      setNotice('Action failed.');
+    } finally {
+      setLaunchBusy(false);
     }
   };
 
@@ -141,6 +192,119 @@ export default function AdminPage() {
             <Stat icon={<Wallet className="h-5 w-5" />} label="Mentor Payouts (90%)" value={formatMoney(overview?.mentorPayout ?? 0)} sub={`${overview?.paidMenteeCount ?? 0} paid mentee${((overview?.paidMenteeCount ?? 0) === 1 ? '' : 's')}`} />
           </div>
 
+          {/* Launch & Waitlist */}
+          <section className="rounded-2xl glass-card p-6">
+            <div className="mb-4">
+              <h2 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2">
+                <Rocket className="h-4 w-4 text-primary" /> App Launch & Waitlist
+              </h2>
+              <p className="text-gray-500 text-xs mt-0.5">Launch/unlaunch the app, tune the countdown, set the WhatsApp group, and see who's on the waitlist.</p>
+            </div>
+            <div className="grid lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                {/* Status + launch toggle */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">App status</p>
+                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold uppercase ${launch?.launched ? 'border-[#84cc16]/40 bg-[#84cc16]/10 text-[#84cc16]' : 'border-amber-400/40 bg-amber-400/10 text-amber-300'}`}>
+                        {launch?.launched ? <><Rocket className="h-3.5 w-3.5" /> Launched</> : <><Timer className="h-3.5 w-3.5" /> Waitlist mode</>}
+                      </span>
+                    </div>
+                    <button
+                      disabled={launchBusy}
+                      onClick={() => launchPost(
+                        'launch/state',
+                        { launched: !launch?.launched },
+                        launch?.launched ? 'App unlaunched — waitlist is back.' : 'App launched — opportunities are live.'
+                      )}
+                      className={`inline-flex items-center gap-1.5 rounded-lg text-xs font-bold py-2 px-3.5 transition-colors disabled:opacity-50 ${launch?.launched ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40 hover:bg-amber-400 hover:text-[#0a0f16]' : 'bg-[#84cc16]/20 text-[#84cc16] border border-[#84cc16]/40 hover:bg-[#84cc16] hover:text-[#0a0f16]'}`}
+                    >
+                      {launch?.launched ? <><XCircle className="h-3.5 w-3.5" /> Unlaunch app</> : <><Rocket className="h-3.5 w-3.5" /> Launch app</>}
+                    </button>
+                  </div>
+                  {launch?.launchedAt && (
+                    <p className="mt-3 text-xs text-gray-500">
+                      Launched on {formatDate(launch.launchedAt)} — welcome banner shows until {formatDate(launch.welcomeUntil)}.
+                    </p>
+                  )}
+                </div>
+
+                {/* Countdown timer */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-2.5">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                    <Timer className="h-3.5 w-3.5" /> Auto-launch countdown
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      value={timerInput}
+                      onChange={e => setTimerInput(e.target.value)}
+                      className="w-24 rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white outline-none focus:border-[#84cc16]/60"
+                    />
+                    <span className="text-sm text-gray-400 self-center">day(s)</span>
+                    <button
+                      disabled={launchBusy}
+                      onClick={() => launchPost('launch/timer', { days: Number(timerInput) }, `Countdown set to ${timerInput} day(s).`)}
+                      className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-[#84cc16]/20 text-[#84cc16] border border-[#84cc16]/40 text-xs font-bold py-2 px-3.5 hover:bg-[#84cc16] hover:text-[#0a0f16] transition-colors disabled:opacity-50"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Set timer
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {launch?.launched
+                      ? 'App is live — the countdown only matters when unlaunched.'
+                      : `If nobody launches manually, the app auto-launches on ${formatDate(launch?.deadline)}.`}
+                  </p>
+                </div>
+
+                {/* WhatsApp group */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-2.5">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                    <Link2 className="h-3.5 w-3.5" /> WhatsApp group link
+                  </p>
+                  <input
+                    type="text"
+                    value={waInput}
+                    onChange={e => setWaInput(e.target.value)}
+                    placeholder="https://chat.whatsapp.com/…"
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2 text-sm text-white placeholder-gray-600 outline-none focus:border-[#84cc16]/60"
+                  />
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-gray-500">Users go here right after joining the waitlist.</p>
+                    <button
+                      disabled={launchBusy}
+                      onClick={() => launchPost('launch/whatsapp', { url: waInput.trim() }, 'WhatsApp group link saved.')}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#84cc16]/20 text-[#84cc16] border border-[#84cc16]/40 text-xs font-bold py-2 px-3.5 hover:bg-[#84cc16] hover:text-[#0a0f16] transition-colors disabled:opacity-50 shrink-0"
+                    >
+                      <Link2 className="h-3.5 w-3.5" /> Save link
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Waitlist emails */}
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" /> Waitlist ({launch?.waitlistCount ?? 0})
+                </p>
+                {launch && launch.waitlist.length === 0 ? (
+                  <p className="text-sm text-gray-500">Nobody has joined yet.</p>
+                ) : (
+                  <div className="max-h-80 overflow-y-auto pr-1 space-y-1.5">
+                    {launch?.waitlist.map(w => (
+                      <div key={w.email} className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
+                        <span className="text-sm font-medium text-gray-200 truncate">{w.email}</span>
+                        <span className="text-xs text-gray-500 shrink-0">{formatDate(w.joinedAt)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
           {/* Pending mentor applications */}
           {overview && (overview.pendingMentorApplications || 0) > 0 && (
             <div className="rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4 flex items-center justify-between gap-4">
@@ -170,6 +334,7 @@ export default function AdminPage() {
                   <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-white/10">
                     <th className="py-2.5 pr-4 font-semibold">User</th>
                     <th className="py-2.5 pr-4 font-semibold">Email</th>
+                    <th className="py-2.5 pr-4 font-semibold">Mentorship</th>
                     <th className="py-2.5 pr-4 font-semibold">Role</th>
                     <th className="py-2.5 pr-4 font-semibold">Joined</th>
                     <th className="py-2.5 font-semibold text-right">Action</th>
@@ -180,6 +345,22 @@ export default function AdminPage() {
                     <tr key={u.uid} className="border-b border-white/5">
                       <td className="py-3 pr-4 font-medium text-gray-200">{u.displayName || '—'}</td>
                       <td className="py-3 pr-4 text-gray-400">{u.email || '—'}</td>
+                      <td className="py-3 pr-4">
+                        {u.mentorshipInterest ? (
+                          <>
+                            <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase ${u.mentorshipInterest.choice === 'yes' ? 'border-[#84cc16]/40 bg-[#84cc16]/10 text-[#84cc16]' : 'border-white/15 bg-white/5 text-gray-400'}`}>
+                              {u.mentorshipInterest.choice === 'yes' ? 'Interested in paid mentorship' : 'Declined mentorship'}
+                            </span>
+                            {u.mentorshipInterest.opportunityTitle && (
+                              <span className="block mt-1 text-gray-500 text-[11px] max-w-[220px] truncate">
+                                {u.mentorshipInterest.opportunityTitle}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-gray-600 text-xs">—</span>
+                        )}
+                      </td>
                       <td className="py-3 pr-4">
                         <span className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold ${u.role === 'admin' ? 'border-[#84cc16]/40 bg-[#84cc16]/10 text-[#84cc16]' : 'border-white/15 bg-white/5 text-gray-400'}`}>
                           {u.role === 'admin' ? 'Admin' : 'User'}
