@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Phone, Mic, MicOff, Volume2, VolumeX, Bot, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../lib/applications';
+import { apiFetch } from '../lib/api';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -200,10 +201,10 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
       .map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const res = await fetch(API_URL, {
+      const res = await apiFetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history: apiHistory, userId: user?.uid || '' }),
+        body: JSON.stringify({ message, history: apiHistory }),
       });
       const data = await res.json();
 

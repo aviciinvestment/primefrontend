@@ -3,7 +3,8 @@ import { ArrowRight, CheckCircle2, Clock, Gift, Loader2, Mail, Users } from 'luc
 import { API_BASE, type LaunchStatus } from '../lib/applications';
 
 interface Props {
-  launch: LaunchStatus;
+  launch: LaunchStatus | null;
+  loading?: boolean;
   onCountChange?: (count: number) => void;
 }
 
@@ -17,7 +18,7 @@ const formatCountdown = (ms: number) => {
   return { d: String(d).padStart(2, '0'), h: pad(h), m: pad(m), s: pad(s) };
 };
 
-export default function WaitlistSection({ launch, onCountChange }: Props) {
+export default function WaitlistSection({ launch, loading, onCountChange }: Props) {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -29,13 +30,20 @@ export default function WaitlistSection({ launch, onCountChange }: Props) {
     return () => clearInterval(id);
   }, []);
 
-  const deadline = launch.deadline ? new Date(launch.deadline).getTime() : nowMs + launch.countdownMs;
+  // Fields below the fold fill in as soon as the backend reply lands; while it
+  // loads we render the placeholder countdown so the page is never blank.
+  const ready = !loading && launch;
+  const deadline = launch?.deadline
+    ? new Date(launch.deadline).getTime()
+    : launch
+      ? nowMs + (launch.countdownMs || 0)
+      : nowMs + 30 * 24 * 60 * 60 * 1000;
   const remaining = deadline - nowMs;
-  const cd = formatCountdown(remaining);
+  const cd = ready ? formatCountdown(remaining) : { d: '– –', h: '– –', m: '– –', s: '– –' };
 
   // When the countdown runs out the server auto-launches — reload so the home
   // page swaps the waitlist for the real feed.
-  const expired = remaining <= 0;
+  const expired = ready && remaining <= 0;
   useEffect(() => {
     if (expired) {
       const t = setTimeout(() => window.location.reload(), 600);
@@ -58,7 +66,7 @@ export default function WaitlistSection({ launch, onCountChange }: Props) {
       if (!data.success) throw new Error(data.error || 'Something went wrong.');
       setJoined(true);
       onCountChange?.(data.waitlistCount);
-      if (data.whatsappGroupUrl) {
+      if (data.whatsappGroupUrl && /^https:\/\//.test(data.whatsappGroupUrl)) {
         window.location.href = data.whatsappGroupUrl; // send them to the WhatsApp group
         return;
       }
@@ -77,7 +85,7 @@ export default function WaitlistSection({ launch, onCountChange }: Props) {
         </div>
         <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-gray-300">
           <Users className="h-3.5 w-3.5 text-[#84cc16]" />
-          {launch.waitlistCount} person{launch.waitlistCount === 1 ? '' : 's'} on the waitlist
+          {launch?.waitlistCount ?? 0} person{launch?.waitlistCount === 1 ? '' : 's'} on the waitlist
         </div>
       </div>
 
@@ -113,7 +121,7 @@ export default function WaitlistSection({ launch, onCountChange }: Props) {
           <div className="rounded-2xl border border-[#84cc16]/40 bg-[#84cc16]/10 p-5 flex items-center gap-3">
             <CheckCircle2 className="h-6 w-6 text-[#84cc16] shrink-0" />
             <p className="text-sm text-[#e5ffd9] font-medium">
-              You're on the waitlist{launch.whatsappGroupUrl ? ' — opening the WhatsApp group…' : ". We'll notify you when we launch."}
+              You're on the waitlist{launch?.whatsappGroupUrl ? ' — opening the WhatsApp group…' : ". We'll notify you when we launch."}
             </p>
           </div>
         ) : (

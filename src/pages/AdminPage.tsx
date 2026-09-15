@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
+  Eye,
+  EyeOff,
   Handshake,
   Link2,
   Loader2,
@@ -14,7 +16,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { API_BASE } from '../lib/applications';
+import { API_BASE, isAdminPreviewEnabled, setAdminPreviewEnabled } from '../lib/applications';
+import { apiFetch } from '../lib/api';
 
 const formatMoney = (amount: number, currency: string = 'NGN') =>
   new Intl.NumberFormat('en-NG', { style: 'currency', currency }).format(amount);
@@ -68,7 +71,7 @@ const statusBadge = (status: string) =>
   : 'bg-rose-400/15 text-rose-300 border-rose-400/40';
 
 export default function AdminPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, role } = useAuth();
 
   const [overview, setOverview] = useState<Overview | null>(null);
   const [users, setUsers] = useState<AppUserRow[]>([]);
@@ -81,19 +84,30 @@ export default function AdminPage() {
   const [launchBusy, setLaunchBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState('');
+  const [adminPreview, setAdminPreview] = useState(() => isAdminPreviewEnabled());
+
+  const toggleAdminPreview = () => {
+    const next = !adminPreview;
+    setAdminPreview(next);
+    setAdminPreviewEnabled(next);
+    setNotice(
+      next
+        ? 'Preview mode ON — browse the app at "/" yourself while everyone else still sees the waitlist. Launch state untouched.'
+        : 'Preview mode OFF — you will see the waitlist again like everyone else.'
+    );
+  };
 
   const load = useCallback(async () => {
     if (!user || !isAdmin) return;
     setLoading(true);
-    const headers = { 'x-user-uid': user.uid };
     try {
       const [o, u, m, e, c, l] = await Promise.all([
-        fetch(`${API_BASE}/admin/overview`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE}/admin/users`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE}/admin/mentors`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE}/admin/mentees`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE}/admin/complaints`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE}/admin/launch`, { headers }).then(r => r.json()),
+        apiFetch(`${API_BASE}/admin/overview`).then(r => r.json()),
+        apiFetch(`${API_BASE}/admin/users`).then(r => r.json()),
+        apiFetch(`${API_BASE}/admin/mentors`).then(r => r.json()),
+        apiFetch(`${API_BASE}/admin/mentees`).then(r => r.json()),
+        apiFetch(`${API_BASE}/admin/complaints`).then(r => r.json()),
+        apiFetch(`${API_BASE}/admin/launch`).then(r => r.json()),
       ]);
       if (o.success) setOverview(o);
       if (u.success) setUsers(u.users);
@@ -116,7 +130,7 @@ export default function AdminPage() {
 
   const act = async (path: string, okMsg: string) => {
     if (!user) return;
-    const res = await fetch(`${API_BASE}/admin/${path}`, { method: 'POST', headers: { 'x-user-uid': user.uid } });
+    const res = await apiFetch(`${API_BASE}/admin/${path}`, { method: 'POST' });
     const data = await res.json();
     if (data.success) {
       setNotice(okMsg);
@@ -130,9 +144,9 @@ export default function AdminPage() {
     if (!user || launchBusy) return;
     setLaunchBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/admin/${path}`, {
+      const res = await apiFetch(`${API_BASE}/admin/${path}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-uid': user.uid },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       const data = await res.json();
@@ -153,7 +167,26 @@ export default function AdminPage() {
             <ShieldBan className="h-6 w-6 text-rose-400" />
           </div>
           <h1 className="text-xl font-bold text-white mb-2">Admin access only</h1>
-          <p className="text-gray-400 text-sm">You need to be promoted to an administrator to view this page.</p>
+          <p className="text-gray-400 text-sm mb-4">
+            You need to be promoted to an administrator to view this page.
+          </p>
+          <div className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm">
+            <p className="text-gray-300">
+              <span className="font-semibold text-gray-200">Signed in as:</span> {user?.email || '—'}{' '}
+              <span className="text-gray-500">(uid: {(user as any)?.uid || '—'})</span>
+            </p>
+            <p className="text-gray-300 mt-1">
+              <span className="font-semibold text-gray-200">Resolved role:</span>{' '}
+              <span className={role === 'admin' ? 'text-[#84cc16]' : 'text-amber-300'}>
+                {role ?? 'unknown (role not synced yet)'}
+              </span>
+            </p>
+            <p className="text-gray-500 mt-2 text-xs leading-relaxed">
+              If the role shows "user", the server did not recognize you as an admin — make sure{' '}
+              <code className="text-gray-300">ADMIN_UIDS</code> in the server <code className="text-gray-300">.env</code>{' '}
+              contains your Firebase uid, then restart the server and refresh this page.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -228,6 +261,30 @@ export default function AdminPage() {
                       Launched on {formatDate(launch.launchedAt)} — welcome banner shows until {formatDate(launch.welcomeUntil)}.
                     </p>
                   )}
+                </div>
+
+                {/* Admin-only preview — never touches the real launch state */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Admin-only preview</p>
+                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold uppercase ${adminPreview ? 'border-[#84cc16]/40 bg-[#84cc16]/10 text-[#84cc16]' : 'border-white/15 bg-white/5 text-gray-400'}`}>
+                        {adminPreview ? <><Eye className="h-3.5 w-3.5" /> Preview on</> : <><EyeOff className="h-3.5 w-3.5" /> Preview off</>}
+                      </span>
+                    </div>
+                    <button
+                      onClick={toggleAdminPreview}
+                      className={`inline-flex items-center gap-1.5 rounded-lg text-xs font-bold py-2 px-3.5 transition-colors ${adminPreview ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40 hover:bg-amber-400 hover:text-[#0a0f16]' : 'bg-[#84cc16]/20 text-[#84cc16] border border-[#84cc16]/40 hover:bg-[#84cc16] hover:text-[#0a0f16]'}`}
+                    >
+                      {adminPreview ? <><EyeOff className="h-3.5 w-3.5" /> Turn preview off</> : <><Eye className="h-3.5 w-3.5" /> Preview the app</>}
+                    </button>
+                  </div>
+                  <p className="mt-3 text-xs text-gray-500 leading-relaxed">
+                    Lets only <span className="text-gray-300">you</span> browse the live app at
+                    <span className="text-[#84cc16] font-semibold"> "/" </span>
+                    while everyone else still sees the waitlist. This only sets a flag in your browser —
+                    the launch state, countdown, deadline, and waitlist are never modified.
+                  </p>
                 </div>
 
                 {/* Countdown timer */}

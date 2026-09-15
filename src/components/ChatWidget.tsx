@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageCircle, X, Send, Bot, User as UserIcon, Loader2, Phone, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { API_BASE } from '../lib/applications';
+import { API_BASE, fetchLaunchStatus, isAdminPreviewEnabled } from '../lib/applications';
+import { apiFetch } from '../lib/api';
 import CallWidget from './CallWidget';
 import MarkdownView from './MarkdownView';
 
@@ -23,21 +24,22 @@ const WELCOME_MESSAGE: ChatMessage = {
 };
 
 export default function ChatWidget() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCall, setShowCall] = useState(false);
-  // Chat is only available once the app has launched.
+  // Chat is only available once the app has launched — unless an admin is
+  // previewing the app while it is still in waitlist mode.
+  const adminPreview = isAdmin && isAdminPreviewEnabled();
   const [launched, setLaunched] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_BASE}/launch/status`)
-      .then(r => r.json())
-      .then(data => { if (!cancelled) setLaunched(!!data.success && !!data.launched); })
+    fetchLaunchStatus()
+      .then(r => { if (!cancelled) setLaunched(!!r.ok && !!r.data?.launched); })
       .catch(() => { if (!cancelled) setLaunched(true); });
     return () => { cancelled = true; };
   }, []);
@@ -46,7 +48,11 @@ export default function ChatWidget() {
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const API_URL = `${API_BASE}/ai/chat`;
+  // Chat can be served by the Cloudflare Worker (free SSE) — set VITE_AI_CHAT_URL
+  // to its URL; otherwise it falls back to the Express backend's /ai/chat.
+  const AI_CHAT_URL =
+    (import.meta.env.VITE_AI_CHAT_URL as string | undefined)?.trim() || `${API_BASE}/ai/chat`;
+  const API_URL = AI_CHAT_URL;
 
   // Open panel → seed welcome message once
   const handleOpen = () => {
@@ -97,39 +103,139 @@ export default function ChatWidget() {
     const history = updated.slice(-10).map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const res = await fetch(API_URL, {
+      const res = await apiFetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message,
-          history,
-          userId: user?.uid || '',
-          userEmail: user?.email || '',
-          userName: user?.displayName || '',
-        }),
+        body: JSON.stringify({ message, history, stream: true }),
       });
 
-      const data = await res.json();
-      if (data.success) {
-        setMessages(prev => [
-          ...prev,
-          { role: 'assistant', content: data.reply, action: data.action },
-        ]);
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('text/event-stream')) {
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error('No response body');
+
+        // Reserve the assistant slot the stream will fill.
+        setMessages(prev => {
+          const copy = [...prev];
+          const last = copy[copy.length - 1];
+          if (last && last.role === 'assistant') {
+            copy[copy.length - 1] = { ...last, content: '' };
+          } else {
+            copy.push({ role: 'assistant', content: '' });
+          }
+          return copy;
+        });
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let swallowed = false;
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          let newlineIdx;
+          while ((newlineIdx = buffer.indexOf('\n\n')) !== -1) {
+            const rawEvent = buffer.slice(0, newlineIdx);
+            buffer = buffer.slice(newlineIdx + 2);
+            const dataLine = rawEvent.split('\n').find(l => l.startsWith('data: '));
+            if (!dataLine) continue;
+            const payload = dataLine.slice(6).trim();
+            if (!payload) continue;
+
+            let parsed: { type: string; text?: string; reply?: string; action?: ChatAction };
+            try {
+              parsed = JSON.parse(payload);
+            } catch {
+              continue;
+            }
+
+            if (parsed.type === 'delta' && typeof parsed.text === 'string') {
+              swallowed = true;
+              const chunk = parsed.text;
+              setMessages(prev => {
+                const copy = [...prev];
+                const last = copy[copy.length - 1];
+                if (last && last.role === 'assistant') {
+                  copy[copy.length - 1] = { ...last, content: last.content + chunk };
+                } else {
+                  copy.push({ role: 'assistant', content: chunk });
+                }
+                return copy;
+              });
+            } else if (parsed.type === 'done' && typeof parsed.reply === 'string') {
+              swallowed = true;
+              setMessages(prev => {
+                const copy = [...prev];
+                const last = copy[copy.length - 1];
+                if (last && last.role === 'assistant') {
+                  copy[copy.length - 1] = { ...last, content: parsed.reply!, action: parsed.action };
+                } else {
+                  copy.push({ role: 'assistant', content: parsed.reply!, action: parsed.action });
+                }
+                return copy;
+              });
+            } else if (parsed.type === 'error') {
+              swallowed = false;
+              setMessages(prev => {
+                const copy = [...prev];
+                const last = copy[copy.length - 1];
+                if (last && last.role === 'assistant' && !last.content) {
+                  copy[copy.length - 1] = {
+                    ...last,
+                    content: 'Sorry, I could not process that. Please try again.',
+                  };
+                }
+                return copy;
+              });
+            }
+          }
+        }
+
+        // Stream ended with no frames — flag it as a failure without a stray empty bubble.
+        if (!swallowed) {
+          setMessages(prev => {
+            const copy = [...prev];
+            const last = copy[copy.length - 1];
+            if (last && last.role === 'assistant' && !last.content) {
+              copy[copy.length - 1] = { ...last, content: 'Sorry, I could not process that. Please try again.' };
+            }
+            return copy;
+          });
+        }
       } else {
-        setMessages(prev => [
-          ...prev,
-          { role: 'assistant', content: 'Sorry, I could not process that. Please try again.' },
-        ]);
+        const data = await res.json();
+        if (data.success && typeof data.reply === 'string') {
+          setMessages(prev => [
+            ...prev,
+            { role: 'assistant', content: data.reply, action: data.action },
+          ]);
+        } else {
+          setMessages(prev => [
+            ...prev,
+            { role: 'assistant', content: 'Sorry, I could not process that. Please try again.' },
+          ]);
+        }
       }
     } catch {
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content:
-            'Sorry, I am having trouble connecting right now. Please check that the server is running and try again.',
-        },
-      ]);
+      setMessages(prev => {
+        const copy = [...prev];
+        const last = copy[copy.length - 1];
+        if (last && last.role === 'assistant') {
+          copy[copy.length - 1] = {
+            ...last,
+            content: 'Sorry, I am having trouble connecting right now. Please check that the server is running and try again.',
+          };
+        } else {
+          copy.push({
+            role: 'assistant',
+            content:
+              'Sorry, I am having trouble connecting right now. Please check that the server is running and try again.',
+          });
+        }
+        return copy;
+      });
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +248,7 @@ export default function ChatWidget() {
     }
   };
 
-  if (!launched) return null;
+  if (!launched && !adminPreview) return null;
 
   return (
     <>

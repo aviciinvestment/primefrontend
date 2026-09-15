@@ -1,10 +1,29 @@
 import { Bookmark, Send, CalendarClock, CheckCircle2, XCircle, type LucideIcon } from 'lucide-react';
+import { apiFetch } from './api';
 
 // Server origin + API root. Override at deploy time with VITE_API_ORIGIN
 // (e.g. https://your-api.onrender.com — no trailing slash).
 const apiOrigin = (import.meta.env.VITE_API_ORIGIN as string | undefined)?.replace(/\/+$/, '') || 'http://localhost:5000';
 export const API_ORIGIN = apiOrigin;
 export const API_BASE = `${apiOrigin}/api`;
+
+// Admin-only preview: lets an admin browse the live app while the app is still
+// in waitlist mode. Stored per-browser (localStorage) so it only affects that
+// admin's own view — it never touches the server, launch state, countdown,
+// deadline, or the waitlist itself.
+export const ADMIN_PREVIEW_KEY = 'primeopportunity_admin_preview';
+
+export const isAdminPreviewEnabled = (): boolean =>
+  typeof localStorage !== 'undefined' && localStorage.getItem(ADMIN_PREVIEW_KEY) === '1';
+
+export const setAdminPreviewEnabled = (enabled: boolean): void => {
+  try {
+    if (enabled) localStorage.setItem(ADMIN_PREVIEW_KEY, '1');
+    else localStorage.removeItem(ADMIN_PREVIEW_KEY);
+  } catch {
+    /* ignore storage errors */
+  }
+};
 
 // Launch / waitlist state shared by the home page and admin page.
 export interface LaunchStatus {
@@ -15,6 +34,29 @@ export interface LaunchStatus {
   deadline: string | null;
   whatsappGroupUrl: string;
   waitlistCount: number;
+}
+
+// Shared launch status with a tiny cache + concurrent-dedupe so the home page
+// and chat widget don't each hammer /launch/status on every mount.
+let launchStatusCache: { at: number; promise: Promise<{ data?: LaunchStatus; ok: boolean }> } | null = null;
+const LAUNCH_STATUS_TTL = 30_000;
+
+export async function fetchLaunchStatus(): Promise<{ data?: LaunchStatus; ok: boolean }> {
+  const now = Date.now();
+  if (launchStatusCache && now - launchStatusCache.at < LAUNCH_STATUS_TTL) {
+    return launchStatusCache.promise;
+  }
+  const promise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/launch/status`);
+      const data = await res.json();
+      return { data: data as LaunchStatus, ok: !!res.ok };
+    } catch {
+      return { ok: false };
+    }
+  })();
+  launchStatusCache = { at: now, promise };
+  return promise;
 }
 
 export interface Opportunity {
@@ -75,7 +117,7 @@ export const STATUS_META: Record<ApplicationStatus, { label: string; icon: Lucid
 };
 
 export async function fetchApplications(userId: string): Promise<ApplicationRecord[]> {
-  const res = await fetch(`${API_BASE}/applications?userId=${encodeURIComponent(userId)}`);
+  const res = await apiFetch(`${API_BASE}/applications?userId=${encodeURIComponent(userId)}`);
   const data = await res.json();
   if (!data.success) throw new Error(data.message || 'Failed to fetch applications');
   return data.data;
@@ -86,7 +128,7 @@ export async function upsertApplication(
   opportunityId: string,
   payload: { status?: ApplicationStatus; clicked?: boolean }
 ): Promise<ApplicationRecord> {
-  const res = await fetch(`${API_BASE}/applications`, {
+  const res = await apiFetch(`${API_BASE}/applications`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, opportunityId, ...payload }),

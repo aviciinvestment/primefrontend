@@ -4,6 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { Radar, UserPlus, Mail, Lock, User, Loader2 } from 'lucide-react';
 import GoogleIcon from '../components/GoogleIcon';
 
+function validatePassword(pw: string): string | null {
+  if (pw.length < 8) return 'Password must be at least 8 characters long.';
+  if (!/[A-Za-z]/.test(pw)) return 'Password must contain at least one letter.';
+  if (!/[0-9]/.test(pw)) return 'Password must contain at least one number.';
+  return null;
+}
+
 export default function Register() {
   const { registerWithEmail, logInWithGoogle } = useAuth();
   const navigate = useNavigate();
@@ -17,9 +24,13 @@ export default function Register() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    const pwError = validatePassword(password);
+    if (pwError) { setError(pwError); return; }
     setSubmitting(true);
     try {
       await registerWithEmail(email, password, name);
+      // The verification gate (AuthGate) takes over from here: the app stays
+      // blocked until the new account's email is verified.
       navigate('/', { replace: true });
     } catch (err: any) {
       setError(normalizeAuthError(err));
@@ -107,12 +118,15 @@ export default function Register() {
               <input
                 type="password"
                 required
-                minLength={6}
+                minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
+                placeholder="At least 8 characters, incl. a letter & number"
                 className="w-full h-11 rounded-xl bg-white/5 border border-white/10 px-4 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#84cc16]/60 focus:ring-2 focus:ring-[#84cc16]/20"
               />
+              <p className="mt-1.5 text-[11px] text-gray-500">
+                8+ characters with at least one letter and one number.
+              </p>
             </div>
 
             {error && (
@@ -151,7 +165,7 @@ function normalizeAuthError(err: any): string {
     case 'auth/invalid-email':
       return 'Please enter a valid email address.';
     case 'auth/weak-password':
-      return 'Password must be at least 6 characters.';
+      return 'Password must be at least 8 characters with a letter and a number.';
     case 'auth/popup-closed-by-user':
       return 'Google sign-in was cancelled.';
     default:

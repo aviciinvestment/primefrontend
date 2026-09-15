@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Briefcase, CheckCircle2, GraduationCap, Handshake, Loader2, Lock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../lib/applications';
+import { apiFetch } from '../lib/api';
 
 declare global {
   interface Window {
@@ -64,11 +65,10 @@ export default function MentorshipGuidance() {
   }, []);
 
   const submitRequest = async (provider: string, reference: string) => {
-    const res = await fetch(`${API_BASE}/mentorships`, {
+    const res = await apiFetch(`${API_BASE}/mentorships`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: user!.uid,
         userEmail: email || user?.email,
         userName: name,
         opportunityId,
@@ -81,7 +81,6 @@ export default function MentorshipGuidance() {
         currency: config!.currency,
         provider,
         reference,
-        status: provider === 'demo' ? 'paid' : 'pending',
         note,
       }),
     });

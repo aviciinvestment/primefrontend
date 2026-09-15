@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Construction, Handshake, Loader2, Rocket, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../lib/applications';
+import { apiFetch } from '../lib/api';
 
 export default function MentorshipInterest() {
   const { user } = useAuth();
@@ -22,11 +23,10 @@ export default function MentorshipInterest() {
     setSaving(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/users/mentorship-interest`, {
+      const res = await apiFetch(`${API_BASE}/users/mentorship-interest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          uid: user.uid,
           choice,
           source: fromOpportunity ? 'opportunity' : 'general',
           opportunityTitle: title,

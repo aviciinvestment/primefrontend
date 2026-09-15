@@ -84,11 +84,11 @@ export default function Navbar() {
           </Link>
           {user ? (
             <>
-              <div className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+              <div className="flex items-center gap-2.5 text-sm font-semibold text-gray-300">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#84cc16]/20 border border-[#84cc16]/40 text-[#84cc16] font-bold">
                   {userInitial}
                 </span>
-                <span className="max-w-[120px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
+                <span className="max-w-[140px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
               </div>
               <button
                 onClick={handleLogout}
@@ -162,7 +162,6 @@ export default function Navbar() {
                   </span>
                   <div className="min-w-0">
                     <p className="text-white font-semibold truncate">{user.displayName || 'User'}</p>
-                    <p className="text-gray-400 text-sm truncate">{user.email}</p>
                   </div>
                 </div>
                 <button

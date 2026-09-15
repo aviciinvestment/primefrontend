@@ -12,9 +12,11 @@ import {
   RefreshCw,
   Camera,
   Clock,
+  CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { API_ORIGIN } from '../lib/applications';
+import { API_BASE } from '../lib/applications';
+import { apiFetch } from '../lib/api';
 
 const ROLE_OPTIONS = [
   'Technology',
@@ -31,7 +33,7 @@ const ROLE_OPTIONS = [
   'Other',
 ];
 
-const API_URL = API_ORIGIN;
+const API_URL = API_BASE;
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -84,7 +86,7 @@ export default function Profile() {
   const loadCvs = async () => {
     if (!user) return;
     try {
-      const res = await fetch(`${API_URL}/api/ai/my-cvs?userId=${encodeURIComponent(user.uid)}`);
+      const res = await apiFetch(`${API_URL}/ai/my-cvs`);
       const data = await res.json();
       if (data.success) setCvs(data.cvs || []);
     } catch {
@@ -99,7 +101,7 @@ export default function Profile() {
     loadCvs();
     const loadMentor = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/mentors/profile?userId=${encodeURIComponent(user.uid)}`);
+        const res = await apiFetch(`${API_URL}/mentors/profile`);
         const data = await res.json();
         setIsMentor(data.isMentor);
         setMentorStatus(data.mentor?.status ?? null);
@@ -147,11 +149,8 @@ export default function Profile() {
     setCvsBusy('change');
     const formData = new FormData();
     formData.append('cv', file);
-    formData.append('userId', user.uid);
-    formData.append('userEmail', user.email || '');
-    formData.append('userName', user.displayName || '');
     try {
-      const res = await fetch(`${API_URL}/api/ai/analyze-cv`, { method: 'POST', body: formData });
+      const res = await apiFetch(`${API_URL}/ai/analyze-cv`, { method: 'POST', body: formData });
       const data = await res.json();
       if (data.success) {
         showNotice('ok', 'CV updated — new analysis complete.');
@@ -172,11 +171,7 @@ export default function Profile() {
     if (!window.confirm('Delete this CV? This cannot be undone.')) return;
     setCvsBusy('delete');
     try {
-      const res = await fetch(`${API_URL}/api/ai/cv/${cvId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.uid }),
-      });
+      const res = await apiFetch(`${API_URL}/ai/cv/${cvId}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         showNotice('ok', 'CV deleted.');
@@ -186,6 +181,32 @@ export default function Profile() {
       }
     } catch {
       showNotice('err', 'Could not connect to server while deleting CV.');
+    } finally {
+      setCvsBusy(null);
+    }
+  };
+
+  // ---- CV download ----
+  const handleCvDownload = async (cvId: string) => {
+    if (!user) return;
+    setCvsBusy('download');
+    try {
+      const res = await apiFetch(`${API_URL}/ai/cv/${cvId}/download`);
+      if (!res.ok) throw new Error('Download failed');
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const match = /filename="([^"]+)"/.exec(disposition);
+      const fileName = match?.[1] || 'cv.pdf';
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      showNotice('err', 'Could not download your CV.');
     } finally {
       setCvsBusy(null);
     }
@@ -212,11 +233,10 @@ export default function Profile() {
     setSaving(true);
     setFormError('');
     try {
-      const res = await fetch(`${API_URL}/api/mentors/register`, {
+      const res = await apiFetch(`${API_URL}/mentors/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user?.uid,
           name: user?.displayName || '',
           email: user?.email || '',
           company: company.trim(),
@@ -304,7 +324,18 @@ export default function Profile() {
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-gray-400">{user.email}</p>
+            <p className="mt-1 text-sm text-gray-400">
+              {user.email}
+              {user.emailVerified ? (
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-[#84cc16]/40 bg-[#84cc16]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#84cc16]">
+                  <CheckCircle2 className="h-3 w-3" /> Verified
+                </span>
+              ) : (
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                  Unverified
+                </span>
+              )}
+            </p>
             {memberSince && <p className="mt-1 text-[12px] text-gray-500">Member since {memberSince}</p>}
           </div>
         </div>
@@ -366,12 +397,14 @@ export default function Profile() {
               </div>
 
               <div className="mt-auto space-y-2 border-t border-white/10 pt-4">
-                <a
-                  href={`${API_URL}/api/ai/cv/${latestCv._id}/download?userId=${encodeURIComponent(user.uid)}`}
-                  className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#84cc16] text-[13px] font-bold text-[#070e0a] transition-all hover:scale-[1.02] active:scale-95"
+                <button
+                  onClick={() => handleCvDownload(latestCv._id)}
+                  disabled={cvsBusy !== null}
+                  className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#84cc16] text-[13px] font-bold text-[#070e0a] transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
                 >
-                  <Download className="h-4 w-4" /> Download CV
-                </a>
+                  {cvsBusy === 'download' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  Download CV
+                </button>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => cvInputRef.current?.click()}

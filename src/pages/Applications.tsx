@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ExternalLink, Loader2, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -46,6 +46,15 @@ const formatDeadline = (dateString: string | null | undefined) => {
   return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
 };
 
+// HTML5 drag and drop doesn't run on touch devices, so cards get a long-press
+// gesture instead: hold a card ~250ms to lift it, slide onto a target column,
+// and release to move. The page keeps scrolling normally while the finger is
+// moving during the initial hold.
+const TOUCH_PRESS_MS = 250;
+const TOUCH_MOVE_TOLERANCE = 10;
+const EDGE_SCROLL_PX = 60;
+const EDGE_SCROLL_STEP = 14;
+
 export default function Applications() {
   const { user } = useAuth();
   const [apps, setApps] = useState<ApplicationRecord[]>([]);
@@ -53,6 +62,14 @@ export default function Applications() {
   const [error, setError] = useState('');
   const [dragOver, setDragOver] = useState<ApplicationStatus | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  // Touch drag state (refs so the once-attached native listeners stay fresh).
+  const boardRef = useRef<HTMLDivElement | null>(null);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressStart = useRef<{ x: number; y: number } | null>(null);
+  const touchDragActive = useRef(false);
+  const touchDragRef = useRef<{ oppId: string; status: ApplicationStatus } | null>(null);
+  const dragOverRef = useRef<ApplicationStatus | null>(null);
 
   const loadApps = useCallback(async () => {
     if (!user) return;
@@ -72,7 +89,7 @@ export default function Applications() {
     loadApps();
   }, [loadApps]);
 
-  const moveApplication = async (opportunityId: string, targetStatus: ApplicationStatus) => {
+  const moveApplication = useCallback(async (opportunityId: string, targetStatus: ApplicationStatus) => {
     if (!user) return;
     // Optimistic update so the board feels instant.
     setApps(prev =>
@@ -85,6 +102,130 @@ export default function Applications() {
       // Revert to server state on failure.
       await loadApps();
     }
+  }, [user, loadApps]);
+
+  const resolveColumnStatus = (clientX: number, clientY: number): ApplicationStatus | null => {
+    const el = document.elementFromPoint(clientX, clientY);
+    const column = el?.closest('[data-status]') as HTMLElement | null;
+    const ds = column?.dataset.status;
+    if (ds && (STATUSES as readonly string[]).includes(ds)) return ds as ApplicationStatus;
+    return null;
+  };
+
+  // Native touchmove/touchend listeners (passive:false on touchmove) so we can
+  // preventDefault once a drag is active and stop the page from scrolling under
+  // the finger. Attached once; all mutable state lives in refs.
+  useEffect(() => {
+    const onTouchMove = (e: TouchEvent) => {
+      if (!touchDragActive.current) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      const { clientX, clientY } = touch;
+      const hovered = resolveColumnStatus(clientX, clientY);
+      if (hovered !== dragOverRef.current) {
+        dragOverRef.current = hovered;
+        setDragOver(hovered);
+      }
+
+      // Auto-scroll horizontally when the finger is near the board's edges so
+      // off-screen columns can be reached while dragging.
+      const board = boardRef.current;
+      if (board) {
+        const rect = board.getBoundingClientRect();
+        if (clientX < rect.left + EDGE_SCROLL_PX) board.scrollLeft -= EDGE_SCROLL_STEP;
+        else if (clientX > rect.right - EDGE_SCROLL_PX) board.scrollLeft += EDGE_SCROLL_STEP;
+      }
+
+      // Auto-scroll the hovered column vertically near its top/bottom edges.
+      const el = document.elementFromPoint(clientX, clientY);
+      const column = el?.closest('[data-status]') as HTMLElement | null;
+      if (column) {
+        const rect = column.getBoundingClientRect();
+        if (clientY < rect.top + EDGE_SCROLL_PX) column.scrollTop -= EDGE_SCROLL_STEP;
+        else if (clientY > rect.bottom - EDGE_SCROLL_PX) column.scrollTop += EDGE_SCROLL_STEP;
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!touchDragActive.current) return;
+      const touch = e.changedTouches[0];
+      const targetStatus = touch ? resolveColumnStatus(touch.clientX, touch.clientY) : null;
+      const drag = touchDragRef.current;
+      if (drag && targetStatus && targetStatus !== drag.status) {
+        moveApplication(drag.oppId, targetStatus);
+      }
+      touchDragActive.current = false;
+      touchDragRef.current = null;
+      dragOverRef.current = null;
+      setDragOver(null);
+      setDraggingId(null);
+    };
+
+    const onTouchCancel = () => {
+      if (!touchDragActive.current) return;
+      touchDragActive.current = false;
+      touchDragRef.current = null;
+      dragOverRef.current = null;
+      setDragOver(null);
+      setDraggingId(null);
+    };
+
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd);
+    document.addEventListener('touchcancel', onTouchCancel);
+    return () => {
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onTouchEnd);
+      document.removeEventListener('touchcancel', onTouchCancel);
+    };
+  }, [moveApplication]);
+
+  useEffect(() => {
+    return () => {
+      if (pressTimer.current) clearTimeout(pressTimer.current);
+    };
+  }, []);
+
+  const beginTouchDrag = (oppId: string, status: ApplicationStatus) => {
+    touchDragActive.current = true;
+    touchDragRef.current = { oppId, status };
+    setDraggingId(oppId);
+  };
+
+  const handleTouchStart = (app: ApplicationRecord) => (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    pressStart.current = { x: touch.clientX, y: touch.clientY };
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    pressTimer.current = setTimeout(() => {
+      pressTimer.current = null;
+      beginTouchDrag(app.opportunityId, app.status);
+    }, TOUCH_PRESS_MS);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // Active drags are handled by the native listener above.
+    if (touchDragActive.current) return;
+    // Moving during the hold means scrolling — cancel the pending press.
+    if (!pressStart.current) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - pressStart.current.x);
+    const dy = Math.abs(touch.clientY - pressStart.current.y);
+    if (dx > TOUCH_MOVE_TOLERANCE || dy > TOUCH_MOVE_TOLERANCE) {
+      if (pressTimer.current) clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+      pressStart.current = null;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    // The native touchend performs the actual drop if a drag was active.
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+    pressStart.current = null;
   };
 
   const handleDrop = (e: React.DragEvent, targetStatus: ApplicationStatus) => {
@@ -137,7 +278,7 @@ export default function Applications() {
           </div>
         </div>
       ) : (
-        <div className="flex gap-6 overflow-x-auto pb-4 h-full scrollbar-thin">
+        <div ref={boardRef} className="flex gap-6 overflow-x-auto pb-4 h-full scrollbar-thin">
           {STATUSES.map((status, colIndex) => {
             const meta = STATUS_META[status];
             const style = COLUMN_STYLE[status];
@@ -154,6 +295,7 @@ export default function Applications() {
                 </div>
 
                 <div
+                  data-status={status}
                   onDragOver={(e) => {
                     e.preventDefault();
                     if (dragOver !== status) setDragOver(status);
@@ -176,7 +318,11 @@ export default function Applications() {
                         setDraggingId(app.opportunityId);
                       }}
                       onDragEnd={() => setDraggingId(null)}
-                      className={`bg-card border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing ${
+                      onTouchStart={handleTouchStart(app)}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                      onContextMenu={(e) => e.preventDefault()}
+                      className={`bg-card border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing select-none touch-callout-none ${
                         draggingId === app.opportunityId ? 'opacity-40' : ''
                       }`}
                     >

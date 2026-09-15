@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../lib/applications';
+import { apiFetch } from '../lib/api';
 
 const ROLE_OPTIONS = [
   'Technology',
@@ -80,12 +81,12 @@ export default function MentorPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/mentors/profile?userId=${encodeURIComponent(user.uid)}`);
+      const res = await apiFetch(`${API_BASE}/mentors/profile`);
       const data = await res.json();
       if (data.success && data.mentor) {
         setMentor(data.mentor);
         if (data.mentor.status === 'approved') {
-          const dash = await fetch(`${API_BASE}/mentors/dashboard?userId=${encodeURIComponent(user.uid)}`);
+          const dash = await apiFetch(`${API_BASE}/mentors/dashboard`);
           const dashData = await dash.json();
           if (dashData.success) setDashboard(dashData);
         }
@@ -113,11 +114,10 @@ export default function MentorPage() {
     setFormError('');
     setNotice('');
     try {
-      const res = await fetch(`${API_BASE}/mentors/register`, {
+      const res = await apiFetch(`${API_BASE}/mentors/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user.uid,
           name: user.displayName || '',
           email: user.email || '',
           company: company.trim(),

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from 'react';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -7,18 +7,23 @@ import {
   GoogleAuthProvider,
   signOut,
   updateProfile,
+  sendEmailVerification,
   type User,
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { API_BASE } from '../lib/applications';
+import { apiFetch, setAuthTokenGetter } from '../lib/api';
 
 interface AuthContextValue {
   user: User | null;
   role: string | null;
   isAdmin: boolean;
   loading: boolean;
+  roleReady: boolean;
   logInWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
+  reloadUser: () => Promise<void>;
   logInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   updatePhoto: (photoURL: string) => Promise<void>;
@@ -31,16 +36,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
+  // True once the server has resolved this user's role (even if it failed),
+  // so gates can safely distinguish a real non-admin from a resolution race.
+  const [roleReady, setRoleReady] = useState(true);
 
-  // Register/refresh the Firebase identity on the server so it appears in the
-  // admin user list and picks up privileges (promoted admin / approved mentor).
-  const syncAppUser = async (currentUser: User) => {
+  // Keep the server / apiFetch's token getter in sync with the session. The
+  // Firebase SDK refreshes ID tokens automatically, so getIdToken() always
+  // returns a fresh, valid token while signed in.
+  useEffect(() => {
+    setAuthTokenGetter(user ? () => user.getIdToken(false) : null);
+    return () => setAuthTokenGetter(null);
+  }, [user]);
+
+  const syncAppUser = useCallback(async (currentUser: User) => {
     try {
-      const res = await fetch(`${API_BASE}/users`, {
+      const res = await apiFetch(`${API_BASE}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          uid: currentUser.uid,
           email: currentUser.email || '',
           displayName: currentUser.displayName || '',
           photoURL: currentUser.photoURL || '',
@@ -50,18 +63,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.user) setRole(data.user.role || 'user');
     } catch (err) {
       console.error('Failed to sync app user:', err);
+    } finally {
+      setRoleReady(true);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setRole(currentUser ? 'user' : null);
+      setRoleReady(!currentUser);
       if (currentUser) syncAppUser(currentUser);
       setLoading(false);
     });
     return unsubscribe;
-  }, []);
+  }, [syncAppUser]);
 
   const refreshRole = async () => {
     if (user) await syncAppUser(user);
@@ -76,11 +92,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (displayName.trim()) {
       await updateProfile(credential.user, { displayName: displayName.trim() });
     }
+    // Soft email verification: send the email but never block app usage.
+    sendEmailVerification(credential.user).catch(() => {
+      /* verification email is best-effort */
+    });
   };
 
   const logInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
+  };
+
+  const resendVerificationEmail = async () => {
+    if (!auth.currentUser) throw new Error('No user is signed in.');
+    await sendEmailVerification(auth.currentUser);
+  };
+
+  // Refresh the Firebase user in place (e.g. after clicking the verification
+  // link, so `emailVerified` flips to true without a full page reload).
+  const reloadUser = async () => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      setUser({ ...auth.currentUser });
+    }
   };
 
   const logout = async () => {
@@ -94,8 +128,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const authValue = useMemo(() => ({
+    user,
+    role,
+    isAdmin: role === 'admin',
+    loading,
+    roleReady,
+    logInWithEmail,
+    registerWithEmail,
+    resendVerificationEmail,
+    reloadUser,
+    logInWithGoogle,
+    logout,
+    updatePhoto,
+    refreshRole,
+  }), [user, role, loading, roleReady, logInWithEmail, registerWithEmail, resendVerificationEmail, reloadUser, logInWithGoogle, logout, updatePhoto, refreshRole]);
+
   return (
-    <AuthContext.Provider value={{ user, role, isAdmin: role === 'admin', loading, logInWithEmail, registerWithEmail, logInWithGoogle, logout, updatePhoto, refreshRole }}>
+    <AuthContext.Provider value={authValue}>
       {children}
     </AuthContext.Provider>
   );

@@ -25,7 +25,8 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MarkdownView from '../components/MarkdownView';
 import WaitlistSection from '../components/WaitlistSection';
-import { STATUSES, STATUS_META, fetchApplications, upsertApplication, API_BASE, type ApplicationRecord, type LaunchStatus } from '../lib/applications';
+import { STATUSES, STATUS_META, fetchApplications, upsertApplication, API_BASE, isAdminPreviewEnabled, fetchLaunchStatus, type ApplicationRecord, type LaunchStatus } from '../lib/applications';
+import { apiFetch } from '../lib/api';
 export interface Opportunity {
   _id: string;
   title: string;
@@ -38,8 +39,37 @@ export interface Opportunity {
   officialUrl?: string;
 }
 
+const HERO_TEXT = 'Find Your Next\nCareer Opportunity';
+
+// Owns the typewriter interval so each 70ms tick re-renders only this heading
+// instead of the entire Dashboard tree. Respects prefers-reduced-motion.
+function TypewriterHeading() {
+  const [text, setText] = useState('');
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
+      setText(HERO_TEXT);
+      return;
+    }
+    let i = 0;
+    const intervalId = setInterval(() => {
+      i += 1;
+      setText(HERO_TEXT.substring(0, i));
+      if (i > HERO_TEXT.length + 30) { i = 0; }
+    }, 70);
+    return () => clearInterval(intervalId);
+  }, []);
+  const [first, second] = text.split('\n');
+  return (
+    <>
+      {first} <br />
+      <span className="text-[#84cc16]">{second || ''}</span>
+      <span className="animate-pulse font-light text-[#84cc16]">|</span>
+    </>
+  );
+}
+
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') || '';
@@ -49,11 +79,14 @@ export default function Dashboard() {
   const [launch, setLaunch] = useState<LaunchStatus | null>(null);
   const [launchLoading, setLaunchLoading] = useState(true);
 
+  // Admin-only preview (localStorage flag): lets an admin browse the app while
+  // it is still in waitlist mode. Everyone else keeps seeing the waitlist.
+  const adminPreview = isAdmin && isAdminPreviewEnabled();
+
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_BASE}/launch/status`)
-      .then(r => r.json())
-      .then(data => { if (!cancelled) setLaunch(data); })
+    fetchLaunchStatus()
+      .then(r => { if (!cancelled && r.data) setLaunch(r.data); })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLaunchLoading(false); });
     return () => { cancelled = true; };
@@ -94,22 +127,7 @@ export default function Dashboard() {
   // Mobile Filter Toggle
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
-  // Typewriter Effect State
-  const fullText = "Find Your Next\nCareer Opportunity";
-  const [displayedText, setDisplayedText] = useState("");
-
-  useEffect(() => {
-    let i = 0;
-    const intervalId = setInterval(() => {
-      setDisplayedText(fullText.substring(0, i + 1));
-      i++;
-      if (i > fullText.length + 30) {
-        i = 0; // Reset after a pause to loop continuously
-      }
-    }, 70); // Typing speed
-    return () => clearInterval(intervalId);
-  }, []);
-
+  // Typewriter Effect State (managed by TypewriterHeading — no page-wide state)
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   
@@ -131,14 +149,9 @@ export default function Dashboard() {
 
     const formData = new FormData();
     formData.append('cv', file);
-    if (user) {
-      formData.append('userId', user.uid);
-      formData.append('userEmail', user.email || '');
-      formData.append('userName', user.displayName || '');
-    }
 
     try {
-      const response = await fetch(`${API_BASE}/ai/analyze-cv`, {
+      const response = await apiFetch(`${API_BASE}/ai/analyze-cv`, {
         method: 'POST',
         body: formData,
       });
@@ -239,18 +252,18 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (launch && !launch.launched) return;
+    if (launch && !launch.launched && !adminPreview) return;
     setPage(1);
     fetchOpportunities(1, selectedTypes, selectedLevels, sortBy, searchQuery);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTypes, selectedLevels, sortBy, searchQuery, launch?.launched]);
+  }, [selectedTypes, selectedLevels, sortBy, searchQuery, launch?.launched, adminPreview]);
 
   // Restore the user's most recent saved CV + matches from MongoDB on load
   useEffect(() => {
     const loadSavedCV = async () => {
       if (!user) return;
       try {
-        const res = await fetch(`${API_BASE}/ai/my-cvs?userId=${encodeURIComponent(user.uid)}`);
+        const res = await apiFetch(`${API_BASE}/ai/my-cvs`);
         const data = await res.json();
         if (data.success && data.cvs.length > 0) {
           const latest = data.cvs[0];
@@ -553,21 +566,14 @@ export default function Dashboard() {
     )
   );
 
-  const showWaitlist = !!launch && !launch.launched;
+  const showWaitlist = launch ? !launch.launched && !adminPreview : true;
   const showWelcome = !!launch?.launched && !!launch.welcomeUntil && new Date(launch.welcomeUntil).getTime() >= Date.now();
-
-  if (launchLoading) {
-    return (
-      <div className="flex items-center justify-center py-24 text-gray-400">
-        <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…
-      </div>
-    );
-  }
 
   if (showWaitlist) {
     return (
       <WaitlistSection
-        launch={launch!}
+        launch={launch}
+        loading={!launch}
         onCountChange={(count) => setLaunch(prev => (prev ? { ...prev, waitlistCount: count } : prev))}
       />
     );
@@ -615,9 +621,7 @@ export default function Dashboard() {
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-white leading-tight tracking-tight min-h-[80px] sm:min-h-[100px] md:min-h-[140px]">
-            {displayedText.split('\n')[0]} <br />
-            <span className="text-[#84cc16]">{displayedText.split('\n')[1] || ""}</span>
-            <span className="animate-pulse font-light text-[#84cc16]">|</span>
+            <TypewriterHeading />
           </h1>
           <p className="text-gray-400 text-base sm:text-lg md:text-xl max-w-lg leading-relaxed mx-auto sm:mx-0">
             Discover tailored scholarships, internships, and graduate programs designed for Nigerian students and early-career professionals.
