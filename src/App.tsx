@@ -8,6 +8,9 @@ import Applications from './pages/Applications';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import MentorshipGuidance from './pages/MentorshipGuidance';
+import MentorPage from './pages/MentorPage';
+import AdminPage from './pages/AdminPage';
 
 function App() {
   return (
@@ -38,6 +41,9 @@ function App() {
                 <Route path="/register" element={<Register />} />
                 <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/mentorship" element={<ProtectedRoute><MentorshipGuidance /></ProtectedRoute>} />
+                <Route path="/mentors" element={<ProtectedRoute><MentorPage /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
               </Routes>
             </main>
             <ChatWidget />

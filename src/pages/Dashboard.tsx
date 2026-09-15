@@ -5,26 +5,25 @@ import {
   Briefcase, 
   GraduationCap, 
   BrainCircuit, 
-  Building2, 
   Clock, 
-  Globe, 
   ArrowRight,
   Book,
   Library,
   Microscope,
   Palette,
   Filter,
-  Bookmark,
   UploadCloud,
   X,
   Loader2,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  Handshake
 } from 'lucide-react';
 import { useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import MarkdownView from '../components/MarkdownView';
+import { STATUSES, STATUS_META, fetchApplications, upsertApplication, API_BASE, type ApplicationRecord } from '../lib/applications';
 export interface Opportunity {
   _id: string;
   title: string;
@@ -40,7 +39,8 @@ export interface Opportunity {
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') || '';
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -52,6 +52,8 @@ export default function Dashboard() {
   const [latestCv, setLatestCv] = useState<{ analysis: string; matches: Opportunity[] } | null>(null);
   const [cvFilterActive, setCvFilterActive] = useState(false);
   const [aiSummaryOpen, setAiSummaryOpen] = useState(false);
+  // App status per opportunity, keyed by opportunityId (overlay on the feed).
+  const [appRecords, setAppRecords] = useState<Map<string, ApplicationRecord>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const programsRef = useRef<HTMLDivElement>(null);
 
@@ -63,6 +65,9 @@ export default function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
+
+  // Guidance prompt shown before redirecting to an opportunity site.
+  const [guidanceOpp, setGuidanceOpp] = useState<Opportunity | null>(null);
 
   const openModal = (title: string, message: string) => {
     setModalTitle(title);
@@ -117,7 +122,7 @@ export default function Dashboard() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/ai/analyze-cv', {
+      const response = await fetch(`${API_BASE}/ai/analyze-cv`, {
         method: 'POST',
         body: formData,
       });
@@ -168,19 +173,23 @@ export default function Dashboard() {
     }
   };
 
-  const fetchOpportunities = async (pageNum: number, types: string[] = selectedTypes, levels: string[] = selectedLevels, sort: string = sortBy) => {
+  const fetchOpportunities = async (pageNum: number, types: string[] = selectedTypes, levels: string[] = selectedLevels, sort: string = sortBy, query: string = searchQuery) => {
     try {
       setLoading(true);
-      let url = `http://localhost:5000/api/opportunities?page=${pageNum}&limit=50`;
+      let url = `${API_BASE}/opportunities?page=${pageNum}&limit=50`;
       
-      if (types.length > 0) {
-        url += `&type=${types.join(',')}`;
-      }
-      
-      if (sort === 'Newest') {
-        url += `&sort=newest`;
-      } else if (sort === 'Deadline Approaching') {
-        url += `&sort=deadline`;
+      if (query) {
+        url += `&search=${encodeURIComponent(query)}`;
+      } else {
+        if (types.length > 0) {
+          url += `&type=${types.join(',')}`;
+        }
+        
+        if (sort === 'Newest') {
+          url += `&sort=newest`;
+        } else if (sort === 'Deadline Approaching') {
+          url += `&sort=deadline`;
+        }
       }
       
       if (levels.length > 0) {
@@ -214,15 +223,16 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchOpportunities(1, selectedTypes, selectedLevels, sortBy);
-  }, [selectedTypes, selectedLevels, sortBy]);
+    setPage(1);
+    fetchOpportunities(1, selectedTypes, selectedLevels, sortBy, searchQuery);
+  }, [selectedTypes, selectedLevels, sortBy, searchQuery]);
 
   // Restore the user's most recent saved CV + matches from MongoDB on load
   useEffect(() => {
     const loadSavedCV = async () => {
       if (!user) return;
       try {
-        const res = await fetch(`http://localhost:5000/api/ai/my-cvs?userId=${encodeURIComponent(user.uid)}`);
+        const res = await fetch(`${API_BASE}/ai/my-cvs?userId=${encodeURIComponent(user.uid)}`);
         const data = await res.json();
         if (data.success && data.cvs.length > 0) {
           const latest = data.cvs[0];
@@ -234,6 +244,111 @@ export default function Dashboard() {
     };
     loadSavedCV();
   }, [user]);
+
+  // Load the user's application records (per-opportunity status + visited flag)
+  // so the feed can show status icons and the "visited" differentiator.
+  useEffect(() => {
+    if (!user) {
+      setAppRecords(new Map());
+      return;
+    }
+    let cancelled = false;
+    fetchApplications(user.uid)
+      .then(records => {
+        if (cancelled) return;
+        setAppRecords(new Map(records.map(rec => [rec.opportunityId, rec])));
+      })
+      .catch(err => console.error('Failed to load application records', err));
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const upsertLocalRecord = (oppId: string, patch: Partial<ApplicationRecord>) => {
+    setAppRecords(prev => {
+      const next = new Map(prev);
+      const current = next.get(oppId);
+      next.set(oppId, { ...(current || {
+        _id: '',
+        opportunityId: oppId,
+        status: 'saved',
+        clicked: false,
+        clickedAt: null,
+        dateApplied: null,
+        updatedAt: null,
+        opportunity: null,
+      }), ...patch });
+      return next;
+    });
+  };
+
+  const handleTrackClicked = (oppId: string) => {
+    const record = appRecords.get(oppId);
+    upsertLocalRecord(oppId, { clicked: true, clickedAt: new Date().toISOString() });
+    upsertApplication(user!.uid, oppId, { clicked: true })
+      .then(rec => setAppRecords(prev => new Map(prev).set(rec.opportunityId, rec)))
+      .catch(async err => {
+        console.error('Failed to record visit', err);
+        // Revert to server truth if the optimistic update couldn't be saved.
+        try {
+          const records = await fetchApplications(user!.uid);
+          setAppRecords(new Map(records.map(r => [r.opportunityId, r])));
+        } catch { /* keep optimistic state */ }
+      });
+    // A fresh interaction is implicitly "saved", but never downgrades an
+    // explicit status (applied/interview/accepted/rejected).
+    if (!record) upsertLocalRecord(oppId, { status: 'saved' });
+  };
+
+  const handleSetStatus = (opp: Opportunity, status: any) => {
+    if (!user) {
+      openModal('Login Required', 'Please log in to track your applications.');
+      return;
+    }
+    upsertLocalRecord(opp._id, { status });
+    upsertApplication(user.uid, opp._id, { status })
+      .then(rec => setAppRecords(prev => new Map(prev).set(rec.opportunityId, rec)))
+      .catch(async err => {
+        console.error('Failed to update status', err);
+        try {
+          const records = await fetchApplications(user.uid);
+          setAppRecords(new Map(records.map(r => [r.opportunityId, r])));
+        } catch { /* keep optimistic state */ }
+      });
+  };
+
+  const resolveOpportunityUrl = (opp: Opportunity) =>
+    opp.officialUrl || `https://www.google.com/search?q=${encodeURIComponent(opp.title + ' ' + (opp.organization || ''))}`;
+
+  const handleOpenOpportunity = (opp: Opportunity) => {
+    window.open(resolveOpportunityUrl(opp), '_blank');
+    if (user) handleTrackClicked(opp._id);
+  };
+
+  // Intercept every opportunity click: ask whether the user wants industry
+  // guidance before letting them leave for the opportunity website.
+  const promptGuidance = (opp: Opportunity) => {
+    setGuidanceOpp(opp);
+  };
+
+  const handleGuidanceSkip = () => {
+    if (guidanceOpp) handleOpenOpportunity(guidanceOpp);
+    setGuidanceOpp(null);
+  };
+
+  const handleGuidanceYes = () => {
+    const opp = guidanceOpp;
+    setGuidanceOpp(null);
+    if (!opp) return;
+    if (user) handleTrackClicked(opp._id);
+    const params = new URLSearchParams({
+      title: opp.title,
+      org: opp.organization || '',
+      url: resolveOpportunityUrl(opp),
+      type: opp.opportunityType || '',
+      category: opp.category || '',
+    });
+    if (opp._id) params.set('id', opp._id);
+    navigate(`/mentorship?${params.toString()}`);
+  };
 
   const handleCvFilterToggle = () => {
     if (!user) {
@@ -263,12 +378,9 @@ export default function Dashboard() {
   };
 
   const handleToggleAiSummary = () => {
-    // Turning the AI summary toggle off clears the CV match view
-    setCvFilterActive(false);
-    setAiAnalysis(null);
+    // Turning the AI summary toggle off just hides the summary; keep the CV match filter active
     setAiSummaryOpen(false);
-    setPage(1);
-    fetchOpportunities(1, selectedTypes, selectedLevels, sortBy);
+    setAiAnalysis(null);
   };
 
   const handleLoadMore = () => {
@@ -594,6 +706,22 @@ export default function Dashboard() {
         
         {/* Right Content - Feed */}
         <div ref={programsRef} className="col-span-1 lg:col-span-3 space-y-4 sm:space-y-6 scroll-mt-24">
+          {searchQuery && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#84cc16]/30 bg-[#84cc16]/10 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-white">
+                <Search className="h-4 w-4 text-[#84cc16]" />
+                <span>
+                  Semantic results for <span className="text-[#84cc16] font-bold">&ldquo;{searchQuery}&rdquo;</span>
+                </span>
+              </div>
+              <button
+                onClick={() => setSearchParams({})}
+                className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/10 border border-white/10 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" /> Clear search
+              </button>
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 relative">
             <div>
               <div className="flex items-center gap-2 text-primary font-bold mb-1 sm:mb-2">
@@ -649,11 +777,13 @@ export default function Dashboard() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {opportunities.map(opp => (
+            {opportunities.map(opp => {
+              const record = appRecords.get(opp._id);
+              return (
               <div 
                 key={opp._id} 
-                onClick={() => window.open(opp.officialUrl || `https://www.google.com/search?q=${encodeURIComponent(opp.title + ' ' + (opp.organization || ''))}`, '_blank')}
-                className="group flex flex-col glass-card hover:bg-white/10 rounded-2xl p-4 sm:p-6 cursor-pointer"
+                onClick={() => promptGuidance(opp)}
+                className={`group flex flex-col glass-card hover:bg-white/10 rounded-2xl p-4 sm:p-6 cursor-pointer transition-all ${record?.clicked ? 'ring-1 ring-[#84cc16]/50 border-[#84cc16]/40' : ''}`}
               >
                 
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary mb-4 sm:mb-6">
@@ -667,6 +797,11 @@ export default function Dashboard() {
                   <span className="font-medium text-gray-300">
                     {cleanText(opp.organization)}
                   </span>
+                  {record?.clicked && (
+                    <span className="inline-flex items-center rounded bg-[#84cc16]/15 border border-[#84cc16]/40 px-1.5 py-0.5 text-[10px] font-semibold text-[#84cc16]">
+                      ✓ Visited
+                    </span>
+                  )}
                 </div>
                 
                 <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 flex-grow">
@@ -691,6 +826,29 @@ export default function Dashboard() {
                   </div>
                 )}
 
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-4 sm:mb-5">
+                  {STATUSES.map(status => {
+                    const Icon = STATUS_META[status].icon;
+                    const active = record?.status === status;
+                    return (
+                      <button
+                        key={status}
+                        type="button"
+                        title={STATUS_META[status].label}
+                        aria-label={`Mark as ${STATUS_META[status].label}`}
+                        onClick={(e) => { e.stopPropagation(); handleSetStatus(opp, status); }}
+                        className={`inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors ${
+                          active
+                            ? STATUS_META[status].activeClass
+                            : 'border-white/10 bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <div className="mt-auto pt-3 sm:pt-4 border-t border-white/10 flex items-center justify-between">
                   <span className="text-primary text-xs sm:text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
                     Read More <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -700,15 +858,33 @@ export default function Dashboard() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="opacity-0 group-hover:opacity-100 p-1.5 sm:p-2 bg-primary/10 rounded-lg text-primary hover:bg-primary hover:text-[#0a0f16] transition-all"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); promptGuidance(opp); }}
                   >
                     <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </a>
                 </div>
 
               </div>
-            ))}
+              );
+            })}
           </div>
+          
+          {!loading && opportunities.length === 0 && (
+            <div className="text-center py-16 px-6 rounded-2xl glass-card">
+              <Search className="h-10 w-10 text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-300 font-semibold">
+                {searchQuery ? `No opportunities match "${searchQuery}"` : 'No opportunities found'}
+              </p>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchParams({})}
+                  className="mt-3 inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition-colors"
+                >
+                  <X className="h-4 w-4" /> Clear search
+                </button>
+              )}
+            </div>
+          )}
           
           {hasMore && (
             <div className="mt-6 sm:mt-8 text-center">
@@ -739,15 +915,15 @@ export default function Dashboard() {
               <div className="flex items-center gap-3">
                 <button
                   role="switch"
-                  aria-checked={cvFilterActive}
+                  aria-checked={aiSummaryOpen}
                   onClick={handleToggleAiSummary}
                   className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                    cvFilterActive ? 'bg-[#84cc16]' : 'bg-white/15'
+                    aiSummaryOpen ? 'bg-[#84cc16]' : 'bg-white/15'
                   }`}
                 >
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                      cvFilterActive ? 'translate-x-6' : 'translate-x-1'
+                      aiSummaryOpen ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
                 </button>
@@ -765,6 +941,51 @@ export default function Dashboard() {
             </div>
             <div className="border-t border-white/10 px-5 py-3 text-[11px] text-gray-500">
               Showing careers filtered by your CV match. Turn off the toggle to return to the full feed.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Guidance prompt before leaving for the opportunity site */}
+      {guidanceOpp && (
+        <div className="fixed inset-0 z-[105] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setGuidanceOpp(null)}
+          />
+          <div className="relative bg-[#1a1f2e] border border-white/10 rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setGuidanceOpp(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Handshake className="h-5 w-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Industry Guidance?</h3>
+            </div>
+            <p className="text-gray-300 text-sm leading-relaxed mb-2">
+              Do you need help from someone already in the industry while you apply for
+              “{cleanText(guidanceOpp.title)}”?
+            </p>
+            <p className="text-gray-500 text-xs leading-relaxed mb-6">
+              Get a mentor to review your application, coach you, and improve your chances — or skip and visit the opportunity directly.
+            </p>
+            <div className="flex flex-col gap-2.5">
+              <button
+                onClick={handleGuidanceYes}
+                className="w-full bg-[#84cc16] text-[#0a0f16] font-bold py-2.5 rounded-lg hover:bg-[#a3e635] transition-colors text-sm"
+              >
+                I need guidance
+              </button>
+              <button
+                onClick={handleGuidanceSkip}
+                className="w-full bg-white/5 border border-white/10 text-gray-200 font-semibold py-2.5 rounded-lg hover:bg-white/10 transition-colors text-sm"
+              >
+                Skip — take me to the site
+              </button>
             </div>
           </div>
         </div>

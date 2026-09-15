@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Phone, Mic, MicOff, Volume2, VolumeX, Bot, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE } from '../lib/applications';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -15,7 +16,7 @@ interface CallWidgetProps {
 
 type CallStatus = 'ringing' | 'connected' | 'thinking' | 'speaking' | 'ended';
 
-const API_URL = 'http://localhost:5000/api/ai/chat';
+const API_URL = `${API_BASE}/ai/chat`;
 
 const STATUS_TEXT: Record<CallStatus, string> = {
   ringing: 'Ringing…',

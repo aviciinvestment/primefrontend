@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Radar, Search, Menu, X, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -8,9 +8,25 @@ export default function Navbar() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
+
+  // Search drives the dashboard feed via ?q= in the URL, so the Navbar input
+  // stays in sync with whatever query is currently active.
+  const [searchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
+
+  useEffect(() => {
+    setSearchTerm(searchParams.get('q') || '');
+  }, [searchParams]);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const term = searchTerm.trim();
+    navigate(term ? `/?q=${encodeURIComponent(term)}` : '/');
+    setIsMobileMenuOpen(false);
+  };
 
   const handleLogout = async () => {
     try {
@@ -40,19 +56,29 @@ export default function Navbar() {
         {/* Desktop Nav */}
         <div className="hidden md:flex flex-1 items-center justify-end space-x-6">
           <div className="w-full flex-1 md:w-auto md:flex-none mr-4">
-            <div className="relative">
+            <form onSubmit={handleSearchSubmit} className="relative" role="search">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <input
                 type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search opportunities..."
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-64 sm:focus:w-80 transition-all pl-9"
               />
-            </div>
+            </form>
           </div>
           
           <Link to="/applications" className={`text-sm font-semibold transition-colors hover:text-white ${currentPath === '/applications' ? 'text-[#84cc16]' : 'text-gray-400'}`}>
             My Applications
           </Link>
+          <Link to="/mentors" className={`text-sm font-semibold transition-colors hover:text-white ${currentPath === '/mentors' ? 'text-[#84cc16]' : 'text-gray-400'}`}>
+            Mentors
+          </Link>
+          {isAdmin && (
+            <Link to="/admin" className={`text-sm font-semibold transition-colors hover:text-white ${currentPath === '/admin' ? 'text-[#84cc16]' : 'text-gray-400'}`}>
+              Admin
+            </Link>
+          )}
           <Link to="/profile" className={`text-sm font-semibold transition-colors hover:text-white ${currentPath === '/profile' ? 'text-[#84cc16]' : 'text-gray-400'}`}>
             Profile
           </Link>
@@ -98,18 +124,30 @@ export default function Navbar() {
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-20 left-0 w-full bg-[#070e0a]/95 backdrop-blur-3xl border-b border-white/5 py-6 px-4 flex flex-col gap-6 shadow-2xl z-40">
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <input
-              type="search"
-              placeholder="Search opportunities..."
-              className="flex h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder:text-gray-500 focus:outline-none focus:border-[#84cc16]/50 pl-11"
-            />
+            <form onSubmit={handleSearchSubmit} role="search">
+              <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search opportunities..."
+                className="flex h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder:text-gray-500 focus:outline-none focus:border-[#84cc16]/50 pl-11"
+              />
+            </form>
           </div>
           
           <div className="flex flex-col gap-4">
             <Link onClick={toggleMobileMenu} to="/applications" className={`text-lg font-semibold ${currentPath === '/applications' ? 'text-[#84cc16]' : 'text-gray-300'}`}>
               My Applications
             </Link>
+            <Link onClick={toggleMobileMenu} to="/mentors" className={`text-lg font-semibold ${currentPath === '/mentors' ? 'text-[#84cc16]' : 'text-gray-300'}`}>
+              Mentors
+            </Link>
+            {isAdmin && (
+              <Link onClick={toggleMobileMenu} to="/admin" className={`text-lg font-semibold ${currentPath === '/admin' ? 'text-[#84cc16]' : 'text-gray-300'}`}>
+                Admin
+              </Link>
+            )}
             <Link onClick={toggleMobileMenu} to="/profile" className={`text-lg font-semibold ${currentPath === '/profile' ? 'text-[#84cc16]' : 'text-gray-300'}`}>
               Profile
             </Link>

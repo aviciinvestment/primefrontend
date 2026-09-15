@@ -1,12 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, User as UserIcon, Loader2, Phone } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { MessageCircle, X, Send, Bot, User as UserIcon, Loader2, Phone, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE } from '../lib/applications';
 import CallWidget from './CallWidget';
 import MarkdownView from './MarkdownView';
+
+interface ChatAction {
+  type: 'mentorship';
+}
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  action?: ChatAction;
 }
 
 const WELCOME_MESSAGE: ChatMessage = {
@@ -17,6 +24,7 @@ const WELCOME_MESSAGE: ChatMessage = {
 
 export default function ChatWidget() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -27,7 +35,7 @@ export default function ChatWidget() {
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const API_URL = 'http://localhost:5000/api/ai/chat';
+  const API_URL = `${API_BASE}/ai/chat`;
 
   // Open panel → seed welcome message once
   const handleOpen = () => {
@@ -81,12 +89,21 @@ export default function ChatWidget() {
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history, userId: user?.uid || '' }),
+        body: JSON.stringify({
+          message,
+          history,
+          userId: user?.uid || '',
+          userEmail: user?.email || '',
+          userName: user?.displayName || '',
+        }),
       });
 
       const data = await res.json();
       if (data.success) {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: data.reply, action: data.action },
+        ]);
       } else {
         setMessages(prev => [
           ...prev,
@@ -192,6 +209,14 @@ export default function ChatWidget() {
                   }`}
                 >
                   {msg.role === 'assistant' ? <MarkdownView text={msg.content} /> : msg.content}
+                  {msg.action?.type === 'mentorship' && (
+                    <button
+                      onClick={() => navigate('/mentorship')}
+                      className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#84cc16] px-3.5 py-2 text-[13px] font-bold text-[#070e0a] shadow-[0_0_15px_rgba(132,204,22,0.35)] transition-all hover:scale-[1.02] hover:bg-[#a3e635] active:scale-95"
+                    >
+                      Get Mentorship Guidance <ArrowRight className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
                 {msg.role === 'user' && (
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#84cc16]/20 border border-[#84cc16]/40 text-[#84cc16]">

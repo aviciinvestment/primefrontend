@@ -11,8 +11,10 @@ import {
   Trash2,
   RefreshCw,
   Camera,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { API_ORIGIN } from '../lib/applications';
 
 const ROLE_OPTIONS = [
   'Technology',
@@ -29,7 +31,7 @@ const ROLE_OPTIONS = [
   'Other',
 ];
 
-const API_URL = 'http://localhost:5000';
+const API_URL = API_ORIGIN;
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -51,6 +53,7 @@ export default function Profile() {
   const [cvsBusy, setCvsBusy] = useState<'download' | 'delete' | 'change' | null>(null);
 
   const [isMentor, setIsMentor] = useState(false);
+  const [mentorStatus, setMentorStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
   const [mentorProfile, setMentorProfile] = useState<any>(null);
   const [mentorLoading, setMentorLoading] = useState(true);
 
@@ -99,6 +102,7 @@ export default function Profile() {
         const res = await fetch(`${API_URL}/api/mentors/profile?userId=${encodeURIComponent(user.uid)}`);
         const data = await res.json();
         setIsMentor(data.isMentor);
+        setMentorStatus(data.mentor?.status ?? null);
         setMentorProfile(data.mentor);
       } catch {
         /* silent */
@@ -222,10 +226,15 @@ export default function Profile() {
       });
       const data = await res.json();
       if (data.success) {
-        setIsMentor(true);
+        setIsMentor(data.isMentor);
+        setMentorStatus(data.mentor?.status ?? null);
         setMentorProfile(data.mentor);
         setShowModal(false);
-        showNotice('ok', 'You are now a mentor!');
+        if (data.mentor?.status === 'approved') {
+          showNotice('ok', 'You are now a mentor!');
+        } else {
+          showNotice('ok', 'Mentor application submitted! An admin will review it shortly.');
+        }
       } else {
         setFormError(data.message || 'Registration failed. Please try again.');
       }
@@ -237,7 +246,7 @@ export default function Profile() {
   };
 
   const latestCv = cvs.length > 0 ? cvs[0] : null;
-  const chip = (cls: string) =>
+  const chip = (_cls: string) =>
     `inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-gray-300`;
 
   if (!user) return null;
@@ -323,31 +332,31 @@ export default function Profile() {
                 </div>
 
                 <div className="mt-4 space-y-3">
-                  {latestCv.highlights?.roles?.length > 0 && (
+                  {!!latestCv.highlights?.roles?.length && (
                     <div>
                       <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-500">Roles</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {latestCv.highlights.roles.map(r => (
+                        {latestCv.highlights?.roles.map(r => (
                           <span key={r} className={chip('')}>{r}</span>
                         ))}
                       </div>
                     </div>
                   )}
-                  {latestCv.highlights?.skills?.length > 0 && (
+                  {!!latestCv.highlights?.skills?.length && (
                     <div>
                       <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-500">Skills</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {latestCv.highlights.skills.map(s => (
+                        {latestCv.highlights?.skills.map(s => (
                           <span key={s} className={chip('')}>{s}</span>
                         ))}
                       </div>
                     </div>
                   )}
-                  {latestCv.highlights?.education?.length > 0 && (
+                  {!!latestCv.highlights?.education?.length && (
                     <div>
                       <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-500">Education</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {latestCv.highlights.education.map(e => (
+                        {latestCv.highlights?.education.map(e => (
                           <span key={e} className={chip('')}>{e}</span>
                         ))}
                       </div>
@@ -423,6 +432,39 @@ export default function Profile() {
                   <p className="text-[13px] leading-relaxed text-gray-300">{mentorProfile.careerStory}</p>
                 </div>
                 <p className="text-[11px] text-gray-500">Registered {formatDate(mentorProfile.createdAt)}</p>
+              </div>
+            ) : mentorProfile && !isMentor ? (
+              <div className="flex flex-1 flex-col">
+                {mentorStatus === 'rejected' ? (
+                  <>
+                    <p className="mb-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[12px] text-rose-300">
+                      Your mentor application was not accepted. You can re-apply.
+                    </p>
+                    <button
+                      onClick={openMentorModal}
+                      className="mt-auto inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#84cc16] text-[13px] font-bold text-[#070e0a] shadow-[0_0_18px_rgba(132,204,22,0.3)] transition-all hover:scale-[1.02] active:scale-95"
+                    >
+                      Re-apply as Mentor
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex flex-1 flex-col gap-4">
+                    <p className="flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-[12px] text-amber-300">
+                      <Clock className="h-4 w-4 shrink-0" /> Your application is under review. You'll be a mentor once an admin approves it.
+                    </p>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-gray-500">Company</p>
+                        <p className="text-[14px] font-semibold text-gray-200">{mentorProfile.company}</p>
+                      </div>
+                      <div>
+                        <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-gray-500">Role / Industry</p>
+                        <p className="text-[14px] font-semibold text-gray-200">{mentorProfile.roleType}</p>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-gray-500">Submitted {formatDate(mentorProfile.createdAt)}</p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-1 flex-col">
