@@ -30,6 +30,17 @@ export default function ChatWidget() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCall, setShowCall] = useState(false);
+  // Chat is only available once the app has launched.
+  const [launched, setLaunched] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_BASE}/launch/status`)
+      .then(r => r.json())
+      .then(data => { if (!cancelled) setLaunched(!!data.success && !!data.launched); })
+      .catch(() => { if (!cancelled) setLaunched(true); });
+    return () => { cancelled = true; };
+  }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -130,6 +141,8 @@ export default function ChatWidget() {
       handleSend();
     }
   };
+
+  if (!launched) return null;
 
   return (
     <>
