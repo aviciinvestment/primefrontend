@@ -7,6 +7,8 @@ import {
   Handshake,
   Link2,
   Loader2,
+  PlusCircle,
+  RefreshCw,
   Rocket,
   ShieldBan,
   ShieldCheck,
@@ -65,6 +67,19 @@ interface ComplaintRow {
   payments: Array<{ reference: string; amount: number; currency: string; mentorName: string; createdAt: string }>;
 }
 
+interface AddOpportunityForm {
+  title: string; organization: string; officialUrl: string; description: string;
+  category: string; opportunityType: string; location: string; deadline: string;
+  fundingAmount: string; currency: string; eligibleEducationLevels: string;
+  eligibleFields: string; tags: string;
+}
+
+const EMPTY_ADD_FORM: AddOpportunityForm = {
+  title: '', organization: '', officialUrl: '', description: '',
+  category: '', opportunityType: '', location: '', deadline: '',
+  fundingAmount: '', currency: '', eligibleEducationLevels: '', eligibleFields: '', tags: '',
+};
+
 const statusBadge = (status: string) =>
   status === 'approved' ? 'border border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
   : status === 'pending' ? 'border border-amber-400/40 bg-amber-400/10 text-amber-300'
@@ -85,6 +100,13 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState('');
   const [adminPreview, setAdminPreview] = useState(() => isAdminPreviewEnabled());
+
+  // Opportunity ingestion: manual sync trigger + manual add form.
+  const [syncBusy, setSyncBusy] = useState(false);
+  const [ingestNotice, setIngestNotice] = useState('');
+  const [addOpen, setAddOpen] = useState(false);
+  const [addBusy, setAddBusy] = useState(false);
+  const [addForm, setAddForm] = useState<AddOpportunityForm>(EMPTY_ADD_FORM);
 
   const toggleAdminPreview = () => {
     const next = !adminPreview;
@@ -159,6 +181,76 @@ export default function AdminPage() {
     }
   };
 
+  // Two manual upload means for opportunities: (1) run the source sync now,
+  // and (2) add a single opportunity by hand through the form below.
+  const handleSyncNow = async () => {
+    if (!user || syncBusy) return;
+    setSyncBusy(true);
+    setIngestNotice('');
+    try {
+      const res = await apiFetch(`${API_BASE}/sync/run`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        const r = data.result || {};
+        setIngestNotice(`Sync complete — ${r.inserted ?? 0} new, ${r.updated ?? 0} updated, ${r.closed ?? 0} closed${r.durationMs ? ` (${r.durationMs}ms)` : ''}.`);
+      } else {
+        setIngestNotice(data.error || data.message || 'Sync failed.');
+      }
+    } catch {
+      setIngestNotice('Sync failed — network error.');
+    } finally {
+      setSyncBusy(false);
+    }
+  };
+
+  const setAddField = (key: keyof AddOpportunityForm) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setAddForm(prev => ({ ...prev, [key]: e.target.value }));
+
+  const handleAddOpportunity = async () => {
+    if (!user || addBusy) return;
+    if (!addForm.title.trim() || !addForm.organization.trim() || !addForm.officialUrl.trim() || !addForm.description.trim()) {
+      setIngestNotice('Title, organization, description, and a valid URL are required.');
+      return;
+    }
+    setAddBusy(true);
+    setIngestNotice('');
+    try {
+      const res = await apiFetch(`${API_BASE}/opportunities`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: addForm.title.trim(),
+          organization: addForm.organization.trim(),
+          officialUrl: addForm.officialUrl.trim(),
+          description: addForm.description.trim(),
+          category: addForm.category.trim(),
+          opportunityType: addForm.opportunityType.trim(),
+          location: addForm.location.trim(),
+          deadline: addForm.deadline?.trim() || undefined,
+          fundingAmount: addForm.fundingAmount.trim() || undefined,
+          currency: addForm.currency.trim() || undefined,
+          eligibleEducationLevels: addForm.eligibleEducationLevels.trim(),
+          eligibleFields: addForm.eligibleFields.trim(),
+          tags: addForm.tags.trim(),
+          status: 'OPEN',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIngestNotice(`Opportunity created: ${data.data.title}.`);
+        setAddForm(EMPTY_ADD_FORM);
+        setAddOpen(false);
+      } else {
+        setIngestNotice(data.error || data.message || 'Could not create the opportunity.');
+      }
+    } catch {
+      setIngestNotice('Failed to create the opportunity.');
+    } finally {
+      setAddBusy(false);
+    }
+  };
+
   if (!user || !isAdmin) {
     return (
       <div className="max-w-xl mx-auto py-16">
@@ -220,6 +312,69 @@ export default function AdminPage() {
             <Stat icon={<Wallet className="h-5 w-5" />} label="Platform 10% Cut" value={formatMoney(overview?.platformRevenue ?? 0)} sub={`of ${formatMoney(overview?.grossRevenue ?? 0)} gross`} />
             <Stat icon={<Wallet className="h-5 w-5" />} label="Mentor Payouts (90%)" value={formatMoney(overview?.mentorPayout ?? 0)} sub={`${overview?.paidMenteeCount ?? 0} paid mentee${((overview?.paidMenteeCount ?? 0) === 1 ? '' : 's')}`} />
           </div>
+
+          {/* Opportunity ingestion */}
+          <Section
+            title="Opportunities"
+            subtitle="Manually add a single opportunity or pull fresh listings from the connected sources with one click."
+          >
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <button
+                onClick={handleSyncNow}
+                disabled={syncBusy}
+                className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${syncBusy ? 'animate-spin' : ''}`} />
+                {syncBusy ? 'Syncing…' : 'Sync Now'}
+              </button>
+              <button
+                onClick={() => setAddOpen(v => !v)}
+                disabled={addBusy}
+                className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+              >
+                <PlusCircle className="h-3.5 w-3.5" />
+                {addOpen ? 'Close form' : 'Add Opportunity'}
+              </button>
+            </div>
+
+            {ingestNotice && (
+              <div className={`rounded-lg border px-3.5 py-2.5 text-sm mb-4 ${ingestNotice.includes('required') || ingestNotice.includes('already exists') || ingestNotice.includes('Failed') || ingestNotice.includes('Could not') ? 'border-rose-400/30 bg-rose-400/10 text-rose-300' : 'border-[#84cc16]/30 bg-[#84cc16]/10 text-[#84cc16]'}`}>
+                {ingestNotice}
+              </div>
+            )}
+
+            {addOpen && (
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3 animate-in fade-in duration-200">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <input value={addForm.title} onChange={setAddField('title')} placeholder="Title *" className="input-base" />
+                  <input value={addForm.organization} onChange={setAddField('organization')} placeholder="Organization *" className="input-base" />
+                </div>
+                <input value={addForm.officialUrl} onChange={setAddField('officialUrl')} placeholder="Official URL * (https://…)" className="input-base" />
+                <textarea value={addForm.description} onChange={setAddField('description')} rows={3} placeholder="Description *" className="input-base resize-none" />
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <input value={addForm.category} onChange={setAddField('category')} placeholder="Category (e.g. Category A - Undergraduate)" className="input-base" />
+                  <input value={addForm.opportunityType} onChange={setAddField('opportunityType')} placeholder="Type (Scholarship, Internship…)" className="input-base" />
+                  <input value={addForm.location} onChange={setAddField('location')} placeholder="Location" className="input-base" />
+                  <input type="date" value={addForm.deadline} onChange={setAddField('deadline')} className="input-base" />
+                  <input value={addForm.fundingAmount} onChange={setAddField('fundingAmount')} placeholder="Funding amount" className="input-base" />
+                  <input value={addForm.currency} onChange={setAddField('currency')} placeholder="Currency (NGN, USD…)" className="input-base" />
+                  <input value={addForm.eligibleEducationLevels} onChange={setAddField('eligibleEducationLevels')} placeholder="Levels (comma-separated)" className="input-base" />
+                  <input value={addForm.eligibleFields} onChange={setAddField('eligibleFields')} placeholder="Fields (comma-separated)" className="input-base" />
+                  <input value={addForm.tags} onChange={setAddField('tags')} placeholder="Tags (comma-separated)" className="input-base" />
+                </div>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <p className="text-xs text-gray-500">Required: title, organization, description, and official URL.</p>
+                  <button
+                    onClick={handleAddOpportunity}
+                    disabled={addBusy}
+                    className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16] text-[#070e0a] text-xs font-bold px-4 transition-all duration-200 active:scale-[0.97] hover:brightness-110 disabled:pointer-events-none disabled:opacity-60"
+                  >
+                    {addBusy ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Creating…</> : <><PlusCircle className="h-3.5 w-3.5" /> Create opportunity</>}
+                  </button>
+                </div>
+              </div>
+            )}
+          </Section>
 
           {/* Launch & Waitlist */}
           <section className="card-surface p-6 overflow-hidden">

@@ -20,6 +20,7 @@ import {
   Handshake,
   Sparkles,
   Share2,
+  RefreshCw,
   Check
 } from 'lucide-react';
 import { useRef, type MouseEvent as ReactMouseEvent } from 'react';
@@ -608,6 +609,7 @@ export default function Dashboard() {
   // Hydrated from localStorage so a CV-match flow survives full refreshes.
   const [cvFilterActive, setCvFilterActive] = useState<boolean>(() => readCvMatchActive());
   const [aiSummaryOpen, setAiSummaryOpen] = useState(false);
+  const [aiRefreshing, setAiRefreshing] = useState(false);
   // App status per opportunity, keyed by opportunityId (overlay on the feed).
   const [appRecords, setAppRecords] = useState<Map<string, ApplicationRecord>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -642,20 +644,53 @@ export default function Dashboard() {
   // humans to this URL; pasting the app link directly should land on the right
   // card too. Scrolls the card into view and pulses a highlight ring. Uses
   // direct DOM access (no state machine) so the memoized feed never re-renders.
-  const highlightHandledRef = useRef<string | null>(null);
+  // Polls until the card element appears (cold loads / snapshot restore may
+  // deliver data after the first effect tick) so the scroll never fails.
+  const highlightAppliedRef = useRef(false);
   useEffect(() => {
     const targetId = searchParams.get('id');
-    if (!targetId || highlightHandledRef.current === targetId) return;
-    const el = document.getElementById(`opp-${targetId}`);
-    if (!el) {
-      highlightHandledRef.current = targetId;
-      return;
-    }
-    highlightHandledRef.current = targetId;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.classList.add('animate-highlight-ring');
-    const timer = window.setTimeout(() => el.classList.remove('animate-highlight-ring'), 3000);
-    return () => window.clearTimeout(timer);
+    if (!targetId || highlightAppliedRef.current) return;
+
+    let cancelled = false;
+    let raf = 0;
+    let pollTimer = 0;
+    let removeTimer = 0;
+
+    const tryHighlight = () => {
+      if (cancelled) return;
+      const el = document.getElementById(`opp-${targetId}`);
+      if (!el) {
+        pollTimer = window.setTimeout(tryHighlight, 200);
+        return;
+      }
+
+      // Clear any leftover ring on every card so exactly ONE is highlighted.
+      document.querySelectorAll('.animate-highlight-ring')
+        .forEach(n => n.classList.remove('animate-highlight-ring'));
+
+      el.classList.add('animate-highlight-ring');
+      highlightAppliedRef.current = true;
+
+      raf = window.requestAnimationFrame(() => {
+        const rect = el.getBoundingClientRect();
+        const offset = Math.max(0, Math.round(window.innerHeight * 0.3) - 80);
+        window.scrollTo({ top: Math.max(0, rect.top + window.scrollY - offset), behavior: 'smooth' });
+      });
+
+      removeTimer = window.setTimeout(() => {
+        if (!cancelled) el.classList.remove('animate-highlight-ring');
+      }, 3000);
+    };
+
+    tryHighlight();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(pollTimer);
+      window.clearTimeout(removeTimer);
+      window.cancelAnimationFrame(raf);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, opportunities]);
 
   // Mobile Filter Toggle
@@ -966,6 +1001,25 @@ export default function Dashboard() {
     // Turning the AI summary toggle off just hides the summary; keep the CV match filter active
     setAiSummaryOpen(false);
     setAiAnalysis(null);
+  };
+
+  const handleRefreshAiAnalysis = async () => {
+    if (!user || aiRefreshing) return;
+    setAiRefreshing(true);
+    try {
+      const res = await apiFetch(`${API_BASE}/ai/reanalyze-cv`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setAiAnalysis(data.analysis);
+        setLatestCv({ analysis: data.analysis, matches: data.matches });
+      } else {
+        openModal('Refresh Failed', data.message || 'Could not refresh your AI match analysis.');
+      }
+    } catch {
+      openModal('Refresh Failed', 'Network error while refreshing your AI match analysis.');
+    } finally {
+      setAiRefreshing(false);
+    }
   };
 
   const handleLoadMore = () => {
@@ -1284,6 +1338,15 @@ export default function Dashboard() {
                 <BrainCircuit className="h-5 w-5 text-[#84cc16]" /> AI Summary
               </h3>
               <div className="flex items-center gap-3">
+                <button
+                  onClick={handleRefreshAiAnalysis}
+                  disabled={aiRefreshing}
+                  title="Re-run the analysis against the latest opportunities"
+                  className="inline-flex items-center gap-1.5 h-9 rounded-lg bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3 transition-all duration-200 active:scale-[0.97] hover:bg-[#84cc16]/20 disabled:pointer-events-none disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${aiRefreshing ? 'animate-spin' : ''}`} />
+                  {aiRefreshing ? 'Refreshing…' : 'Refresh analysis'}
+                </button>
                 <button
                   role="switch"
                   aria-checked={aiSummaryOpen}

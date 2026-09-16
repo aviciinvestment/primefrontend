@@ -4,7 +4,6 @@ import {
   Clock,
   Handshake,
   Loader2,
-  MessageCircle,
   UserPlus,
   Users,
   Wallet,
@@ -291,8 +290,7 @@ function ApprovedDashboard({ dashboard, mentor }: { dashboard: any; mentor: Ment
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard icon={<Users className="h-5 w-5" />} label="My Mentees" value={String(dashboard.totalMentees)} />
         <StatCard icon={<Wallet className="h-5 w-5" />} label="Total Earned (90%)" value={formatMoney(dashboard.totalEarned)} />
-        <StatCard icon={<MessageCircle className="h-5 w-5" />} label="Requests Needing a Mentor" value={String(dashboard.openRequests?.length || 0)} />
-      </div>
+        </div>
 
       <div className="card-surface p-5 sm:p-6 overflow-hidden">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
@@ -302,20 +300,9 @@ function ApprovedDashboard({ dashboard, mentor }: { dashboard: any; mentor: Ment
           <span className="text-xs text-gray-500">{mentor.company} · {mentor.roleType}</span>
         </div>
         {dashboard.myMentees?.length ? (
-          <MenteeTable rows={dashboard.myMentees} showAssigned={false} />
+          <MenteeTable rows={dashboard.myMentees} />
         ) : (
           <p className="text-gray-400 text-sm">No mentees assigned yet. You'll be matched with students based on your industry.</p>
-        )}
-      </div>
-
-      <div className="card-surface p-5 sm:p-6 overflow-hidden">
-        <h2 className="flex items-center gap-2 text-sm font-bold text-white uppercase tracking-wide mb-4">
-          <MessageCircle className="h-4 w-4 text-[#84cc16]" /> Users Who Need Mentorship
-        </h2>
-        {dashboard.openRequests?.length ? (
-          <MenteeTable rows={dashboard.openRequests} showAssigned={true} />
-        ) : (
-          <p className="text-gray-400 text-sm">No open requests right now.</p>
         )}
       </div>
     </div>
@@ -332,7 +319,7 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-function MenteeTable({ rows, showAssigned }: { rows: MenteeRequest[]; showAssigned: boolean }) {
+function MenteeTable({ rows }: { rows: MenteeRequest[] }) {
   return (
     <div className="overflow-x-auto -mx-5 px-5 sm:-mx-6 sm:px-6">
       <table className="w-full text-left text-sm">
@@ -341,7 +328,6 @@ function MenteeTable({ rows, showAssigned }: { rows: MenteeRequest[]; showAssign
             <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Student</th>
             <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Opportunity</th>
             <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Type</th>
-            {showAssigned && <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Mentor</th>}
             <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Paid</th>
             <th className="py-2.5 font-semibold whitespace-nowrap">Date</th>
           </tr>
@@ -358,7 +344,6 @@ function MenteeTable({ rows, showAssigned }: { rows: MenteeRequest[]; showAssign
                 {r.opportunityOrg && <p className="text-gray-500 text-xs">{r.opportunityOrg}</p>}
               </td>
               <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">{r.opportunityType || '—'}</td>
-              {showAssigned && <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">{r.mentorName || 'Unassigned'}</td>}
               <td className="py-3 pr-4 text-[#84cc16] font-semibold tabular-nums whitespace-nowrap">{formatMoney(r.amount, r.currency)}</td>
               <td className="py-3 text-gray-500 text-xs whitespace-nowrap">{formatDate(r.createdAt)}</td>
             </tr>
