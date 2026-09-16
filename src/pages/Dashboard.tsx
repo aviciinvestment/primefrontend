@@ -18,14 +18,16 @@ import {
   SlidersHorizontal,
   ChevronDown,
   Handshake,
-  Sparkles
+  Sparkles,
+  Share2,
+  Check
 } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, type MouseEvent as ReactMouseEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MarkdownView from '../components/MarkdownView';
 import WaitlistSection from '../components/WaitlistSection';
-import { STATUSES, STATUS_META, fetchApplications, upsertApplication, API_BASE, isAdminPreviewEnabled, fetchLaunchStatus, type ApplicationRecord, type LaunchStatus } from '../lib/applications';
+import { STATUSES, STATUS_META, fetchApplications, upsertApplication, API_BASE, API_ORIGIN, isAdminPreviewEnabled, fetchLaunchStatus, type ApplicationRecord, type LaunchStatus } from '../lib/applications';
 import { apiFetch } from '../lib/api';
 export interface Opportunity {
   _id: string;
@@ -40,6 +42,65 @@ export interface Opportunity {
 }
 
 const HERO_TEXT = 'Find Your Next\nCareer Opportunity';
+
+// ---------------------------------------------------------------------------
+// UX-stability plumbing kept at module scope so it survives Dashboard
+// remounts:
+//  - persistence keys for the filter toggles and the CV-match toggle, hydrated
+//    on mount and mirrored back on every change (full-refresh persistence)
+//  - an SPA-lifetime feed snapshot so forward/back history navigation
+//    restores an already-fetched page instantly instead of re-blanking.
+// ---------------------------------------------------------------------------
+const FILTER_STATE_KEY = 'filter_state';
+const CV_MATCH_ACTIVE_KEY = 'cv_match_active';
+
+// Graceful reads: corrupt/denied storage must never crash the feed render.
+const readFilterState = (): { types: string[]; levels: string[] } => {
+  try {
+    const raw = localStorage.getItem(FILTER_STATE_KEY);
+    if (!raw) return { types: [], levels: [] };
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return { types: [], levels: [] };
+    const { types: rawTypes, levels: rawLevels } = parsed as { types?: unknown; levels?: unknown };
+    const types = Array.isArray(rawTypes) ? rawTypes.filter((v): v is string => typeof v === 'string') : [];
+    const levels = Array.isArray(rawLevels) ? rawLevels.filter((v): v is string => typeof v === 'string') : [];
+    return { types, levels };
+  } catch {
+    return { types: [], levels: [] };
+  }
+};
+
+const readCvMatchActive = (): boolean => {
+  try {
+    return localStorage.getItem(CV_MATCH_ACTIVE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+interface FeedSnapshot {
+  key: string;
+  data: Opportunity[];
+  hasMore: boolean;
+}
+
+// Latest page-1 feed result, keyed by the exact filter/sort/search tuple that
+// produced it. Rehydrates a re-mounted Dashboard (back/forward navigation)
+// straight from data instead of a blank grid; the fetch effect then refreshes
+// silently in the background.
+let feedSnapshot: FeedSnapshot | null = null;
+
+const buildSnapshotKey = (types: string[], levels: string[], sort: string, query: string): string =>
+  `${types.join(',')}|${levels.join(',')}|${sort}|${query}`;
+
+// A cached page only restores when the filters are unchanged AND the CV-match
+// toggle isn't active (CV mode renders from the saved-match derivation below,
+// never the paged feed).
+const snapshotRestoreFor = (query: string): boolean => {
+  if (!feedSnapshot || readCvMatchActive()) return false;
+  const { types, levels } = readFilterState();
+  return feedSnapshot.key === buildSnapshotKey(types, levels, 'Best Match', query);
+};
 
 // Owns the typewriter interval so each 70ms tick re-renders only this heading
 // instead of the entire Dashboard tree. Respects prefers-reduced-motion.
@@ -253,12 +314,60 @@ const OpportunityCard = memo(function OpportunityCard({
   onPromptGuidance,
 }: OpportunityCardProps) {
   const meta = record?.status;
+  // Share link: server-rendered OG capsule (same API origin the app already
+  // uses). Crawlers read its tags; a <meta http-equiv="refresh"> bounces humans
+  // to the SPA's /opportunities?id= deep link.
+  const shareUrl = `${API_ORIGIN}/api/opportunities/${opp._id}/share`;
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (copyTimer.current) window.clearTimeout(copyTimer.current);
+    },
+    []
+  );
+  const handleShareClick = async (e: ReactMouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = shareUrl;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+      } catch {
+        // ignore — no clipboard available
+      }
+      document.body.removeChild(textarea);
+    }
+    setCopied(true);
+    if (copyTimer.current) window.clearTimeout(copyTimer.current);
+    copyTimer.current = window.setTimeout(() => setCopied(false), 2000);
+  };
   return (
     <div
-      key={opp._id}
+      id={`opp-${opp._id}`}
       onClick={() => onPromptGuidance(opp)}
-      className={`group card-surface card-hover flex flex-col rounded-2xl p-4 sm:p-6 cursor-pointer text-center sm:text-left ${record?.clicked ? 'border-[#84cc16]/40 ring-1 ring-[#84cc16]/50' : ''}`}
+      className={`group card-surface card-hover relative flex flex-col rounded-2xl p-4 sm:p-6 cursor-pointer text-center sm:text-left ${record?.clicked ? 'border-[#84cc16]/40 ring-1 ring-[#84cc16]/50' : ''}`}
     >
+      <button
+        type="button"
+        onClick={handleShareClick}
+        title={copied ? 'Link copied' : 'Copy share link'}
+        aria-label={copied ? 'Link copied' : 'Copy share link'}
+        className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-[11px] font-semibold transition-all active:scale-90 ${
+          copied
+            ? 'border-[#84cc16]/50 bg-[#84cc16]/15 text-[#84cc16]'
+            : 'border-white/10 bg-white/[0.04] text-gray-400 hover:bg-white/10 hover:text-white'
+        }`}
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+        {copied ? 'Copied' : 'Share'}
+      </button>
       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary mb-4 sm:mb-6 mx-auto sm:mx-0">
         {opp.opportunityType === 'Scholarship' ? <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" /> : <Briefcase className="h-5 w-5 sm:h-6 sm:w-6" />}
       </div>
@@ -406,11 +515,22 @@ const HeroSection = memo(function HeroSection({ hasUser, onScrollToPrograms, onL
       <div className="relative z-10 w-full md:w-[45%] h-[250px] sm:h-[350px] md:h-[500px] flex items-center justify-center p-4 md:p-8 mt-4 md:mt-0">
         <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-[450px] md:h-[450px] flex items-center justify-center">
           <div className="absolute inset-2 md:inset-4 bg-[#84cc16] animate-blob z-0 shadow-[0_0_40px_rgba(132,204,22,0.4)] overflow-hidden flex items-end justify-center">
-            <img
-              src="/student_cutout_v2.png"
-              alt="Student Hero"
-              className="w-full h-[110%] object-cover object-top animate-drop-in drop-shadow-2xl translate-y-4 md:translate-y-0 contrast-[1.08] saturate-110"
-            />
+            {/* LCP hero graphic: AVIF -> WebP (each ~90% smaller than the PNG it
+                replaced) -> PNG fallback. fetchPriority="high" lets the browser
+                pull the hero before any other same-priority subresource. */}
+            <picture>
+              <source srcSet="/student_cutout_v2.avif" type="image/avif" />
+              <source srcSet="/student_cutout_v2.webp" type="image/webp" />
+              <img
+                src="/student_cutout_v2.png"
+                alt="Student Hero"
+                width={500}
+                height={500}
+                fetchPriority="high"
+                decoding="async"
+                className="w-full h-[110%] object-cover object-top animate-drop-in drop-shadow-2xl translate-y-4 md:translate-y-0 contrast-[1.08] saturate-110"
+              />
+            </picture>
           </div>
         </div>
 
@@ -458,8 +578,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') || '';
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>(() =>
+    snapshotRestoreFor(searchQuery) && feedSnapshot ? feedSnapshot.data : []
+  );
+  const [loading, setLoading] = useState(() => !snapshotRestoreFor(searchQuery));
   // Launch / waitlist state: until launched, the home page shows the waitlist.
   const [launch, setLaunch] = useState<LaunchStatus | null>(null);
   const [launchLoading, setLaunchLoading] = useState(true);
@@ -483,13 +605,20 @@ export default function Dashboard() {
   const [aiMatches, setAiMatches] = useState<Opportunity[]>([]);
   // Saved CV state (persisted in MongoDB per user)
   const [latestCv, setLatestCv] = useState<{ analysis: string; matches: Opportunity[] } | null>(null);
-  const [cvFilterActive, setCvFilterActive] = useState(false);
+  // Hydrated from localStorage so a CV-match flow survives full refreshes.
+  const [cvFilterActive, setCvFilterActive] = useState<boolean>(() => readCvMatchActive());
   const [aiSummaryOpen, setAiSummaryOpen] = useState(false);
   // App status per opportunity, keyed by opportunityId (overlay on the feed).
   const [appRecords, setAppRecords] = useState<Map<string, ApplicationRecord>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const programsRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  // Live mirror of the CV toggle for the IntersectionObserver callback, so the
+  // observer never fires a "load more" while CV matches own the feed area.
+  const cvActiveRef = useRef(cvFilterActive);
+  useEffect(() => {
+    cvActiveRef.current = cvFilterActive;
+  }, [cvFilterActive]);
 
   const scrollToPrograms = useCallback(() => {
     programsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -509,20 +638,63 @@ export default function Dashboard() {
     setModalOpen(true);
   }, []);
 
+  // Deep-link support: /opportunities?id=<id>. A shared OG capsule bounces
+  // humans to this URL; pasting the app link directly should land on the right
+  // card too. Scrolls the card into view and pulses a highlight ring. Uses
+  // direct DOM access (no state machine) so the memoized feed never re-renders.
+  const highlightHandledRef = useRef<string | null>(null);
+  useEffect(() => {
+    const targetId = searchParams.get('id');
+    if (!targetId || highlightHandledRef.current === targetId) return;
+    const el = document.getElementById(`opp-${targetId}`);
+    if (!el) {
+      highlightHandledRef.current = targetId;
+      return;
+    }
+    highlightHandledRef.current = targetId;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('animate-highlight-ring');
+    const timer = window.setTimeout(() => el.classList.remove('animate-highlight-ring'), 3000);
+    return () => window.clearTimeout(timer);
+  }, [searchParams, opportunities]);
+
   // Mobile Filter Toggle
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
   // Typewriter Effect State (managed by TypewriterHeading — no page-wide state)
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(() =>
+    snapshotRestoreFor(searchQuery) && feedSnapshot ? feedSnapshot.hasMore : true
+  );
   
-  // Filter States
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
+  // Filter States — hydrated from localStorage (filter_state) so refresh keeps
+  // the exact filter setup the user had active.
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(() => readFilterState().types);
+  const [selectedLevels, setSelectedLevels] = useState<string[]>(() => readFilterState().levels);
   
   // Sort State
   const [sortBy, setSortBy] = useState('Best Match');
   const [isSortOpen, setIsSortOpen] = useState(false);
+
+  // Persistence mirrors: every toggle change is written straight back to
+  // localStorage immediately (only storage writes — never setState — so these
+  // effects add no render churn and no abort-controller interference).
+  useEffect(() => {
+    try {
+      localStorage.setItem(FILTER_STATE_KEY, JSON.stringify({ types: selectedTypes, levels: selectedLevels }));
+    } catch {
+      // Storage full/disabled — persistence is best-effort, keep the UI working.
+    }
+  }, [selectedTypes, selectedLevels]);
+
+  useEffect(() => {
+    try {
+      if (cvFilterActive) localStorage.setItem(CV_MATCH_ACTIVE_KEY, 'true');
+      else localStorage.removeItem(CV_MATCH_ACTIVE_KEY);
+    } catch {
+      // ignore storage write failures
+    }
+  }, [cvFilterActive]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -547,9 +719,6 @@ export default function Dashboard() {
         setAiMatches(data.matches);
         setLatestCv({ analysis: data.analysis, matches: data.matches });
         setCvFilterActive(true);
-        // Clear existing opportunities and show AI matches
-        setOpportunities(data.matches);
-        setHasMore(false); // Disable pagination when showing AI matches
       } else {
         openModal('Upload Failed', data.message || 'Failed to analyze CV. Please try again.');
       }
@@ -569,9 +738,9 @@ export default function Dashboard() {
 
   const isAbortError = (error: unknown) => error instanceof DOMException && error.name === 'AbortError';
 
-  const fetchOpportunities = async (pageNum: number, types: string[] = selectedTypes, levels: string[] = selectedLevels, sort: string = sortBy, query: string = searchQuery, signal?: AbortSignal) => {
+  const fetchOpportunities = async (pageNum: number, types: string[] = selectedTypes, levels: string[] = selectedLevels, sort: string = sortBy, query: string = searchQuery, signal?: AbortSignal, options?: { silent?: boolean }) => {
     try {
-      setLoading(true);
+      if (!options?.silent) setLoading(true);
       let url = `${API_BASE}/opportunities?page=${pageNum}&limit=50`;
       
       if (query) {
@@ -606,6 +775,13 @@ export default function Dashboard() {
       if (data.success) {
         if (pageNum === 1) {
           setOpportunities(data.data);
+          // Snapshot page-1 results for instant restore on back/forward nav
+          // (module-scope; survives Dashboard remounts within the session).
+          feedSnapshot = {
+            key: buildSnapshotKey(types, levels, sort, query),
+            data: data.data,
+            hasMore: data.page < data.pages,
+          };
         } else {
           setOpportunities(prev => [...prev, ...data.data]);
         }
@@ -625,7 +801,12 @@ export default function Dashboard() {
     // responses can never overwrite fresh state.
     const controller = new AbortController();
     setPage(1);
-    fetchOpportunities(1, selectedTypes, selectedLevels, sortBy, searchQuery, controller.signal);
+    // When a snapshot restored the feed we already have content on screen, so
+    // the refetch is silent: no spinner flash, cached rows stay visible while
+    // the data refreshes underneath.
+    fetchOpportunities(1, selectedTypes, selectedLevels, sortBy, searchQuery, controller.signal, {
+      silent: feedSnapshot?.key === buildSnapshotKey(selectedTypes, selectedLevels, sortBy, searchQuery),
+    });
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTypes, selectedLevels, sortBy, searchQuery, launch?.launched, adminPreview]);
@@ -766,18 +947,17 @@ export default function Dashboard() {
       return;
     }
     if (cvFilterActive) {
-      // Clear the CV match filter → back to the full feed
+      // Clear the CV match filter → the feed area re-derives the paged feed
+      // instantly (no refetch, no re-spin); the views in opportunities are
+      // whatever the API last delivered.
       setCvFilterActive(false);
       setAiAnalysis(null);
       setAiSummaryOpen(false);
-      setPage(1);
-      fetchOpportunities(1, selectedTypes, selectedLevels, sortBy);
     } else {
-      // Apply the saved CV matches and show the formatted summary in a modal
+      // Apply the saved CV matches — the feed area derives from latestCv —
+      // and show the formatted summary in a modal.
       setCvFilterActive(true);
       setAiAnalysis(latestCv.analysis);
-      setOpportunities(latestCv.matches);
-      setHasMore(false); // Disable pagination when showing AI matches
       setAiSummaryOpen(true);
     }
   };
@@ -806,7 +986,7 @@ export default function Dashboard() {
     if (!el || !hasMore) return;
     const observer = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting && hasMore && !loading && opportunities.length > 0) {
+        if (entries[0].isIntersecting && !cvActiveRef.current && hasMore && !loading && opportunities.length > 0) {
           loadMoreRef.current();
         }
       },
@@ -832,6 +1012,16 @@ export default function Dashboard() {
     setSelectedLevels([]);
     setPage(1);
   };
+
+  // --- CV-match filter is a render-time derivation --------------------------
+  // While active (including when restored from localStorage after a refresh or
+  // back-navigation), the feed area renders latestCv.matches and the paged API
+  // feed (opportunities) keeps refreshing underneath untouched. That means no
+  // state-clobbering race with the feed fetch's AbortController and no blank
+  // re-spin: toggling CV off shows the last feed immediately.
+  const cvMatches = cvFilterActive && latestCv ? latestCv.matches : null;
+  const visibleOpportunities = cvMatches ?? opportunities;
+  const visibleHasMore = cvFilterActive && latestCv ? false : hasMore;
 
   const showWaitlist = launch ? !launch.launched && !adminPreview : true;
   const showWelcome = !!launch?.launched && !!launch.welcomeUntil && new Date(launch.welcomeUntil).getTime() >= Date.now();
@@ -1036,7 +1226,7 @@ export default function Dashboard() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {opportunities.map(opp => {
+            {visibleOpportunities.map(opp => {
               const record = appRecords.get(opp._id);
               return (
                 <OpportunityCard
@@ -1050,7 +1240,7 @@ export default function Dashboard() {
             })}
           </div>
           
-          {!loading && opportunities.length === 0 && (
+          {!loading && visibleOpportunities.length === 0 && (
             <div className="text-center py-16 px-6 rounded-2xl glass-card">
               <Search className="h-10 w-10 text-gray-500 mx-auto mb-4" />
               <p className="text-gray-300 font-semibold">
@@ -1067,7 +1257,7 @@ export default function Dashboard() {
             </div>
           )}
           
-          {hasMore && (
+          {visibleHasMore && (
             <div ref={sentinelRef} className="mt-6 sm:mt-8 h-1" />
           )}
           {loading && page > 1 && (

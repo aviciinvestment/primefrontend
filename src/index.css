@@ -231,3 +231,14 @@
 .animate-blob {
   animation: blob 8s ease-in-out infinite;
 }
+
+/* Deep-link highlight: pulses a lime ring around the card that a shared
+   /opportunities?id=<id> URL scrolled into view. Applied/removed via the
+   Dashboard deep-link effect (direct DOM, no React state). */
+@keyframes highlight-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(132, 204, 22, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(132, 204, 22, 0.45); }
+}
+.animate-highlight-ring {
+  animation: highlight-ring 900ms ease-in-out 3;
+}

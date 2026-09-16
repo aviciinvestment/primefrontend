@@ -1,8 +1,7 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
-import ChatWidget from './components/ChatWidget';
 import EmailVerificationScreen from './components/EmailVerificationScreen';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -17,6 +16,33 @@ const MentorshipGuidance = lazy(() => import('./pages/MentorshipGuidance'));
 const MentorshipInterest = lazy(() => import('./pages/MentorshipInterest'));
 const MentorPage = lazy(() => import('./pages/MentorPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+
+// ChatWidget (feeds/voice UI + eslint heaviest) is NOT needed for first paint:
+// mount it only after the browser goes idle so its chunk download + mount never
+// compete with the LCP hero / above-fold render. requestIdleCallback with a
+// fallback timer keeps the deferral non-blocking everywhere.
+const ChatWidget = lazy(() => import('./components/ChatWidget'));
+
+function DeferredMount({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let idleHandle: number | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const reveal = () => setReady(true);
+    if (typeof window.requestIdleCallback === 'function') {
+      idleHandle = window.requestIdleCallback(reveal, { timeout: 2000 });
+    } else {
+      timer = setTimeout(reveal, 1200);
+    }
+    return () => {
+      if (idleHandle !== null && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleHandle);
+      }
+      if (timer !== null) clearTimeout(timer);
+    };
+  }, []);
+  return <>{ready ? children : null}</>;
+}
 
 const PageLoader = () => (
   <div className="flex items-center justify-center py-28" role="status" aria-label="Loading page">
@@ -67,6 +93,7 @@ function App() {
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
+                  <Route path="/opportunities" element={<Dashboard />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
@@ -79,7 +106,11 @@ function App() {
               </Suspense>
             </main>
             <Footer />
-            <ChatWidget />
+            <Suspense fallback={null}>
+              <DeferredMount>
+                <ChatWidget />
+              </DeferredMount>
+            </Suspense>
           </div>
         </div>
         </AuthGate>
