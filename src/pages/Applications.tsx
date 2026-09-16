@@ -241,55 +241,55 @@ export default function Applications() {
   const grouped = STATUSES.map(status => apps.filter(a => a.status === status));
 
   return (
-    <div className="flex flex-col gap-6 pb-10 h-[calc(100vh-8rem)]">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Applications</h1>
-          <p className="text-muted-foreground mt-1">
+    <div className="flex flex-col gap-6 pb-10 h-[calc(100vh-8rem)] min-w-0">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">My Applications</h1>
+          <p className="text-sm sm:text-base text-gray-400 leading-relaxed mt-1">
             Track your progress and stay on top of deadlines. Drag cards between columns to update their status.
           </p>
         </div>
         <Link
           to="/"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md font-medium shadow-sm transition-all active:scale-95 inline-flex items-center gap-2 no-underline"
+          className="btn-primary h-11 px-5 text-sm no-underline shrink-0"
         >
           Discover opportunities
         </Link>
       </div>
 
       {loading ? (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+        <div className="flex-1 flex items-center justify-center text-gray-400">
           <Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading your applications...
         </div>
       ) : error ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">{error}</p>
+          <p className="text-gray-400">{error}</p>
         </div>
       ) : apps.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-3 border border-dashed border-white/10 rounded-2xl px-10 py-12">
+          <div className="card-surface text-center space-y-4 px-8 py-12 sm:px-10 sm:py-16 max-w-sm">
             <p className="text-white font-semibold text-lg">No applications tracked yet</p>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-gray-400 text-sm leading-relaxed">
               Open an opportunity on the dashboard to auto-save it, or pick a status icon on any card.
             </p>
-            <Link to="/" className="inline-block bg-primary text-primary-foreground px-5 py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+            <Link to="/" className="btn-primary h-11 px-6 text-sm no-underline inline-flex">
               Browse opportunities
             </Link>
           </div>
         </div>
       ) : (
-        <div ref={boardRef} className="flex gap-6 overflow-x-auto pb-4 h-full scrollbar-thin">
+        <div ref={boardRef} className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 min-h-0 flex-1 scrollbar-thin">
           {STATUSES.map((status, colIndex) => {
             const meta = STATUS_META[status];
             const style = COLUMN_STYLE[status];
             const Icon = meta.icon;
             return (
-              <div key={status} className={`flex-shrink-0 w-80 rounded-xl border ${style.panel} flex flex-col`}>
-                <div className="p-4 border-b bg-background/50 backdrop-blur-sm rounded-t-xl flex justify-between items-center">
-                  <h3 className={`font-semibold flex items-center gap-2 ${style.header}`}>
-                    <Icon className="h-4 w-4" /> {style.title}
+              <div key={status} className={`flex-shrink-0 w-72 sm:w-80 rounded-2xl border ${style.panel} flex flex-col min-w-0`}>
+                <div className="p-4 border-b border-white/10 bg-white/[0.04] rounded-t-2xl flex justify-between items-center">
+                  <h3 className={`font-semibold text-sm flex items-center gap-2 ${style.header}`}>
+                    <Icon className="h-4 w-4 shrink-0" /> {style.title}
                   </h3>
-                  <span className="bg-background text-foreground text-xs font-bold px-2 py-1 rounded-md shadow-sm">
+                  <span className="text-gray-400 tabular-nums text-xs font-bold px-2 py-1 rounded-lg bg-white/[0.06] border border-white/10 shadow-sm">
                     {grouped[colIndex].length}
                   </span>
                 </div>
@@ -304,7 +304,7 @@ export default function Applications() {
                     if (dragOver === status) setDragOver(null);
                   }}
                   onDrop={(e) => handleDrop(e, status)}
-                  className={`p-3 flex-1 overflow-y-auto space-y-3 rounded-b-xl transition-colors ${
+                  className={`p-3 flex-1 overflow-y-auto space-y-3 rounded-b-2xl transition-colors ${
                     dragOver === status ? 'bg-[#84cc16]/10 ring-1 ring-inset ring-[#84cc16]/40' : ''
                   }`}
                 >
@@ -322,30 +322,30 @@ export default function Applications() {
                       onTouchMove={handleTouchMove}
                       onTouchEnd={handleTouchEnd}
                       onContextMenu={(e) => e.preventDefault()}
-                      className={`bg-card border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing select-none touch-callout-none ${
+                      className={`card-surface p-4 cursor-grab active:cursor-grabbing select-none touch-callout-none ${
                         draggingId === app.opportunityId ? 'opacity-40' : ''
                       }`}
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-bold text-sm leading-tight text-foreground">{app.opportunity?.title || 'Untitled'}</h4>
+                      <div className="flex justify-between items-start mb-2 gap-2">
+                        <h4 className="font-bold text-sm leading-tight text-white min-w-0">{app.opportunity?.title || 'Untitled'}</h4>
                         {app.opportunity?.officialUrl && (
                           <a
                             href={app.opportunity.officialUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-primary ml-2"
+                            className="text-gray-400 hover:text-lime-400 transition-colors focus-ring rounded-md shrink-0"
                             title="Open opportunity"
                           >
                             <ExternalLink className="h-4 w-4" />
                           </a>
                         )}
                       </div>
-                      <p className="text-xs font-medium text-muted-foreground mb-3">{app.opportunity?.organization || ''}</p>
+                      <p className="text-xs font-medium text-gray-500 mb-3">{app.opportunity?.organization || ''}</p>
 
                       <div className="flex flex-wrap items-center gap-1.5">
                         {app.opportunity?.location && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-background/60 border border-white/10 px-2 py-0.5 rounded-md">
-                            <MapPin className="h-3 w-3" /> {app.opportunity.location}
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-400 bg-white/[0.04] border border-white/10 px-2 py-0.5 rounded-md">
+                            <MapPin className="h-3 w-3 shrink-0" /> {app.opportunity.location}
                           </span>
                         )}
                         <span className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-500 dark:text-orange-400 bg-orange-500/10 dark:bg-orange-950/50 border border-orange-500/20 px-2 py-0.5 rounded-md">
@@ -362,7 +362,7 @@ export default function Applications() {
                   ))}
 
                   {grouped[colIndex].length === 0 && (
-                    <div className="border-2 border-dashed border-muted-foreground/20 rounded-lg h-24 flex items-center justify-center text-muted-foreground/50 text-sm font-medium">
+                    <div className="border-2 border-dashed border-white/10 rounded-xl h-24 flex items-center justify-center text-gray-500 text-sm font-medium">
                       Drop here
                     </div>
                   )}

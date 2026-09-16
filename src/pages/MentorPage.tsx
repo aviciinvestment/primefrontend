@@ -144,21 +144,17 @@ export default function MentorPage() {
   const isApproved = mentor?.status === 'approved';
 
   return (
-    <div className="max-w-5xl mx-auto pb-12">
+    <div className="section-shell pb-12">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-11 h-11 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center">
-          <Handshake className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white">Mentors</h1>
-          <p className="text-gray-400 text-sm">Your mentorship hub — manage mentees and track guidance earnings.</p>
-        </div>
+      <div className="mb-8">
+        <span className="eyebrow mb-3"><Handshake className="h-3.5 w-3.5" /> Mentorship</span>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Mentors</h1>
+        <p className="text-gray-400 text-sm sm:text-base mt-1">Your mentorship hub — manage mentees and track guidance earnings.</p>
       </div>
 
       {notice && (
-        <div className="flex items-center gap-2 rounded-xl border border-[#84cc16]/40 bg-[#84cc16]/10 px-4 py-2.5 text-[13px] font-medium text-[#84cc16] mb-5">
-          <CheckCircle2 className="h-4 w-4" /> {notice}
+        <div className="flex items-center gap-2.5 rounded-xl border border-[#84cc16]/30 bg-[#84cc16]/10 px-4 py-3 text-sm font-medium text-[#84cc16] mb-6">
+          <CheckCircle2 className="h-4 w-4 shrink-0" /> {notice}
         </div>
       )}
 
@@ -196,17 +192,17 @@ function ApplicationFlow(props: {
 
   if (mentor?.status === 'pending') {
     return (
-      <div className="rounded-2xl glass-card p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
+      <div className="card-surface p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-amber-400/15 border border-amber-400/40 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-amber-400/10 border border-amber-400/30 flex items-center justify-center shrink-0">
             <Clock className="h-6 w-6 text-amber-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Application under review</h2>
-            <p className="text-gray-400 text-sm">You become a mentor only after an admin accepts your application.</p>
+            <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-white">Application under review</h2>
+            <p className="text-gray-400 text-sm mt-0.5">You become a mentor only after an admin accepts your application.</p>
           </div>
         </div>
-        <div className="rounded-xl bg-white/5 border border-white/10 p-4 text-sm space-y-1.5 mb-6">
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm space-y-1.5 mb-6">
           <p><span className="text-gray-500">Company:</span> <span className="text-gray-200 font-medium">{mentor.company}</span></p>
           <p><span className="text-gray-500">Industry:</span> <span className="text-gray-200 font-medium">{mentor.roleType}</span></p>
           <p className="text-gray-400 leading-relaxed">{mentor.careerStory}</p>
@@ -214,7 +210,7 @@ function ApplicationFlow(props: {
         </div>
         <button
           onClick={onReapply}
-          className="bg-white/5 border border-white/10 text-gray-200 font-semibold py-2.5 px-5 rounded-lg hover:bg-white/10 transition-colors text-sm"
+          className="btn-secondary h-10 text-sm"
         >
           Update application
         </button>
@@ -224,22 +220,22 @@ function ApplicationFlow(props: {
 
   if (mentor?.status === 'rejected') {
     return (
-      <div className="mb-6 rounded-2xl border border-red-500/40 bg-red-500/10 p-5 text-sm">
-        <p className="text-red-300 font-semibold mb-1">Your mentor application was not accepted.</p>
+      <div className="mb-6 rounded-xl border border-rose-400/30 bg-rose-400/5 p-5 text-sm">
+        <p className="text-rose-300 font-semibold mb-1">Your mentor application was not accepted.</p>
         <p className="text-gray-400">You can update your details and apply again below.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl glass-card p-6 sm:p-8 max-w-2xl">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-12 h-12 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
-          <UserPlus className="h-6 w-6 text-primary" />
+    <div className="card-surface p-6 sm:p-8 max-w-2xl">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-full bg-[#84cc16]/10 border border-[#84cc16]/30 flex items-center justify-center shrink-0">
+          <UserPlus className="h-6 w-6 text-[#84cc16]" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-white">Become a Mentor</h2>
-          <p className="text-gray-400 text-sm">Guide students through applications in your industry. Approval is required before you're active.</p>
+          <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-white">Become a Mentor</h2>
+          <p className="text-gray-400 text-sm mt-0.5">Guide students through applications in your industry. Approval is required before you're active.</p>
         </div>
       </div>
 
@@ -250,7 +246,7 @@ function ApplicationFlow(props: {
             value={company}
             onChange={e => setCompany(e.target.value)}
             placeholder="e.g. Dangote Group"
-            className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-primary transition-colors"
+            className="input-base mt-1.5"
           />
         </div>
         <div>
@@ -258,7 +254,7 @@ function ApplicationFlow(props: {
           <select
             value={roleType}
             onChange={e => setRoleType(e.target.value)}
-            className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary transition-colors [&>option]:bg-[#111827]"
+            className="input-base mt-1.5 appearance-none [&>option]:bg-[#0d1308]"
           >
             <option value="">Select your industry…</option>
             {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
@@ -271,16 +267,16 @@ function ApplicationFlow(props: {
             onChange={e => setCareerStory(e.target.value)}
             rows={4}
             placeholder="Tell students about your experience and how you can help them apply successfully…"
-            className="mt-1.5 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-primary transition-colors resize-none"
+            className="input-base mt-1.5 resize-none"
           />
         </div>
 
-        {formError && <p className="text-red-400 text-xs">{formError}</p>}
+        {formError && <p className="text-rose-400 text-xs mt-1">{formError}</p>}
 
         <button
           onClick={onSubmit}
           disabled={saving}
-          className="w-full flex items-center justify-center gap-2 bg-[#84cc16] text-[#0a0f16] font-bold py-3 rounded-lg hover:bg-[#a3e635] transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-primary w-full h-11 text-sm"
         >
           {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</> : <>Submit Application</>}
         </button>
@@ -292,16 +288,16 @@ function ApplicationFlow(props: {
 function ApprovedDashboard({ dashboard, mentor }: { dashboard: any; mentor: MentorProfile }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard icon={<Users className="h-5 w-5" />} label="My Mentees" value={String(dashboard.totalMentees)} />
         <StatCard icon={<Wallet className="h-5 w-5" />} label="Total Earned (90%)" value={formatMoney(dashboard.totalEarned)} />
         <StatCard icon={<MessageCircle className="h-5 w-5" />} label="Requests Needing a Mentor" value={String(dashboard.openRequests?.length || 0)} />
       </div>
 
-      <div className="rounded-2xl glass-card p-5 sm:p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wide flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" /> My Mentees
+      <div className="card-surface p-5 sm:p-6 overflow-hidden">
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-white uppercase tracking-wide">
+            <Users className="h-4 w-4 text-[#84cc16]" /> My Mentees
           </h2>
           <span className="text-xs text-gray-500">{mentor.company} · {mentor.roleType}</span>
         </div>
@@ -312,9 +308,9 @@ function ApprovedDashboard({ dashboard, mentor }: { dashboard: any; mentor: Ment
         )}
       </div>
 
-      <div className="rounded-2xl glass-card p-5 sm:p-6">
-        <h2 className="text-sm font-bold text-white uppercase tracking-wide mb-4 flex items-center gap-2">
-          <MessageCircle className="h-4 w-4 text-primary" /> Users Who Need Mentorship
+      <div className="card-surface p-5 sm:p-6 overflow-hidden">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-white uppercase tracking-wide mb-4">
+          <MessageCircle className="h-4 w-4 text-[#84cc16]" /> Users Who Need Mentorship
         </h2>
         {dashboard.openRequests?.length ? (
           <MenteeTable rows={dashboard.openRequests} showAssigned={true} />
@@ -328,11 +324,9 @@ function ApprovedDashboard({ dashboard, mentor }: { dashboard: any; mentor: Ment
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-2xl glass-card p-5">
-      <div className="flex items-center gap-2 text-primary mb-2">
-        <span className="p-2 rounded-lg bg-primary/10 border border-primary/20">{icon}</span>
-      </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
+    <div className="card-surface p-5 min-w-0">
+      <span className="p-2 rounded-lg bg-[#84cc16]/10 border border-[#84cc16]/20 text-[#84cc16] inline-flex mb-2">{icon}</span>
+      <p className="text-2xl font-extrabold text-white tabular-nums">{value}</p>
       <p className="text-gray-400 text-xs mt-1">{label}</p>
     </div>
   );
@@ -340,33 +334,33 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
 
 function MenteeTable({ rows, showAssigned }: { rows: MenteeRequest[]; showAssigned: boolean }) {
   return (
-    <div className="overflow-x-auto -mx-5 px-5">
+    <div className="overflow-x-auto -mx-5 px-5 sm:-mx-6 sm:px-6">
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-white/10">
-            <th className="py-2.5 pr-4 font-semibold">Student</th>
-            <th className="py-2.5 pr-4 font-semibold">Opportunity</th>
-            <th className="py-2.5 pr-4 font-semibold">Type</th>
-            {showAssigned && <th className="py-2.5 pr-4 font-semibold">Mentor</th>}
-            <th className="py-2.5 pr-4 font-semibold">Paid</th>
-            <th className="py-2.5 font-semibold">Date</th>
+            <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Student</th>
+            <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Opportunity</th>
+            <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Type</th>
+            {showAssigned && <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Mentor</th>}
+            <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Paid</th>
+            <th className="py-2.5 font-semibold whitespace-nowrap">Date</th>
           </tr>
         </thead>
         <tbody>
           {rows.map(r => (
             <tr key={r._id} className="border-b border-white/5">
-              <td className="py-3 pr-4">
+              <td className="py-3 pr-4 whitespace-nowrap">
                 <p className="text-gray-200 font-medium">{r.userName || '—'}</p>
                 {r.userEmail && <p className="text-gray-500 text-xs">{r.userEmail}</p>}
               </td>
               <td className="py-3 pr-4">
-                <p className="text-gray-200 max-w-[260px] truncate">{r.opportunityTitle || '—'}</p>
+                <p className="text-gray-200 max-w-[240px] truncate">{r.opportunityTitle || '—'}</p>
                 {r.opportunityOrg && <p className="text-gray-500 text-xs">{r.opportunityOrg}</p>}
               </td>
-              <td className="py-3 pr-4 text-gray-400">{r.opportunityType || '—'}</td>
-              {showAssigned && <td className="py-3 pr-4 text-gray-400">{r.mentorName || 'Unassigned'}</td>}
-              <td className="py-3 pr-4 text-[#84cc16] font-semibold">{formatMoney(r.amount, r.currency)}</td>
-              <td className="py-3 text-gray-500 text-xs">{formatDate(r.createdAt)}</td>
+              <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">{r.opportunityType || '—'}</td>
+              {showAssigned && <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">{r.mentorName || 'Unassigned'}</td>}
+              <td className="py-3 pr-4 text-[#84cc16] font-semibold tabular-nums whitespace-nowrap">{formatMoney(r.amount, r.currency)}</td>
+              <td className="py-3 text-gray-500 text-xs whitespace-nowrap">{formatDate(r.createdAt)}</td>
             </tr>
           ))}
         </tbody>

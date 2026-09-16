@@ -40,59 +40,63 @@ export default function Navbar() {
   const userInitial = user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?';
 
   return (
-    <nav className="border-b border-white/5 bg-[#070e0a]/70 backdrop-blur-2xl sticky top-0 z-50 w-full">
-      <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-8">
-        
+    <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#070e0a]/85 backdrop-blur-md">
+      <div className="section-shell flex h-16 items-center justify-between md:h-20">
+
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 mr-6 group z-50">
-          <div className="bg-[#84cc16] p-2.5 rounded-xl text-[#070e0a] font-bold shadow-[0_0_15px_rgba(132,204,34,0.6)] transition-transform group-hover:scale-110">
+        <Link to="/" className="focus-ring group z-50 mr-6 flex items-center gap-3 rounded-lg">
+          <div className="rounded-xl bg-[#84cc16] p-2.5 text-[#0d1308] font-bold shadow-[0_0_15px_rgba(132,204,34,0.6)] transition-all duration-200 group-hover:scale-110 group-active:scale-95">
             <Radar className="h-6 w-6" />
           </div>
           <div className="flex flex-col">
-            <span className="font-extrabold text-xl tracking-tight text-white leading-none">PrimeOpportunity</span>
+            <span className="text-xl leading-none font-extrabold tracking-tight text-white">PrimeOpportunity</span>
           </div>
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex flex-1 items-center justify-end space-x-6">
-          <div className="w-full flex-1 md:w-auto md:flex-none mr-4">
+        <div className="hidden flex-1 items-center justify-end space-x-6 md:flex">
+          <div className="mr-2 w-full flex-1 md:w-64 md:flex-none">
             <form onSubmit={handleSearchSubmit} className="relative" role="search">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
               <input
                 type="search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search opportunities..."
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-64 sm:focus:w-80 transition-all pl-9"
+                aria-label="Search opportunities"
+                className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-9 pr-4 text-sm text-white transition-all duration-200 placeholder:text-gray-500 focus:border-[#84cc16]/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#84cc16]/25 sm:w-64 sm:focus:w-80"
               />
             </form>
           </div>
-          
-          <Link to="/applications" className={`text-sm font-semibold transition-colors hover:text-white ${currentPath === '/applications' ? 'text-[#84cc16]' : 'text-gray-400'}`}>
-            My Applications
-          </Link>
-          <Link to="/mentors" className={`text-sm font-semibold transition-colors hover:text-white ${currentPath === '/mentors' ? 'text-[#84cc16]' : 'text-gray-400'}`}>
-            Mentors
-          </Link>
-          {isAdmin && (
-            <Link to="/admin" className={`text-sm font-semibold transition-colors hover:text-white ${currentPath === '/admin' ? 'text-[#84cc16]' : 'text-gray-400'}`}>
-              Admin
+
+          {[
+            { to: '/applications', label: 'My Applications' },
+            { to: '/mentors', label: 'Mentors' },
+            { to: '/admin', label: 'Admin', show: isAdmin },
+            { to: '/profile', label: 'Profile' },
+          ].filter(l => l.show !== false).map(link => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`focus-ring rounded-lg px-1 py-2 text-sm font-semibold transition-colors duration-200 ${
+                currentPath === link.to ? 'text-[#84cc16]' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {link.label}
             </Link>
-          )}
-          <Link to="/profile" className={`text-sm font-semibold transition-colors hover:text-white ${currentPath === '/profile' ? 'text-[#84cc16]' : 'text-gray-400'}`}>
-            Profile
-          </Link>
+          ))}
+
           {user ? (
             <>
               <div className="flex items-center gap-2.5 text-sm font-semibold text-gray-300">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#84cc16]/20 border border-[#84cc16]/40 text-[#84cc16] font-bold">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#84cc16]/40 bg-[#84cc16]/20 font-bold text-[#84cc16]">
                   {userInitial}
                 </span>
                 <span className="max-w-[140px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center justify-center gap-2 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:bg-white/5 border border-white/10 h-10 py-2 px-4 transition-colors"
+                className="btn-secondary h-10 px-4"
               >
                 <LogOut className="h-4 w-4" />
                 Log out
@@ -100,85 +104,81 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/login" className="inline-flex items-center justify-center rounded-xl text-sm font-bold transition-colors hover:text-white text-white h-10 py-2 px-4">
-                Log in
-              </Link>
-              <Link to="/register" className="inline-flex items-center justify-center rounded-xl text-sm font-bold transition-all bg-[#84cc16]/20 text-[#84cc16] hover:bg-[#84cc16] hover:text-[#0a0f16] border border-[#84cc16]/50 h-10 py-2 px-6 shadow-[0_0_15px_rgba(132,204,22,0.15)]">
-                Sign up
-              </Link>
+              <Link to="/login" className="btn-secondary h-10 px-4">Log in</Link>
+              <Link to="/register" className="btn-primary h-10 px-6">Sign up</Link>
             </>
           )}
         </div>
 
         {/* Mobile Menu Toggle Button */}
-        <button 
+        <button
           onClick={toggleMobileMenu}
-          className="md:hidden inline-flex items-center justify-center rounded-md text-gray-400 hover:text-white focus:outline-none z-50 h-10 w-10"
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-nav"
+          className="focus-ring z-50 flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 transition-all hover:text-white active:scale-90 md:hidden"
         >
           {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           <span className="sr-only">Toggle Menu</span>
         </button>
       </div>
 
-      {/* Mobile Nav Dropdown */}
+      {/* Mobile Nav Dropdown — solid surface (no backdrop blur over scrolling
+          content, keeps low-end devices smooth) */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-20 left-0 w-full bg-[#070e0a]/95 backdrop-blur-3xl border-b border-white/5 py-6 px-4 flex flex-col gap-6 shadow-2xl z-40">
-          <div className="relative">
-            <form onSubmit={handleSearchSubmit} role="search">
-              <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+        <div id="mobile-nav" className="absolute top-16 right-0 left-0 z-40 flex flex-col gap-2 border-b border-white/5 bg-[#070e0a]/[0.98] px-4 py-5 shadow-2xl md:hidden sm:px-6">
+          <form onSubmit={handleSearchSubmit} role="search" className="mb-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
               <input
                 type="search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search opportunities..."
-                className="flex h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder:text-gray-500 focus:outline-none focus:border-[#84cc16]/50 pl-11"
+                aria-label="Search opportunities"
+                className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.05] pl-11 pr-4 text-base text-white placeholder:text-gray-500 focus:border-[#84cc16]/50 focus:outline-none focus:ring-2 focus:ring-[#84cc16]/25"
               />
-            </form>
-          </div>
-          
-          <div className="flex flex-col gap-4">
-            <Link onClick={toggleMobileMenu} to="/applications" className={`text-lg font-semibold ${currentPath === '/applications' ? 'text-[#84cc16]' : 'text-gray-300'}`}>
-              My Applications
-            </Link>
-            <Link onClick={toggleMobileMenu} to="/mentors" className={`text-lg font-semibold ${currentPath === '/mentors' ? 'text-[#84cc16]' : 'text-gray-300'}`}>
-              Mentors
-            </Link>
-            {isAdmin && (
-              <Link onClick={toggleMobileMenu} to="/admin" className={`text-lg font-semibold ${currentPath === '/admin' ? 'text-[#84cc16]' : 'text-gray-300'}`}>
-                Admin
+            </div>
+          </form>
+
+          <div className="flex flex-col">
+            {[
+              { to: '/applications', label: 'My Applications' },
+              { to: '/mentors', label: 'Mentors' },
+              { to: '/admin', label: 'Admin', show: isAdmin },
+              { to: '/profile', label: 'Profile' },
+            ].filter(l => l.show !== false).map(link => (
+              <Link
+                key={link.to}
+                onClick={toggleMobileMenu}
+                to={link.to}
+                className={`focus-ring rounded-xl px-3 py-3 text-lg font-semibold transition-colors ${
+                  currentPath === link.to ? 'text-[#84cc16]' : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                {link.label}
               </Link>
-            )}
-            <Link onClick={toggleMobileMenu} to="/profile" className={`text-lg font-semibold ${currentPath === '/profile' ? 'text-[#84cc16]' : 'text-gray-300'}`}>
-              Profile
-            </Link>
+            ))}
           </div>
-          
-          <div className="flex flex-col gap-3 mt-4 pt-6 border-t border-white/10">
+
+          <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-5">
             {user ? (
               <>
                 <div className="flex items-center gap-3 px-1">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#84cc16]/20 border border-[#84cc16]/40 text-[#84cc16] font-bold">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#84cc16]/40 bg-[#84cc16]/20 font-bold text-[#84cc16]">
                     {userInitial}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-white font-semibold truncate">{user.displayName || 'User'}</p>
+                    <p className="truncate font-semibold text-white">{user.displayName || 'User'}</p>
                   </div>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl text-base font-bold text-white bg-white/5 border border-white/10 h-12"
-                >
+                <button onClick={handleLogout} className="btn-secondary h-12 text-base">
                   <LogOut className="h-5 w-5" /> Log out
                 </button>
               </>
             ) : (
               <>
-                <Link onClick={toggleMobileMenu} to="/login" className="inline-flex items-center justify-center rounded-xl text-base font-bold text-white bg-white/5 border border-white/10 h-12">
-                  Log in
-                </Link>
-                <Link onClick={toggleMobileMenu} to="/register" className="inline-flex items-center justify-center rounded-xl text-base font-bold bg-[#84cc16] text-[#0a0f16] h-12 shadow-[0_0_15px_rgba(132,204,22,0.3)]">
-                  Sign up
-                </Link>
+                <Link onClick={toggleMobileMenu} to="/login" className="btn-secondary h-12 text-base">Log in</Link>
+                <Link onClick={toggleMobileMenu} to="/register" className="btn-primary h-12 text-base">Sign up</Link>
               </>
             )}
           </div>

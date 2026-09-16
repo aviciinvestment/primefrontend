@@ -78,86 +78,98 @@ export default function WaitlistSection({ launch, loading, onCountChange }: Prop
   };
 
   return (
-    <div className="relative rounded-[2rem] bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.1)] overflow-hidden px-6 py-14 sm:px-12 sm:py-20 text-center">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-2 rounded-full border border-[#84cc16]/30 bg-[#84cc16]/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#84cc16]">
-          <Gift className="h-3.5 w-3.5" /> Coming soon
-        </div>
-        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-gray-300">
-          <Users className="h-3.5 w-3.5 text-[#84cc16]" />
-          {launch?.waitlistCount ?? 0} person{launch?.waitlistCount === 1 ? '' : 's'} on the waitlist
-        </div>
-      </div>
+    <div className="relative overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] px-4 py-12 text-center shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.08)] sm:px-8 md:px-12 md:py-16">
+      {/* Decorative top accent line — premium, compositor-free */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#84cc16]/60 to-transparent" aria-hidden="true"></div>
 
-      <h1 className="mt-8 text-3xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight">
-        Prime Opportunity is <span className="text-[#84cc16]">launching soon</span>
-      </h1>
-      <p className="mx-auto mt-4 max-w-xl text-gray-400 text-base sm:text-lg leading-relaxed">
-        Scholarships, internships, and graduate programs matched to you — with AI guidance to help you apply.
-        Join the waitlist to be the first in when we open the doors.
-      </p>
+      {/* Soft radial glow behind hero content */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(132,204,22,0.06),transparent_60%)]" aria-hidden="true"></div>
 
-      {/* Countdown */}
-      <div className="mt-8 flex items-center justify-center gap-3 sm:gap-4">
-        <div className="flex items-center gap-1.5 mr-2 text-gray-500">
-          <Clock className="h-4 w-4" />
+      <div className="relative z-10">
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <span className="eyebrow">
+            <Gift className="h-3.5 w-3.5" aria-hidden="true" /> Coming soon
+          </span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-gray-300">
+            <Users className="h-3.5 w-3.5 text-[#84cc16]" aria-hidden="true" />
+            {launch?.waitlistCount ?? 0} person{launch?.waitlistCount === 1 ? '' : 's'} on the waitlist
+          </span>
         </div>
-        {[
-          { v: cd.d, l: 'Days' },
-          { v: cd.h, l: 'Hours' },
-          { v: cd.m, l: 'Minutes' },
-          { v: cd.s, l: 'Seconds' },
-        ].map(unit => (
-          <div key={unit.l} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 sm:px-4 py-2.5 sm:py-3">
-            <div className="text-2xl sm:text-3xl font-bold text-white tabular-nums">{unit.v}</div>
-            <div className="text-[10px] uppercase tracking-wider text-gray-500 mt-0.5">{unit.l}</div>
+
+        <h1 className="mx-auto mt-8 max-w-2xl text-3xl leading-tight font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl">
+          Prime Opportunity is <span className="text-[#84cc16]">launching soon</span>
+        </h1>
+        <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-gray-400 sm:text-lg">
+          Scholarships, internships, and graduate programs matched to you — with AI guidance to help you apply.
+          Join the waitlist to be the first in when we open the doors.
+        </p>
+
+        {/* Countdown — fluid grid prevents horizontal overflow at 320px */}
+        <div className="mx-auto mt-8 flex max-w-sm items-start justify-center gap-2 sm:max-w-md sm:gap-3" aria-label="Countdown timer">
+          <div className="mt-1 hidden shrink-0 text-gray-500 sm:block" aria-hidden="true">
+            <Clock className="h-4 w-4" />
           </div>
-        ))}
-      </div>
-
-      {/* Join form */}
-      <div className="mx-auto mt-10 max-w-lg">
-        {joined ? (
-          <div className="rounded-2xl border border-[#84cc16]/40 bg-[#84cc16]/10 p-5 flex items-center gap-3">
-            <CheckCircle2 className="h-6 w-6 text-[#84cc16] shrink-0" />
-            <p className="text-sm text-[#e5ffd9] font-medium">
-              You're on the waitlist{launch?.whatsappGroupUrl ? ' — opening the WhatsApp group…' : ". We'll notify you when we launch."}
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {error && (
-              <div className="rounded-lg border border-rose-400/40 bg-rose-400/10 px-4 py-2.5 text-sm text-rose-300 text-left">
-                {error}
-              </div>
-            )}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="Enter your Gmail address"
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.05] py-3 pl-11 pr-4 text-sm text-white placeholder-gray-500 outline-none focus:border-[#84cc16]/60 focus:ring-1 focus:ring-[#84cc16]/40 transition-colors"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#84cc16] px-6 py-3 text-sm font-bold text-[#0a0f16] shadow-[0_0_15px_rgba(132,204,22,0.35)] transition-all hover:bg-[#a3e635] active:scale-95 disabled:opacity-60"
-              >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <>
-                  Join the waitlist <ArrowRight className="h-4 w-4" />
-                </>}
-              </button>
+          {[
+            { v: cd.d, l: 'Days' },
+            { v: cd.h, l: 'Hrs' },
+            { v: cd.m,  l: 'Min' },
+            { v: cd.s,  l: 'Sec' },
+          ].map(unit => (
+            <div
+              key={unit.l}
+              className="flex min-w-0 flex-1 flex-col items-center rounded-xl border border-white/10 bg-white/[0.03] px-1 py-2.5 transition-colors hover:border-white/20 sm:px-3 sm:py-3"
+            >
+              <span className="w-full truncate text-center text-xl tabular-nums font-bold text-white sm:text-3xl">{unit.v}</span>
+              <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">{unit.l}</span>
             </div>
-            <p className="text-xs text-gray-500">
-              After joining, we'll take you to our WhatsApp community.
-            </p>
-          </form>
-        )}
+          ))}
+        </div>
+
+        {/* Join form */}
+        <div className="mx-auto mt-10 max-w-md">
+          {joined ? (
+            <div className="rounded-2xl border border-[#84cc16]/40 bg-[#84cc16]/10 p-5 text-left" role="status">
+              <CheckCircle2 className="mb-2 h-6 w-6 text-[#84cc16]" aria-hidden="true" />
+              <p className="text-sm font-medium text-[#e5ffd9]">
+                You're on the waitlist{launch?.whatsappGroupUrl ? ' — opening the WhatsApp group…' : ". We'll notify you when we launch."}
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+              {error && (
+                <div className="rounded-xl border border-rose-400/40 bg-rose-400/10 px-4 py-3 text-left text-sm text-rose-300" role="alert" aria-live="polite">
+                  {error}
+                </div>
+              )}
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="relative flex-1">
+                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" aria-hidden="true" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="Enter your Gmail address"
+                    aria-label="Email address"
+                    className="input-base pl-11"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn-primary h-11 shrink-0 px-6 whitespace-nowrap"
+                >
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <>
+                    Join the waitlist <ArrowRight className="h-4 w-4" />
+                  </>}
+                </button>
+              </div>
+              <p className="px-1 text-left text-[11px] text-gray-500">
+                After joining, we'll take you to our WhatsApp community.
+              </p>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

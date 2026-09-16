@@ -119,12 +119,12 @@ export default function MentorshipGuidance() {
 
   if (confirmed) {
     return (
-      <div className="max-w-xl mx-auto py-10">
-        <div className="rounded-2xl glass-card p-6 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
-          <div className="w-16 h-16 mx-auto rounded-full bg-[#84cc16]/15 border border-[#84cc16]/40 flex items-center justify-center mb-5">
+      <div className="w-full max-w-xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+        <div className="card-surface p-6 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+          <div className="w-16 h-16 mx-auto rounded-full bg-[#84cc16]/10 border border-[#84cc16]/30 flex items-center justify-center mb-6 shadow-[0_0_40px_-12px_rgba(132,204,22,0.5)]">
             <CheckCircle2 className="h-8 w-8 text-[#84cc16]" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Request received!</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">Request received!</h1>
           <p className="text-gray-300 text-sm leading-relaxed mb-1">
             Your mentorship guidance request has been submitted for “{title}”.
           </p>
@@ -140,14 +140,14 @@ export default function MentorshipGuidance() {
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-[#84cc16] text-[#0a0f16] font-bold py-2.5 px-5 rounded-lg hover:bg-[#a3e635] transition-colors text-sm"
+                className="btn-primary h-11 px-6 text-sm"
               >
                 Visit the opportunity <ArrowRight className="h-4 w-4" />
               </a>
             )}
             <Link
               to="/"
-              className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-gray-200 font-semibold py-2.5 px-5 rounded-lg hover:bg-white/10 transition-colors text-sm"
+              className="btn-secondary h-11 px-6 text-sm"
             >
               Back to Dashboard
             </Link>
@@ -158,34 +158,34 @@ export default function MentorshipGuidance() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6">
-      <Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm mb-6">
+    <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <Link to="/" className="inline-flex items-center gap-2 text-sm text-gray-400 transition-colors hover:text-white focus-ring rounded-lg mb-6">
         <ArrowLeft className="h-4 w-4" /> Back to opportunities
       </Link>
 
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center">
-            <Handshake className="h-5 w-5 text-primary" />
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 shrink-0 rounded-xl bg-[#84cc16]/10 border border-[#84cc16]/30 flex items-center justify-center">
+            <Handshake className="h-5 w-5 text-[#84cc16]" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">Mentorship Guidance</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Mentorship Guidance</h1>
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className="text-sm sm:text-base leading-relaxed text-gray-400">
           Get a 1-on-1 session with someone already in the industry while you apply.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-5 gap-6">
-        <div className="md:col-span-3 space-y-4">
-          <div className="rounded-2xl glass-card p-5 sm:p-6">
-            <h2 className="text-sm font-bold text-[#84cc16] uppercase tracking-wide mb-3">Opportunity you're applying to</h2>
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+      <div className="grid md:grid-cols-5 gap-6 items-start">
+        <div className="md:col-span-3 space-y-4 min-w-0">
+          <div className="card-surface p-6 sm:p-8">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#84cc16] mb-4">Opportunity you're applying to</h2>
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-9 h-9 shrink-0 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
                 <Briefcase className="h-4 w-4 text-gray-300" />
               </div>
-              <div>
-                <p className="text-white font-semibold leading-snug">{title}</p>
-                {org && <p className="text-gray-400 text-sm mt-0.5">{org}</p>}
+              <div className="min-w-0">
+                <p className="text-white font-semibold leading-snug break-words">{title}</p>
+                {org && <p className="text-gray-400 text-sm mt-1">{org}</p>}
               </div>
             </div>
             {url && (
@@ -193,58 +193,58 @@ export default function MentorshipGuidance() {
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline mt-3"
+                className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-[#84cc16] hover:text-[#a3e635] focus-ring rounded-md transition-colors"
               >
                 View listing <ArrowRight className="h-3 w-3" />
               </a>
             )}
           </div>
 
-          <div className="rounded-2xl glass-card p-5 sm:p-6">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wide mb-4">Your details</h2>
-            <div className="space-y-3">
+          <div className="card-surface p-6 sm:p-8">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-gray-300 mb-4">Your details</h2>
+            <div className="space-y-4">
               <input
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="Full name (optional)"
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-primary transition-colors"
+                className="input-base"
               />
               <input
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="Email (optional, default: your account email)"
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-primary transition-colors"
+                className="input-base"
               />
               <textarea
                 value={note}
                 onChange={e => setNote(e.target.value)}
                 placeholder="Anything the mentor should know? (optional)"
                 rows={3}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-primary transition-colors resize-none"
+                className="input-base resize-none min-h-28 py-3"
               />
             </div>
           </div>
         </div>
 
-        <div className="md:col-span-2">
-          <div className="rounded-2xl glass-card p-5 sm:p-6 sticky top-6">
-            <div className="flex items-center gap-2 mb-2">
-              <GraduationCap className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-bold text-white uppercase tracking-wide">Application Guidance</h2>
+        <div className="md:col-span-2 min-w-0">
+          <div className="card-surface p-6 sm:p-8 sticky top-6">
+            <div className="flex items-center gap-2 mb-3">
+              <GraduationCap className="h-4 w-4 text-[#84cc16]" />
+              <h2 className="text-xs font-bold uppercase tracking-widest text-gray-300">Application Guidance</h2>
             </div>
-            <ul className="text-gray-400 text-xs space-y-2 mb-5">
-              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 text-[#84cc16] shrink-0" /> Review your application so it stands out</li>
-              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 text-[#84cc16] shrink-0" /> 1-on-1 session with an industry mentor</li>
-              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 text-[#84cc16] shrink-0" /> Actionable feedback on your chances & next steps</li>
+            <ul className="space-y-3 mb-6 text-sm leading-relaxed text-gray-400">
+              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 mt-0.5 text-[#84cc16] shrink-0" /> Review your application so it stands out</li>
+              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 mt-0.5 text-[#84cc16] shrink-0" /> 1-on-1 session with an industry mentor</li>
+              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 mt-0.5 text-[#84cc16] shrink-0" /> Actionable feedback on your chances & next steps</li>
             </ul>
-            <div className="flex items-baseline gap-2 mb-5">
+            <div className="flex items-baseline gap-2 mb-6">
               {config ? (
                 <>
-                  <span className="text-3xl font-bold text-white">{formatMoney(config.amount, config.currency)}</span>
+                  <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">{formatMoney(config.amount, config.currency)}</span>
                   <span className="text-gray-500 text-sm">one-time</span>
                 </>
               ) : (
-                <span className="text-3xl font-bold text-white">…</span>
+                <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">…</span>
               )}
             </div>
 
@@ -253,7 +253,7 @@ export default function MentorshipGuidance() {
             <button
               onClick={handlePay}
               disabled={!config || processing}
-              className="w-full flex items-center justify-center gap-2 bg-[#84cc16] text-[#0a0f16] font-bold py-3 rounded-lg hover:bg-[#a3e635] transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full h-12 text-sm"
             >
               {processing ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
@@ -263,7 +263,7 @@ export default function MentorshipGuidance() {
             </button>
 
             {config && !config.paystackPublicKey && (
-              <p className="text-[10px] leading-relaxed text-gray-500 mt-3 border-t border-white/10 pt-3">
+              <p className="text-xs leading-relaxed text-gray-500 mt-4 border-t border-white/10 pt-4">
                 Payments are not enabled yet. Add <span className="font-mono text-gray-400">PAYSTACK_PUBLIC_KEY</span> to the server .env to enable card payments.
               </p>
             )}

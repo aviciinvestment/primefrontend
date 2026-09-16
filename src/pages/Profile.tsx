@@ -267,12 +267,12 @@ export default function Profile() {
 
   const latestCv = cvs.length > 0 ? cvs[0] : null;
   const chip = (_cls: string) =>
-    `inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-gray-300`;
+    `inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-gray-300`;
 
   if (!user) return null;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-12">
+    <div className="section-shell max-w-5xl space-y-6 pb-12">
 
       {/* Transient notice */}
       {notice && (
@@ -289,7 +289,7 @@ export default function Profile() {
       )}
 
       {/* ---- Header ---- */}
-      <div className="flex flex-col justify-between gap-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:flex-row sm:items-center sm:gap-8">
+      <div className="card-surface flex flex-col justify-between gap-6 p-6 sm:p-8 sm:flex-row sm:items-center sm:gap-8">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
           <div className="relative shrink-0">
             {user.photoURL ? (
@@ -307,7 +307,7 @@ export default function Profile() {
               onClick={() => photoInputRef.current?.click()}
               aria-label="Change profile picture"
               title="Change photo"
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#84cc16] text-[#070e0a] border-2 border-[#0a100d] shadow-md transition-all hover:scale-110 active:scale-95"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#84cc16] text-[#070e0a] border-2 border-[#0a100d] shadow-md transition-all hover:scale-110 active:scale-95 focus-ring"
             >
               <Camera className="h-4 w-4" />
             </button>
@@ -315,11 +315,11 @@ export default function Profile() {
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">
+              <h1 className="truncate text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
                 {user.displayName || 'Your Account'}
               </h1>
               {isMentor && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[#84cc16]/40 bg-[#84cc16]/15 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[#84cc16]">
+                <span className="eyebrow">
                   Mentor
                 </span>
               )}
@@ -327,11 +327,11 @@ export default function Profile() {
             <p className="mt-1 text-sm text-gray-400">
               {user.email}
               {user.emailVerified ? (
-                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-[#84cc16]/40 bg-[#84cc16]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#84cc16]">
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-[#84cc16]/30 bg-[#84cc16]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#84cc16]">
                   <CheckCircle2 className="h-3 w-3" /> Verified
                 </span>
               ) : (
-                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-300">
                   Unverified
                 </span>
               )}
@@ -342,11 +342,11 @@ export default function Profile() {
       </div>
 
       {/* ---- Three-column symmetric grid (desktop) ---- */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
         {/* ---- CV card ---- */}
-        <section className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-[16px] font-bold">
+        <section className="card-surface flex h-full flex-col p-6 sm:p-8">
+          <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-white">
             <Briefcase className="h-5 w-5 text-[#84cc16]" /> CV Highlights
           </h2>
 
@@ -400,7 +400,7 @@ export default function Profile() {
                 <button
                   onClick={() => handleCvDownload(latestCv._id)}
                   disabled={cvsBusy !== null}
-                  className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#84cc16] text-[13px] font-bold text-[#070e0a] transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                  className="btn-primary h-11 w-full text-sm"
                 >
                   {cvsBusy === 'download' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   Download CV
@@ -409,7 +409,7 @@ export default function Profile() {
                   <button
                     onClick={() => cvInputRef.current?.click()}
                     disabled={cvsBusy !== null}
-                    className="flex h-9 items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 text-[12px] font-medium text-gray-200 transition-all hover:bg-white/10 disabled:opacity-50"
+                    className="btn-secondary h-11 text-xs"
                   >
                     {cvsBusy === 'change' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                     Change
@@ -417,7 +417,7 @@ export default function Profile() {
                   <button
                     onClick={() => handleCvDelete(latestCv._id)}
                     disabled={cvsBusy !== null}
-                    className="flex h-9 items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 text-[12px] font-medium text-red-400 transition-all hover:bg-red-500/20 disabled:opacity-50"
+                    className="btn-danger h-11 text-xs"
                   >
                     {cvsBusy === 'delete' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                     Delete
@@ -428,7 +428,7 @@ export default function Profile() {
             </div>
           ) : (
             <div className="flex flex-1 flex-col">
-              <p className="text-[13px] leading-relaxed text-gray-500">
+              <p className="text-sm leading-relaxed text-gray-400">
                 Upload a CV from the Dashboard to unlock AI-matched opportunities and see your key roles, skills and education here.
               </p>
             </div>
@@ -436,8 +436,8 @@ export default function Profile() {
         </section>
 
         {/* ---- Mentorship card ---- */}
-        <section className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-[16px] font-bold">
+        <section className="card-surface flex h-full flex-col p-6 sm:p-8">
+          <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-white">
             <GraduationCap className="h-5 w-5 text-[#84cc16]" /> Mentorship
           </h2>
           <div className="flex flex-1 flex-col">
@@ -447,22 +447,22 @@ export default function Profile() {
               </div>
             ) : isMentor && mentorProfile ? (
               <div className="flex flex-1 flex-col gap-4">
-                <p className="text-[13px] leading-relaxed text-gray-400">
+                <p className="text-sm leading-relaxed text-gray-400">
                   You are registered as a mentor on PrimeOpportunity. Students can reach out to you for guidance.
                 </p>
                 <div className="space-y-2">
                   <div>
                     <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-gray-500">Company</p>
-                    <p className="text-[14px] font-semibold text-gray-200">{mentorProfile.company}</p>
+                    <p className="text-sm font-semibold text-gray-200">{mentorProfile.company}</p>
                   </div>
                   <div>
                     <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-gray-500">Role / Industry</p>
-                    <p className="text-[14px] font-semibold text-gray-200">{mentorProfile.roleType}</p>
+                    <p className="text-sm font-semibold text-gray-200">{mentorProfile.roleType}</p>
                   </div>
                 </div>
                 <div className="flex-1">
                   <p className="mb-1 text-[11px] font-medium uppercase tracking-wider text-gray-500">Your Story</p>
-                  <p className="text-[13px] leading-relaxed text-gray-300">{mentorProfile.careerStory}</p>
+                  <p className="text-sm leading-relaxed text-gray-300">{mentorProfile.careerStory}</p>
                 </div>
                 <p className="text-[11px] text-gray-500">Registered {formatDate(mentorProfile.createdAt)}</p>
               </div>
@@ -470,29 +470,29 @@ export default function Profile() {
               <div className="flex flex-1 flex-col">
                 {mentorStatus === 'rejected' ? (
                   <>
-                    <p className="mb-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[12px] text-rose-300">
+                    <p className="mb-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
                       Your mentor application was not accepted. You can re-apply.
                     </p>
                     <button
                       onClick={openMentorModal}
-                      className="mt-auto inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#84cc16] text-[13px] font-bold text-[#070e0a] shadow-[0_0_18px_rgba(132,204,22,0.3)] transition-all hover:scale-[1.02] active:scale-95"
+                      className="mt-auto btn-primary h-11 w-full text-sm"
                     >
                       Re-apply as Mentor
                     </button>
                   </>
                 ) : (
                   <div className="flex flex-1 flex-col gap-4">
-                    <p className="flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-[12px] text-amber-300">
+                    <p className="flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-xs text-amber-300">
                       <Clock className="h-4 w-4 shrink-0" /> Your application is under review. You'll be a mentor once an admin approves it.
                     </p>
                     <div className="space-y-2">
                       <div>
                         <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-gray-500">Company</p>
-                        <p className="text-[14px] font-semibold text-gray-200">{mentorProfile.company}</p>
+                        <p className="text-sm font-semibold text-gray-200">{mentorProfile.company}</p>
                       </div>
                       <div>
                         <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-gray-500">Role / Industry</p>
-                        <p className="text-[14px] font-semibold text-gray-200">{mentorProfile.roleType}</p>
+                        <p className="text-sm font-semibold text-gray-200">{mentorProfile.roleType}</p>
                       </div>
                     </div>
                     <p className="text-[11px] text-gray-500">Submitted {formatDate(mentorProfile.createdAt)}</p>
@@ -501,12 +501,12 @@ export default function Profile() {
               </div>
             ) : (
               <div className="flex flex-1 flex-col">
-                <p className="text-[13px] leading-relaxed text-gray-400">
+                <p className="text-sm leading-relaxed text-gray-400">
                   Share your professional journey to guide students and early-career professionals.
                 </p>
                 <button
                   onClick={openMentorModal}
-                  className="mt-auto inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#84cc16] text-[13px] font-bold text-[#070e0a] shadow-[0_0_18px_rgba(132,204,22,0.3)] transition-all hover:scale-[1.02] active:scale-95"
+                  className="mt-auto btn-primary h-11 w-full text-sm"
                 >
                   Be a Mentor
                 </button>
@@ -516,11 +516,11 @@ export default function Profile() {
         </section>
 
         {/* ---- Account card ---- */}
-        <section className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-[16px] font-bold">
+        <section className="card-surface flex h-full flex-col p-6 sm:p-8">
+          <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-white">
             <UserIcon className="h-5 w-5 text-[#84cc16]" /> Account
           </h2>
-          <dl className="space-y-3 text-[13px]">
+          <dl className="space-y-3 text-sm">
             <div className="flex items-center justify-between gap-3">
               <dt className="text-gray-500">Display name</dt>
               <dd className="truncate font-medium text-gray-200">{user.displayName || '—'}</dd>
@@ -538,15 +538,15 @@ export default function Profile() {
               <dd className="font-medium text-gray-200">{memberSince || '—'}</dd>
             </div>
           </dl>
-          <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-            <h3 className="mb-2 flex items-center gap-2 text-[13px] font-bold">
+          <div className="mt-6 card-surface p-4">
+            <h3 className="mb-2 flex items-center gap-2 text-[13px] font-bold text-white">
               <BookOpen className="h-4 w-4 text-[#84cc16]" /> AI Scout
             </h3>
             <div className="mb-1.5 flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-[#84cc16] animate-pulse"></span>
-              <span className="text-[12px] text-gray-400">Actively scanning for matches</span>
+              <span className="text-xs text-gray-400">Actively scanning for matches</span>
             </div>
-            <p className="text-[12px] text-gray-500">
+            <p className="text-xs text-gray-500">
               The AI Scout reviews new opportunities daily and surfaces the best fits for you.
             </p>
           </div>
@@ -560,46 +560,47 @@ export default function Profile() {
           onClick={() => !saving && setShowModal(false)}
         >
           <div
-            className="relative w-full max-w-lg space-y-5 rounded-2xl border border-white/10 bg-[#0a100d] p-6 shadow-2xl sm:p-8"
+            className="relative w-full max-w-lg space-y-5 rounded-2xl border border-white/10 bg-[#0d1712] bg-gradient-to-b from-white/[0.06] to-transparent p-6 shadow-2xl sm:p-8"
             onClick={e => e.stopPropagation()}
           >
             <button
               onClick={() => !saving && setShowModal(false)}
-              className="absolute right-4 top-4 text-gray-500 transition-colors hover:text-white"
+              className="absolute right-4 top-4 p-1 rounded-lg text-gray-500 transition-colors hover:text-white focus-ring"
+              aria-label="Close"
             >
               <X className="h-5 w-5" />
             </button>
 
             <div>
-              <h2 className="text-xl font-bold">Become a Mentor</h2>
-              <p className="mt-1 text-[13px] text-gray-400">
+              <h2 className="text-xl font-bold text-white">Become a Mentor</h2>
+              <p className="mt-1 text-sm text-gray-400">
                 Your profile will be updated to <span className="font-semibold text-[#84cc16]">Mentor</span> once registered.
               </p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-[12px] font-medium text-gray-400">Company</label>
+                <label className="mb-1 block text-xs font-medium text-gray-400">Company</label>
                 <input
                   value={company}
                   onChange={e => setCompany(e.target.value)}
                   placeholder="e.g. Paystack, KPMG, MTN"
-                  className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-[14px] text-white placeholder:text-gray-500 focus:border-[#84cc16]/60 focus:outline-none focus:ring-1 focus:ring-[#84cc16]/40"
+                  className="input-base"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-[12px] font-medium text-gray-400">Role / Industry</label>
+                <label className="mb-1 block text-xs font-medium text-gray-400">Role / Industry</label>
                 <select
                   value={roleType}
                   onChange={e => setRoleType(e.target.value)}
-                  className="h-11 w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-4 text-[14px] text-white focus:border-[#84cc16]/60 focus:outline-none focus:ring-1 focus:ring-[#84cc16]/40"
+                  className="input-base appearance-none"
                 >
-                  <option value="" disabled className="bg-[#0a100d] text-gray-400">
+                  <option value="" disabled className="bg-[#0d1712] text-gray-400">
                     Select your industry…
                   </option>
                   {ROLE_OPTIONS.map(opt => (
-                    <option key={opt} value={opt} className="bg-[#0a100d] text-white">
+                    <option key={opt} value={opt} className="bg-[#0d1712] text-white">
                       {opt}
                     </option>
                   ))}
@@ -607,7 +608,7 @@ export default function Profile() {
               </div>
 
               <div>
-                <label className="mb-1 block text-[12px] font-medium text-gray-400">
+                <label className="mb-1 block text-xs font-medium text-gray-400">
                   How did you get into this industry?
                 </label>
                 <textarea
@@ -615,9 +616,9 @@ export default function Profile() {
                   onChange={e => setCareerStory(e.target.value)}
                   rows={4}
                   placeholder="Share a brief version of your career journey…"
-                  className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[14px] text-white placeholder:text-gray-500 focus:border-[#84cc16]/60 focus:outline-none focus:ring-1 focus:ring-[#84cc16]/40"
+                  className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-gray-500 transition-all duration-200 focus:border-[#84cc16]/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#84cc16]/25"
                 />
-                <p className="mt-1 text-right text-[11px] text-gray-500">
+                <p className="mt-1 text-right text-[11px] text-gray-500 tabular-nums">
                   {careerStory.length.toLocaleString()} / 2,000
                 </p>
               </div>
@@ -630,7 +631,7 @@ export default function Profile() {
             <button
               onClick={handleMentorRegister}
               disabled={saving}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#84cc16] text-[14px] font-bold text-[#070e0a] transition-all hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+              className="btn-primary h-11 w-full text-sm"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {saving ? 'Registering…' : 'Register as Mentor'}

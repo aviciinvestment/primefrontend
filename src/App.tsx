@@ -19,8 +19,11 @@ const MentorPage = lazy(() => import('./pages/MentorPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 
 const PageLoader = () => (
-  <div className="flex items-center justify-center py-24">
-    <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#84cc16] border-t-transparent" />
+  <div className="flex items-center justify-center py-28" role="status" aria-label="Loading page">
+    <div className="relative h-10 w-10">
+      <div className="absolute inset-0 animate-spin rounded-full border-2 border-[#84cc16]/20 border-t-[#84cc16]" />
+      <div className="absolute inset-2.5 rounded-full border border-[#84cc16]/30 animate-pulse" />
+    </div>
   </div>
 );
 
@@ -42,25 +45,25 @@ function App() {
     <Router>
       <AuthProvider>
         <AuthGate>
-        <div className="min-h-screen bg-[#070e0a] font-sans antialiased text-white relative">
-          {/* Subtle Ambient Green Glow */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-[#070e0a]/50 to-[#070e0a] pointer-events-none z-0"></div>
+        <div className="relative min-h-screen overflow-x-clip bg-[#070e0a] font-sans antialiased text-white selection:bg-[#84cc16]/30">
+          {/* Subtle Ambient Green Glow — static gradient, compositor-cheap */}
+          <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_rgba(132,204,22,0.10),_transparent_60%)]"></div>
 
           {/* Global Grid Line Pattern - Faint Green */}
-          <div 
-            className="absolute inset-0 pointer-events-none z-0"
+          <div
+            className="pointer-events-none absolute inset-0 z-0"
             style={{
               backgroundImage: `
-                linear-gradient(to right, rgba(132, 204, 34, 0.05) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(132, 204, 34, 0.05) 1px, transparent 1px)
+                linear-gradient(to right, rgba(132, 204, 34, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(132, 204, 34, 0.04) 1px, transparent 1px)
               `,
-              backgroundSize: '60px 60px'
+              backgroundSize: '60px 60px',
             }}
           ></div>
 
-          <div className="relative z-10 max-w-[1440px] mx-auto flex flex-col">
+          <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1440px] flex-col">
             <Navbar />
-            <main className="container mx-auto py-6 px-4 md:px-8">
+            <main className="section-shell flex-1 pt-8 pb-16 md:pt-10 md:pb-20">
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />

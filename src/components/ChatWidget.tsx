@@ -272,14 +272,14 @@ export default function ChatWidget() {
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-[95] flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d1410]/95 backdrop-blur-2xl shadow-2xl w-[calc(100vw-2rem)] sm:w-[400px] h-[70vh] sm:h-[560px] max-h-[75vh] fade-in-slide-up">
+        <div className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-[95] flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d1410]/[0.98] backdrop-blur-md shadow-2xl w-[calc(100vw-2rem)] sm:w-[400px] h-[70vh] sm:h-[560px] max-h-[75vh] fade-in-slide-up">
           
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/10 bg-gradient-to-br from-indigo-500 via-purple-500 to-primary">
             <div className="flex items-center gap-3">
               <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/15 border border-white/20">
                 <Bot className="h-5 w-5 text-white" />
-                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-[#84cc16] border-2 border-[#1a1f2e]"></span>
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-[#84cc16] border-2 border-[#070e0a]"></span>
               </div>
               <div>
                 <h3 className="text-sm font-bold text-white leading-tight">PrimeOpportunity AI</h3>

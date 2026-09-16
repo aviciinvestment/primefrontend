@@ -43,36 +43,37 @@ export default function Login() {
   };
 
   return (
-    <div className="flex justify-center py-10 md:py-16">
+    <div className="flex justify-center px-4 py-10 md:py-16">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex bg-[#84cc16] p-3 rounded-2xl text-[#070e0a] shadow-[0_0_25px_rgba(132,204,34,0.5)] mb-4">
+          <div className="mb-4 inline-flex rounded-2xl bg-[#84cc16] p-3 text-[#070e0a] shadow-[0_8px_24px_-10px_rgba(132,204,22,0.8)] ring-1 ring-[#84cc16]/30">
             <Radar className="h-8 w-8" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Welcome back</h1>
-          <p className="text-gray-400 mt-2">Log in to continue your opportunity journey</p>
+          <span className="eyebrow mb-3">Member Access</span>
+          <h1 className="text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-3xl">Welcome back</h1>
+          <p className="mt-2 text-sm leading-relaxed text-gray-400 sm:text-base">Log in to continue your opportunity journey</p>
         </div>
 
-        <div className="glass-card rounded-2xl p-6 md:p-8">
+        <div className="card-surface p-6 sm:p-8">
           {/* Google Button */}
           <button
             onClick={handleGoogle}
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-3 bg-white text-[#1f2937] font-bold py-3 px-4 rounded-xl hover:bg-gray-100 transition-colors disabled:opacity-70"
+            className="focus-ring flex h-11 w-full items-center justify-center gap-3 rounded-xl bg-white font-bold text-[#1f2937] transition-colors hover:bg-gray-100 active:scale-[0.97] disabled:opacity-50"
           >
             <GoogleIcon className="h-5 w-5" />
             Continue with Google
           </button>
 
           {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
+          <div className="flex items-center gap-4 my-6">
             <div className="flex-1 h-px bg-white/10"></div>
             <span className="text-xs text-gray-500 uppercase tracking-wider">or</span>
             <div className="flex-1 h-px bg-white/10"></div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">
                 <Mail className="inline h-4 w-4 mr-1 text-[#84cc16]" /> Email
@@ -83,7 +84,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full h-11 rounded-xl bg-white/5 border border-white/10 px-4 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#84cc16]/60 focus:ring-2 focus:ring-[#84cc16]/20"
+                className="input-base"
               />
             </div>
 
@@ -97,7 +98,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full h-11 rounded-xl bg-white/5 border border-white/10 px-4 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#84cc16]/60 focus:ring-2 focus:ring-[#84cc16]/20"
+                className="input-base"
               />
             </div>
 
@@ -110,7 +111,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full h-11 bg-[#84cc16] text-[#070e0a] font-bold rounded-xl hover:bg-[#84cc16]/90 transition-colors shadow-[0_0_20px_rgba(132,204,22,0.35)] disabled:opacity-70 flex items-center justify-center gap-2"
+              className="btn-primary h-12 w-full"
             >
               {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
               Log In
@@ -119,7 +120,7 @@ export default function Login() {
 
           <p className="text-center text-sm text-gray-400 mt-6">
             Don't have an account?{' '}
-            <Link to="/register" className="text-[#84cc16] font-semibold hover:underline">
+            <Link to="/register" className="focus-ring rounded font-semibold text-[#84cc16] hover:text-[#a3e635] hover:underline">
               Sign up
             </Link>
           </p>

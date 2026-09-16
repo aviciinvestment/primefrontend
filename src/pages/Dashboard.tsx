@@ -93,15 +93,15 @@ function FiltersContent({
   return (
     <>
       <div className="flex items-center justify-between mb-2 pb-4 border-b border-white/10">
-        <h2 className="font-bold text-lg flex items-center gap-2">
-          <Filter className="h-5 w-5 text-primary" /> Filters
+        <h2 className="flex items-center gap-2 text-lg font-bold text-white">
+          <Filter className="h-5 w-5 text-[#84cc16]" /> Filters
         </h2>
-        <button onClick={onResetFilters} className="text-xs text-primary font-medium hover:underline">Reset</button>
+        <button onClick={onResetFilters} className="focus-ring text-xs font-semibold text-[#84cc16] transition-colors hover:text-[#a3e635]">Reset</button>
       </div>
       
       <div className="space-y-6">
         <div>
-          <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wider">Opportunity Type</h3>
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">Opportunity Type</h3>
           <div className="space-y-2">
             {['Scholarship', 'Internship', 'Graduate Trainee', 'Fellowship'].map(type => (
               <label key={type} className="flex items-center gap-3 cursor-pointer group">
@@ -109,16 +109,16 @@ function FiltersContent({
                   type="checkbox" 
                   checked={selectedTypes.includes(type)}
                   onChange={() => onToggleType(type)}
-                  className="w-4 h-4 rounded border-gray-600 text-primary focus:ring-primary accent-primary bg-[#1e1e1e]" 
+                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/[0.06] text-[#84cc16] accent-[#84cc16] focus:ring-2 focus:ring-[#84cc16]/50" 
                 />
-                <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{type}</span>
+                <span className="text-sm font-medium text-gray-300 transition-colors group-hover:text-white">{type}</span>
               </label>
             ))}
           </div>
         </div>
         
         <div>
-          <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wider">Education Level</h3>
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">Education Level</h3>
           <div className="space-y-2">
             {['Undergraduate', 'Final-Year', 'Recent Graduate', 'Postgraduate'].map(level => (
               <label key={level} className="flex items-center gap-3 cursor-pointer group">
@@ -126,9 +126,9 @@ function FiltersContent({
                   type="checkbox" 
                   checked={selectedLevels.includes(level)}
                   onChange={() => onToggleLevel(level)}
-                  className="w-4 h-4 rounded border-gray-600 text-primary focus:ring-primary accent-primary bg-[#1e1e1e]" 
+                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/[0.06] text-[#84cc16] accent-[#84cc16] focus:ring-2 focus:ring-[#84cc16]/50" 
                 />
-                <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{level}</span>
+                <span className="text-sm font-medium text-gray-300 transition-colors group-hover:text-white">{level}</span>
               </label>
             ))}
           </div>
@@ -169,7 +169,7 @@ function AiAdvisorCard({ user, fileInputRef, isAnalyzing, onChangeFile }: AiAdvi
           <button 
             onClick={() => fileInputRef.current?.click()}
             disabled={isAnalyzing}
-            className="bg-[#84cc16] text-[#070e0a] font-bold py-2.5 px-4 rounded-lg text-sm hover:bg-[#84cc16]/90 transition-colors w-full flex items-center justify-center gap-2 disabled:opacity-70 shadow-[0_0_20px_rgba(132,204,22,0.4)]"
+            className="btn-primary h-11 w-full text-sm"
           >
             {isAnalyzing ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing CV...</>
@@ -194,7 +194,7 @@ function AiAdvisorCard({ user, fileInputRef, isAnalyzing, onChangeFile }: AiAdvi
           </p>
           <button 
             onClick={() => window.location.href = '/login'}
-            className="bg-white/10 text-white font-bold py-2.5 px-4 rounded-lg text-sm hover:bg-white/20 transition-colors w-full flex items-center justify-center gap-2 border border-white/20"
+            className="btn-secondary h-11 w-full text-sm"
           >
             Log in to Upload CV
           </button>
@@ -257,7 +257,7 @@ const OpportunityCard = memo(function OpportunityCard({
     <div
       key={opp._id}
       onClick={() => onPromptGuidance(opp)}
-      className={`group flex flex-col glass-card hover:bg-white/10 rounded-2xl p-4 sm:p-6 cursor-pointer transition-all text-center sm:text-left ${record?.clicked ? 'ring-1 ring-[#84cc16]/50 border-[#84cc16]/40' : ''}`}
+      className={`group card-surface card-hover flex flex-col rounded-2xl p-4 sm:p-6 cursor-pointer text-center sm:text-left ${record?.clicked ? 'border-[#84cc16]/40 ring-1 ring-[#84cc16]/50' : ''}`}
     >
       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary mb-4 sm:mb-6 mx-auto sm:mx-0">
         {opp.opportunityType === 'Scholarship' ? <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" /> : <Briefcase className="h-5 w-5 sm:h-6 sm:w-6" />}
@@ -313,7 +313,7 @@ const OpportunityCard = memo(function OpportunityCard({
               className={`inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors ${
                 active
                   ? STATUS_META[status].activeClass
-                  : 'border-white/10 bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                  : 'border-white/10 bg-white/[0.04] text-gray-400 hover:text-white hover:bg-white/10 active:scale-90'
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -874,10 +874,10 @@ export default function Dashboard() {
       <div className="lg:hidden flex items-center gap-2 px-1">
         <button
           onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-          className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors border flex-1 justify-center ${
+          className={`focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors border flex-1 justify-center ${
             selectedTypes.length > 0 || selectedLevels.length > 0
               ? 'bg-[#84cc16] text-[#070e0a] border-[#84cc16]'
-              : 'bg-[#1e1e1e]/80 text-white border-white/10 hover:bg-white/5'
+              : 'bg-white/[0.04] text-white border-white/10 hover:bg-white/[0.08]'
           }`}
         >
           <SlidersHorizontal className="h-4 w-4" />
@@ -892,10 +892,10 @@ export default function Dashboard() {
         {user && (
           <button
             onClick={handleCvFilterToggle}
-            className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors border flex-1 justify-center ${
+            className={`focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors border flex-1 justify-center ${
               cvFilterActive
                 ? 'bg-[#84cc16] text-[#070e0a] border-[#84cc16] shadow-[0_0_15px_rgba(132,204,22,0.4)]'
-                : 'bg-[#1e1e1e]/80 text-white border-white/10 hover:bg-white/5'
+                : 'bg-white/[0.04] text-white border-white/10 hover:bg-white/[0.08]'
             }`}
           >
             <BrainCircuit className="h-4 w-4" />
@@ -906,14 +906,14 @@ export default function Dashboard() {
         <div className="relative flex-1">
           <button 
             onClick={() => setIsSortOpen(!isSortOpen)}
-            className="bg-[#1e1e1e]/80 backdrop-blur-sm border border-white/10 rounded-lg px-3 py-2 text-sm font-medium shadow-sm outline-none hover:bg-white/5 text-white flex items-center justify-center gap-1 w-full"
+            className="bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm font-medium shadow-sm text-white flex items-center justify-center gap-1 w-full transition-all hover:bg-white/[0.08] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60"
           >
             {sortBy}
             <ChevronDown className={`w-4 h-4 transition-transform ${isSortOpen ? 'rotate-180' : ''}`} />
           </button>
           
           {isSortOpen && (
-            <div className="absolute right-0 mt-2 w-full min-w-[160px] bg-[#1a1f2e]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden">
+            <div className="absolute right-0 mt-2 w-full min-w-[160px] bg-[#11160f] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
               {['Best Match', 'Newest', 'Deadline Approaching'].map(option => (
                 <button
                   key={option}
@@ -994,10 +994,10 @@ export default function Dashboard() {
               {user && (
                 <button
                   onClick={handleCvFilterToggle}
-                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors border ${
+                  className={`focus-ring inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors border ${
                     cvFilterActive
                       ? 'bg-[#84cc16] text-[#070e0a] border-[#84cc16] shadow-[0_0_15px_rgba(132,204,22,0.4)]'
-                      : 'bg-[#1e1e1e]/80 text-white border-white/10 hover:bg-white/5'
+                      : 'bg-white/[0.04] text-white border-white/10 hover:bg-white/[0.08]'
                   }`}
                 >
                   <BrainCircuit className="h-4 w-4" />
@@ -1009,14 +1009,14 @@ export default function Dashboard() {
               <div className="relative">
                 <button 
                   onClick={() => setIsSortOpen(!isSortOpen)}
-                  className="bg-[#1e1e1e]/80 backdrop-blur-sm border border-white/10 rounded-lg px-4 py-2 text-sm font-medium shadow-sm outline-none hover:bg-white/5 focus:ring-1 focus:ring-primary text-white flex items-center justify-between min-w-[180px]"
+                  className="bg-white/[0.04] border border-white/10 rounded-lg px-4 py-2 text-sm font-medium shadow-sm text-white flex items-center justify-between min-w-[180px] transition-all hover:bg-white/[0.08] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60"
                 >
                   {sortBy}
                   <svg className={`w-4 h-4 ml-2 transition-transform ${isSortOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 
                 {isSortOpen && (
-                  <div className="absolute right-0 mt-2 w-full min-w-[180px] bg-[#1a1f2e]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-full min-w-[180px] bg-[#11160f] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
                     {['Best Match', 'Newest', 'Deadline Approaching'].map(option => (
                       <button
                         key={option}
@@ -1059,7 +1059,7 @@ export default function Dashboard() {
               {searchQuery && (
                 <button
                   onClick={() => setSearchParams({})}
-                  className="mt-3 inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition-colors"
+                  className="btn-secondary h-10 font-medium"
                 >
                   <X className="h-4 w-4" /> Clear search
                 </button>
@@ -1134,7 +1134,7 @@ export default function Dashboard() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setGuidanceOpp(null)}
           />
-          <div className="relative bg-[#1a1f2e] border border-white/10 rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative border border-white/10 rounded-2xl bg-[#0d1712] p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 sm:p-8 max-w-sm w-full">
             <button
               onClick={() => setGuidanceOpp(null)}
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
@@ -1157,13 +1157,13 @@ export default function Dashboard() {
             <div className="flex flex-col gap-2.5">
               <button
                 onClick={handleGuidanceYes}
-                className="w-full bg-[#84cc16] text-[#0a0f16] font-bold py-2.5 rounded-lg hover:bg-[#a3e635] transition-colors text-sm"
+                className="btn-primary h-11 w-full text-sm"
               >
                 I need guidance
               </button>
               <button
                 onClick={handleGuidanceSkip}
-                className="w-full bg-white/5 border border-white/10 text-gray-200 font-semibold py-2.5 rounded-lg hover:bg-white/10 transition-colors text-sm"
+                className="btn-secondary h-11 w-full text-sm"
               >
                 Skip — take me to the site
               </button>
@@ -1179,7 +1179,7 @@ export default function Dashboard() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setModalOpen(false)}
           />
-          <div className="relative bg-[#1a1f2e] border border-white/10 rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative border border-white/10 rounded-2xl bg-[#0d1712] p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 sm:p-8 max-w-sm w-full">
             <button 
               onClick={() => setModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
@@ -1195,7 +1195,7 @@ export default function Dashboard() {
             <p className="text-gray-300 text-sm leading-relaxed mb-6">{modalMessage}</p>
             <button
               onClick={() => setModalOpen(false)}
-              className="w-full bg-primary text-[#070e0a] font-bold py-2.5 rounded-lg hover:bg-primary/90 transition-colors text-sm"
+              className="btn-primary h-11 w-full text-sm"
             >
               Got it
             </button>
