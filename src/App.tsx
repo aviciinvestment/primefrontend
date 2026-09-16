@@ -5,6 +5,7 @@ import Footer from './components/layout/Footer';
 import EmailVerificationScreen from './components/EmailVerificationScreen';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { BreathingLoader } from './components/BreathingLoader';
 import Dashboard from './pages/Dashboard';
 
 // Route-level code splitting: heavy admin/mentor pages load lazily.
@@ -46,10 +47,7 @@ function DeferredMount({ children }: { children: React.ReactNode }) {
 
 const PageLoader = () => (
   <div className="flex items-center justify-center py-28" role="status" aria-label="Loading page">
-    <div className="relative h-10 w-10">
-      <div className="absolute inset-0 animate-spin rounded-full border-2 border-[#84cc16]/20 border-t-[#84cc16]" />
-      <div className="absolute inset-2.5 rounded-full border border-[#84cc16]/30 animate-pulse" />
-    </div>
+    <BreathingLoader size="lg" dots={3} label="Page loading…" />
   </div>
 );
 

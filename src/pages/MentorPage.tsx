@@ -3,12 +3,12 @@ import {
   CheckCircle2,
   Clock,
   Handshake,
-  Loader2,
   UserPlus,
   Users,
   Wallet,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { BreathingLoader } from '../components/BreathingLoader';
 import { API_BASE } from '../lib/applications';
 import { apiFetch } from '../lib/api';
 
@@ -159,7 +159,7 @@ export default function MentorPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-gray-400">
-          <Loader2 className="h-5 w-5 animate-spin mr-2" /> Loading…
+          <BreathingLoader size="md" dots={3} label="Loading…" />
         </div>
       ) : isApproved && dashboard ? (
         <ApprovedDashboard dashboard={dashboard} mentor={mentor!} />
@@ -277,7 +277,7 @@ function ApplicationFlow(props: {
           disabled={saving}
           className="btn-primary w-full h-11 text-sm"
         >
-          {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</> : <>Submit Application</>}
+          {saving ? <><BreathingLoader size="sm" dots={3} /> Submitting…</> : <>Submit Application</>}
         </button>
       </div>
     </div>

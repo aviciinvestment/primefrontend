@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import {
   X,
   XCircle,
-  Loader2,
   GraduationCap,
   User as UserIcon,
   Briefcase,
@@ -15,6 +14,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { BreathingLoader } from '../components/BreathingLoader';
 import { API_BASE } from '../lib/applications';
 import { apiFetch } from '../lib/api';
 
@@ -352,7 +352,7 @@ export default function Profile() {
 
           {cvsLoading ? (
             <div className="flex items-center gap-2 text-sm text-gray-400">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+              <BreathingLoader size="md" dots={3} /> Loading…
             </div>
           ) : latestCv ? (
             <div className="flex flex-1 flex-col gap-4">
@@ -402,7 +402,7 @@ export default function Profile() {
                   disabled={cvsBusy !== null}
                   className="btn-primary h-11 w-full text-sm"
                 >
-                  {cvsBusy === 'download' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  {cvsBusy === 'download' ? <BreathingLoader size="md" dots={3} /> : <Download className="h-4 w-4" />}
                   Download CV
                 </button>
                 <div className="grid grid-cols-2 gap-2">
@@ -411,7 +411,7 @@ export default function Profile() {
                     disabled={cvsBusy !== null}
                     className="btn-secondary h-11 text-xs"
                   >
-                    {cvsBusy === 'change' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    {cvsBusy === 'change' ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
                     Change
                   </button>
                   <button
@@ -419,7 +419,7 @@ export default function Profile() {
                     disabled={cvsBusy !== null}
                     className="btn-danger h-11 text-xs"
                   >
-                    {cvsBusy === 'delete' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                    {cvsBusy === 'delete' ? <BreathingLoader size="sm" dots={3} /> : <Trash2 className="h-3.5 w-3.5" />}
                     Delete
                   </button>
                 </div>
@@ -443,7 +443,7 @@ export default function Profile() {
           <div className="flex flex-1 flex-col">
             {mentorLoading ? (
               <div className="flex items-center gap-2 text-sm text-gray-400">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+                <BreathingLoader size="md" dots={3} /> Loading…
               </div>
             ) : isMentor && mentorProfile ? (
               <div className="flex flex-1 flex-col gap-4">
@@ -633,7 +633,7 @@ export default function Profile() {
               disabled={saving}
               className="btn-primary h-11 w-full text-sm"
             >
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              {saving && <BreathingLoader size="md" dots={3} />}
               {saving ? 'Registering…' : 'Register as Mentor'}
             </button>
           </div>

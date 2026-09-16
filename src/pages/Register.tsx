@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Radar, UserPlus, Mail, Lock, User, Loader2 } from 'lucide-react';
+import { Radar, UserPlus, Mail, Lock, User } from 'lucide-react';
+import { BreathingLoader } from '../components/BreathingLoader';
 import GoogleIcon from '../components/GoogleIcon';
 
 function validatePassword(pw: string): string | null {
@@ -141,7 +142,7 @@ export default function Register() {
               disabled={submitting}
               className="btn-primary h-12 w-full"
             >
-              {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <UserPlus className="h-5 w-5" />}
+              {submitting ? <BreathingLoader size="md" dots={3} /> : <UserPlus className="h-5 w-5" />}
               Create Account
             </button>
           </form>

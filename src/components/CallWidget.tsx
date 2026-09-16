@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Phone, Mic, MicOff, Volume2, VolumeX, Bot, Loader2 } from 'lucide-react';
+import { Phone, Mic, MicOff, Volume2, VolumeX, Bot } from 'lucide-react';
+import { BreathingLoader } from './BreathingLoader';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../lib/applications';
 import { apiFetch } from '../lib/api';
@@ -362,7 +363,7 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
 
             {/* Status line */}
             <div className="mt-3 flex items-center gap-2 text-[12px] text-white/70">
-              {status === 'thinking' && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#84cc16]" />}
+              {status === 'thinking' && <BreathingLoader size="sm" dots={3} />}
               {isListening && (
                 <span className="flex items-end gap-0.5" aria-hidden>
                   <span className="eq-bar h-2 w-0.5 rounded bg-[#84cc16]"></span>

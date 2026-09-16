@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, Construction, Handshake, Loader2, Rocket, XCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Construction, Handshake, Rocket, XCircle } from 'lucide-react';
+import { BreathingLoader } from '../components/BreathingLoader';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../lib/applications';
 import { apiFetch } from '../lib/api';
@@ -53,7 +54,7 @@ export default function MentorshipInterest() {
       <div className="card-surface p-6 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
         {done ? (
           <div className="flex items-center justify-center gap-3 text-[#84cc16] py-4">
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <BreathingLoader size="lg" dots={3} />
             <span className="font-semibold">
               {fromOpportunity ? 'Taking you to the opportunity...' : 'Redirecting you home...'}
             </span>

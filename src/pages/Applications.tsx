@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, Loader2, MapPin } from 'lucide-react';
+import { ExternalLink, MapPin } from 'lucide-react';
+import { BreathingLoader } from '../components/BreathingLoader';
 import { useAuth } from '../context/AuthContext';
 import {
   STATUSES,
@@ -259,7 +260,7 @@ export default function Applications() {
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center text-gray-400">
-          <Loader2 className="h-6 w-6 animate-spin mr-2" /> Loading your applications...
+          <BreathingLoader size="lg" dots={3} label="Loading your applications..." />
         </div>
       ) : error ? (
         <div className="flex-1 flex items-center justify-center">

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, X, Send, Bot, User as UserIcon, Loader2, Phone, ArrowRight } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User as UserIcon, Phone, ArrowRight } from 'lucide-react';
+import { BreathingLoader } from './BreathingLoader';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE, fetchLaunchStatus, isAdminPreviewEnabled } from '../lib/applications';
 import { apiFetch } from '../lib/api';
@@ -351,7 +352,7 @@ export default function ChatWidget() {
                   <Bot className="h-4 w-4 text-white" />
                 </div>
                 <div className="rounded-2xl rounded-bl-sm bg-white/[0.06] border border-white/10 px-4 py-3 flex items-center gap-1.5">
-                  <Loader2 className="h-4 w-4 text-[#84cc16] animate-spin" />
+                  <BreathingLoader size="sm" dots={3} />
                   <span className="text-sm text-gray-300">Thinking...</span>
                 </div>
               </div>
@@ -378,7 +379,7 @@ export default function ChatWidget() {
                 aria-label="Send message"
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#84cc16] text-[#070e0a] hover:bg-[#84cc16]/90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(132,204,22,0.3)]"
               >
-                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                {isLoading ? <BreathingLoader size="md" dots={3} /> : <Send className="h-5 w-5" />}
               </button>
             </div>
             {user && (

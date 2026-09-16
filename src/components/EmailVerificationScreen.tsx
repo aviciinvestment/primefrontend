@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CheckCircle2, Loader2, LogOut, Mail, RefreshCw, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, LogOut, Mail, RefreshCw, ShieldCheck } from 'lucide-react';
+import { BreathingLoader } from './BreathingLoader';
 import { useAuth } from '../context/AuthContext';
 
 // Full-screen gate: the app is unreachable until the signed-in user's email is
@@ -76,7 +77,7 @@ export default function EmailVerificationScreen() {
               disabled={sending}
               className="btn-primary h-12 w-full"
             >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              {sending ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-4 w-4" />}
               {sending ? 'Sending…' : 'Resend verification email'}
             </button>
 
@@ -85,7 +86,7 @@ export default function EmailVerificationScreen() {
               disabled={checking}
               className="btn-secondary h-12 w-full"
             >
-              {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+              {checking ? <BreathingLoader size="sm" dots={3} /> : <CheckCircle2 className="h-4 w-4" />}
               {checking ? 'Checking…' : "I've verified — continue"}
             </button>
 

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { ArrowRight, CheckCircle2, Clock, Gift, Loader2, Mail, Users } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Clock, Gift, Mail, Users } from 'lucide-react';
+import { BreathingLoader } from './BreathingLoader';
 import { API_BASE, type LaunchStatus } from '../lib/applications';
 
 interface Props {
@@ -159,7 +160,7 @@ export default function WaitlistSection({ launch, loading, onCountChange }: Prop
                   disabled={submitting}
                   className="btn-primary h-11 shrink-0 px-6 whitespace-nowrap"
                 >
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <>
+                  {submitting ? <BreathingLoader size="sm" dots={3} /> : <>
                     Join the waitlist <ArrowRight className="h-4 w-4" />
                   </>}
                 </button>

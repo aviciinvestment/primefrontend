@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, memo } from 'react';
+import { BreathingLoader } from '../components/BreathingLoader';
 import { 
   Search, 
   MapPin, 
@@ -14,7 +15,6 @@ import {
   Filter,
   UploadCloud,
   X,
-  Loader2,
   SlidersHorizontal,
   ChevronDown,
   Handshake,
@@ -234,7 +234,7 @@ function AiAdvisorCard({ user, fileInputRef, isAnalyzing, onChangeFile }: AiAdvi
             className="btn-primary h-11 w-full text-sm"
           >
             {isAnalyzing ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing CV...</>
+              <><BreathingLoader size="sm" dots={3} /> Analyzing CV...</>
             ) : (
               <><UploadCloud className="h-4 w-4" /> Upload CV</>
             )}
@@ -1013,7 +1013,8 @@ export default function Dashboard() {
         setAiAnalysis(data.analysis);
         setLatestCv({ analysis: data.analysis, matches: data.matches });
       } else {
-        openModal('Refresh Failed', data.message || 'Could not refresh your AI match analysis.');
+        console.error('Reanalyze CV failed:', data);
+        openModal('Refresh Failed', `${data.message || 'Could not refresh your AI match analysis.'}${data.error ? `\n\nTechnical detail: ${data.error}` : ''}`);
       }
     } catch {
       openModal('Refresh Failed', 'Network error while refreshing your AI match analysis.');
@@ -1317,7 +1318,7 @@ export default function Dashboard() {
           {loading && page > 1 && (
             <div className="mt-6 sm:mt-8 text-center">
               <div className="inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-gray-400">
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <BreathingLoader size="md" dots={3} />
                 Loading more opportunities...
               </div>
             </div>
@@ -1344,7 +1345,7 @@ export default function Dashboard() {
                   title="Re-run the analysis against the latest opportunities"
                   className="inline-flex items-center gap-1.5 h-9 rounded-lg bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3 transition-all duration-200 active:scale-[0.97] hover:bg-[#84cc16]/20 disabled:pointer-events-none disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60"
                 >
-                  <RefreshCw className={`h-3.5 w-3.5 ${aiRefreshing ? 'animate-spin' : ''}`} />
+                  {aiRefreshing ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
                   {aiRefreshing ? 'Refreshing…' : 'Refresh analysis'}
                 </button>
                 <button

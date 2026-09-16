@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Briefcase, CheckCircle2, GraduationCap, Handshake, Loader2, Lock, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Briefcase, CheckCircle2, GraduationCap, Handshake, Lock, ShieldCheck } from 'lucide-react';
+import { BreathingLoader } from '../components/BreathingLoader';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../lib/applications';
 import { apiFetch } from '../lib/api';
@@ -256,7 +257,7 @@ export default function MentorshipGuidance() {
               className="btn-primary w-full h-12 text-sm"
             >
               {processing ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
+                <><BreathingLoader size="sm" dots={3} /> Processing…</>
               ) : (
                 <><Lock className="h-4 w-4" /> Pay & Apply for Guidance</>
               )}

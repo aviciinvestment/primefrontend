@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Radar, LogIn, Mail, Lock, Loader2 } from 'lucide-react';
+import { Radar, LogIn, Mail, Lock } from 'lucide-react';
+import { BreathingLoader } from '../components/BreathingLoader';
 import GoogleIcon from '../components/GoogleIcon';
 
 export default function Login() {
@@ -113,7 +114,7 @@ export default function Login() {
               disabled={submitting}
               className="btn-primary h-12 w-full"
             >
-              {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
+              {submitting ? <BreathingLoader size="md" dots={3} /> : <LogIn className="h-5 w-5" />}
               Log In
             </button>
           </form>

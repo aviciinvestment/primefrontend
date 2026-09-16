@@ -202,6 +202,27 @@
 .animate-float-3 { animation: float-3 6s ease-in-out infinite; }
 .animate-float-4 { animation: float-4 7s ease-in-out infinite; }
 
+/* Breathing loader: a soft inhale/exhale pulse used anywhere a component is
+   waiting on the server (busy buttons, loading sections, chat "thinking").
+   Dots/children can stagger with inline animation-delay. */
+@keyframes breath {
+  0%, 100% { transform: scale(1); opacity: 0.45; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+.animate-breath {
+  animation: breath 1.6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Slower, ambient breath for placeholder/skeleton blocks. */
+@keyframes breath-soft {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.75; }
+}
+.animate-breath-soft {
+  animation: breath-soft 2.2s ease-in-out infinite;
+}
+
 @keyframes fall {
   0% { transform: translateY(-50px) rotate(0deg); opacity: 0; }
   10% { opacity: 0.35; }
