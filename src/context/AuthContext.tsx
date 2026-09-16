@@ -79,15 +79,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, [syncAppUser]);
 
-  const refreshRole = async () => {
+  const refreshRole = useCallback(async () => {
     if (user) await syncAppUser(user);
-  };
+  }, [user, syncAppUser]);
 
-  const logInWithEmail = async (email: string, password: string) => {
+  const logInWithEmail = useCallback(async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
-  };
+  }, []);
 
-  const registerWithEmail = async (email: string, password: string, displayName: string) => {
+  const registerWithEmail = useCallback(async (email: string, password: string, displayName: string) => {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     if (displayName.trim()) {
       await updateProfile(credential.user, { displayName: displayName.trim() });
@@ -96,37 +96,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sendEmailVerification(credential.user).catch(() => {
       /* verification email is best-effort */
     });
-  };
+  }, []);
 
-  const logInWithGoogle = async () => {
+  const logInWithGoogle = useCallback(async () => {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
-  };
+  }, []);
 
-  const resendVerificationEmail = async () => {
+  const resendVerificationEmail = useCallback(async () => {
     if (!auth.currentUser) throw new Error('No user is signed in.');
     await sendEmailVerification(auth.currentUser);
-  };
+  }, []);
 
   // Refresh the Firebase user in place (e.g. after clicking the verification
   // link, so `emailVerified` flips to true without a full page reload).
-  const reloadUser = async () => {
+  const reloadUser = useCallback(async () => {
     if (auth.currentUser) {
       await auth.currentUser.reload();
       setUser({ ...auth.currentUser });
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await signOut(auth);
-  };
+  }, []);
 
-  const updatePhoto = async (photoURL: string) => {
+  const updatePhoto = useCallback(async (photoURL: string) => {
     if (auth.currentUser) {
       await updateProfile(auth.currentUser, { photoURL });
       setUser({ ...auth.currentUser });
     }
-  };
+  }, []);
 
   const authValue = useMemo(() => ({
     user,

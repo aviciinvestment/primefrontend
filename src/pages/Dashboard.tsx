@@ -53,8 +53,12 @@ function TypewriterHeading() {
     let i = 0;
     const intervalId = setInterval(() => {
       i += 1;
+      if (i > HERO_TEXT.length) {
+        clearInterval(intervalId);
+        setText(HERO_TEXT);
+        return;
+      }
       setText(HERO_TEXT.substring(0, i));
-      if (i > HERO_TEXT.length + 30) { i = 0; }
     }, 70);
     return () => clearInterval(intervalId);
   }, []);
@@ -65,6 +69,141 @@ function TypewriterHeading() {
       <span className="text-[#84cc16]">{second || ''}</span>
       <span className="animate-pulse font-light text-[#84cc16]">|</span>
     </>
+  );
+}
+
+// Defined at module scope (not inside Dashboard) so React sees a stable
+// component identity — previously the inline arrow functions unmounted and
+// remounted their subtrees on every parent render.
+interface FiltersContentProps {
+  selectedTypes: string[];
+  selectedLevels: string[];
+  onToggleType: (type: string) => void;
+  onToggleLevel: (level: string) => void;
+  onResetFilters: () => void;
+}
+
+function FiltersContent({
+  selectedTypes,
+  selectedLevels,
+  onToggleType,
+  onToggleLevel,
+  onResetFilters,
+}: FiltersContentProps) {
+  return (
+    <>
+      <div className="flex items-center justify-between mb-2 pb-4 border-b border-white/10">
+        <h2 className="font-bold text-lg flex items-center gap-2">
+          <Filter className="h-5 w-5 text-primary" /> Filters
+        </h2>
+        <button onClick={onResetFilters} className="text-xs text-primary font-medium hover:underline">Reset</button>
+      </div>
+      
+      <div className="space-y-6">
+        <div>
+          <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wider">Opportunity Type</h3>
+          <div className="space-y-2">
+            {['Scholarship', 'Internship', 'Graduate Trainee', 'Fellowship'].map(type => (
+              <label key={type} className="flex items-center gap-3 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  checked={selectedTypes.includes(type)}
+                  onChange={() => onToggleType(type)}
+                  className="w-4 h-4 rounded border-gray-600 text-primary focus:ring-primary accent-primary bg-[#1e1e1e]" 
+                />
+                <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{type}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        
+        <div>
+          <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wider">Education Level</h3>
+          <div className="space-y-2">
+            {['Undergraduate', 'Final-Year', 'Recent Graduate', 'Postgraduate'].map(level => (
+              <label key={level} className="flex items-center gap-3 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  checked={selectedLevels.includes(level)}
+                  onChange={() => onToggleLevel(level)}
+                  className="w-4 h-4 rounded border-gray-600 text-primary focus:ring-primary accent-primary bg-[#1e1e1e]" 
+                />
+                <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{level}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+interface AiAdvisorCardProps {
+  user: { uid: string } | null;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  isAnalyzing: boolean;
+  onChangeFile: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function AiAdvisorCard({ user, fileInputRef, isAnalyzing, onChangeFile }: AiAdvisorCardProps) {
+  return (
+    user ? (
+      <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-primary rounded-2xl p-5 sm:p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <BrainCircuit className="h-5 w-5 sm:h-6 sm:w-6" />
+            <h3 className="font-bold text-base sm:text-lg">AI Career Advisor</h3>
+          </div>
+          <p className="text-white/80 text-xs sm:text-sm mb-4">
+            Upload your CV (PDF) and our AI will analyze your profile to find perfect matches.
+          </p>
+          
+          <input 
+            type="file" 
+            accept=".pdf" 
+            className="hidden" 
+            ref={fileInputRef} 
+            onChange={onChangeFile} 
+          />
+          
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isAnalyzing}
+            className="bg-[#84cc16] text-[#070e0a] font-bold py-2.5 px-4 rounded-lg text-sm hover:bg-[#84cc16]/90 transition-colors w-full flex items-center justify-center gap-2 disabled:opacity-70 shadow-[0_0_20px_rgba(132,204,22,0.4)]"
+          >
+            {isAnalyzing ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing CV...</>
+            ) : (
+              <><UploadCloud className="h-4 w-4" /> Upload CV</>
+            )}
+          </button>
+        </div>
+        <div className="absolute -right-4 -bottom-4 opacity-10">
+          <BrainCircuit className="h-32 w-32" />
+        </div>
+      </div>
+    ) : (
+      <div className="bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-primary/20 rounded-2xl p-5 sm:p-6 text-white shadow-lg relative overflow-hidden border border-white/10">
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <BrainCircuit className="h-5 w-5 sm:h-6 sm:w-6" />
+            <h3 className="font-bold text-base sm:text-lg">AI Career Advisor</h3>
+          </div>
+          <p className="text-white/80 text-xs sm:text-sm mb-4">
+            Upload your CV (PDF) and our AI will analyze your profile to find perfect matches.
+          </p>
+          <button 
+            onClick={() => window.location.href = '/login'}
+            className="bg-white/10 text-white font-bold py-2.5 px-4 rounded-lg text-sm hover:bg-white/20 transition-colors w-full flex items-center justify-center gap-2 border border-white/20"
+          >
+            Log in to Upload CV
+          </button>
+        </div>
+        <div className="absolute -right-4 -bottom-4 opacity-10">
+          <BrainCircuit className="h-32 w-32" />
+        </div>
+      </div>
+    )
   );
 }
 
@@ -459,113 +598,6 @@ export default function Dashboard() {
     setPage(1);
   };
 
-  const FiltersContent = () => (
-    <>
-      <div className="flex items-center justify-between mb-2 pb-4 border-b border-white/10">
-        <h2 className="font-bold text-lg flex items-center gap-2">
-          <Filter className="h-5 w-5 text-primary" /> Filters
-        </h2>
-        <button onClick={handleResetFilters} className="text-xs text-primary font-medium hover:underline">Reset</button>
-      </div>
-      
-      <div className="space-y-6">
-        <div>
-          <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wider">Opportunity Type</h3>
-          <div className="space-y-2">
-            {['Scholarship', 'Internship', 'Graduate Trainee', 'Fellowship'].map(type => (
-              <label key={type} className="flex items-center gap-3 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  checked={selectedTypes.includes(type)}
-                  onChange={() => toggleType(type)}
-                  className="w-4 h-4 rounded border-gray-600 text-primary focus:ring-primary accent-primary bg-[#1e1e1e]" 
-                />
-                <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{type}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-        
-        <div>
-          <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wider">Education Level</h3>
-          <div className="space-y-2">
-            {['Undergraduate', 'Final-Year', 'Recent Graduate', 'Postgraduate'].map(level => (
-              <label key={level} className="flex items-center gap-3 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  checked={selectedLevels.includes(level)}
-                  onChange={() => toggleLevel(level)}
-                  className="w-4 h-4 rounded border-gray-600 text-primary focus:ring-primary accent-primary bg-[#1e1e1e]" 
-                />
-                <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">{level}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-
-  const AiAdvisorCard = () => (
-    user ? (
-      <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-primary rounded-2xl p-5 sm:p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <BrainCircuit className="h-5 w-5 sm:h-6 sm:w-6" />
-            <h3 className="font-bold text-base sm:text-lg">AI Career Advisor</h3>
-          </div>
-          <p className="text-white/80 text-xs sm:text-sm mb-4">
-            Upload your CV (PDF) and our AI will analyze your profile to find perfect matches.
-          </p>
-          
-          <input 
-            type="file" 
-            accept=".pdf" 
-            className="hidden" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-          />
-          
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isAnalyzing}
-            className="bg-[#84cc16] text-[#070e0a] font-bold py-2.5 px-4 rounded-lg text-sm hover:bg-[#84cc16]/90 transition-colors w-full flex items-center justify-center gap-2 disabled:opacity-70 shadow-[0_0_20px_rgba(132,204,22,0.4)]"
-          >
-            {isAnalyzing ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Analyzing CV...</>
-            ) : (
-              <><UploadCloud className="h-4 w-4" /> Upload CV</>
-            )}
-          </button>
-        </div>
-        <div className="absolute -right-4 -bottom-4 opacity-10">
-          <BrainCircuit className="h-32 w-32" />
-        </div>
-      </div>
-    ) : (
-      <div className="bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-primary/20 rounded-2xl p-5 sm:p-6 text-white shadow-lg relative overflow-hidden border border-white/10">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <BrainCircuit className="h-5 w-5 sm:h-6 sm:w-6" />
-            <h3 className="font-bold text-base sm:text-lg">AI Career Advisor</h3>
-          </div>
-          <p className="text-white/80 text-xs sm:text-sm mb-4">
-            Upload your CV (PDF) and our AI will analyze your profile to find perfect matches.
-          </p>
-          <button 
-            onClick={() => window.location.href = '/login'}
-            className="bg-white/10 text-white font-bold py-2.5 px-4 rounded-lg text-sm hover:bg-white/20 transition-colors w-full flex items-center justify-center gap-2 border border-white/20"
-          >
-            Log in to Upload CV
-          </button>
-        </div>
-        <div className="absolute -right-4 -bottom-4 opacity-10">
-          <BrainCircuit className="h-32 w-32" />
-        </div>
-      </div>
-    )
-  );
-
   const showWaitlist = launch ? !launch.launched && !adminPreview : true;
   const showWelcome = !!launch?.launched && !!launch.welcomeUntil && new Date(launch.welcomeUntil).getTime() >= Date.now();
 
@@ -695,7 +727,7 @@ export default function Dashboard() {
 
       {/* Mobile: CV Upload at top (visible only on lg below) */}
       <div className="lg:hidden">
-        <AiAdvisorCard />
+        <AiAdvisorCard user={user} fileInputRef={fileInputRef} isAnalyzing={isAnalyzing} onChangeFile={handleFileUpload} />
       </div>
 
       {/* Mobile: Filter & Sort Bar */}
@@ -762,7 +794,13 @@ export default function Dashboard() {
       {/* Mobile: Collapsible Filters Panel */}
       {mobileFiltersOpen && (
         <div className="lg:hidden glass-card rounded-2xl p-4 sm:p-5 space-y-4">
-          <FiltersContent />
+          <FiltersContent
+            selectedTypes={selectedTypes}
+            selectedLevels={selectedLevels}
+            onToggleType={toggleType}
+            onToggleLevel={toggleLevel}
+            onResetFilters={handleResetFilters}
+          />
         </div>
       )}
 
@@ -772,11 +810,17 @@ export default function Dashboard() {
         {/* Left Sidebar - Filters & AI Advisor (desktop only) */}
         <div className="hidden lg:block col-span-1 space-y-6">
           <div className="glass-card rounded-2xl p-6 sticky top-24 space-y-6">
-            <FiltersContent />
+            <FiltersContent
+            selectedTypes={selectedTypes}
+            selectedLevels={selectedLevels}
+            onToggleType={toggleType}
+            onToggleLevel={toggleLevel}
+            onResetFilters={handleResetFilters}
+          />
           </div>
 
           {/* AI Advisor Card (desktop) */}
-          <AiAdvisorCard />
+          <AiAdvisorCard user={user} fileInputRef={fileInputRef} isAnalyzing={isAnalyzing} onChangeFile={handleFileUpload} />
         </div>
         
         {/* Right Content - Feed */}
