@@ -14,4 +14,23 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Split vendor libraries so the main entry stays small, and so browser
+        // caches survive individual dependency upgrades.
+        manualChunks(id) {
+          if (id.includes('node_modules/firebase/')) return 'firebase';
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/react-router')
+          ) {
+            return 'react-vendor';
+          }
+          if (id.includes('node_modules/lucide-react')) return 'icons';
+        },
+      },
+    },
+  },
 })

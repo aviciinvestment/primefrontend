@@ -116,8 +116,13 @@ export const STATUS_META: Record<ApplicationStatus, { label: string; icon: Lucid
   },
 };
 
-export async function fetchApplications(userId: string): Promise<ApplicationRecord[]> {
-  const res = await apiFetch(`${API_BASE}/applications?userId=${encodeURIComponent(userId)}`);
+export async function fetchApplications(
+  userId: string,
+  opts?: { signal?: AbortSignal }
+): Promise<ApplicationRecord[]> {
+  const res = await apiFetch(`${API_BASE}/applications?userId=${encodeURIComponent(userId)}`, {
+    signal: opts?.signal,
+  });
   const data = await res.json();
   if (!data.success) throw new Error(data.message || 'Failed to fetch applications');
   return data.data;

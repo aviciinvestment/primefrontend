@@ -78,7 +78,7 @@ export default function WaitlistSection({ launch, loading, onCountChange }: Prop
   };
 
   return (
-    <div className="relative rounded-[2rem] bg-white/[0.02] backdrop-blur-[50px] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.1)] overflow-hidden px-6 py-14 sm:px-12 sm:py-20 text-center">
+    <div className="relative rounded-[2rem] bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.1)] overflow-hidden px-6 py-14 sm:px-12 sm:py-20 text-center">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-2 rounded-full border border-[#84cc16]/30 bg-[#84cc16]/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#84cc16]">
           <Gift className="h-3.5 w-3.5" /> Coming soon

@@ -45,6 +45,10 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
   const recognitionRef = useRef<any>(null);
   const silenceTimerRef = useRef<number | null>(null);
   const dispatchingRef = useRef(false);
+  // Tracks whether the component is still mounted so async callbacks scheduled
+  // by the speech engine (resumeAfterReply, recognition restart timers) can bail
+  // out instead of re-creating the mic instance after the widget unmounts.
+  const mountedRef = useRef(true);
 
   const setStatusBoth = useCallback((s: CallStatus) => {
     statusRef.current = s;
@@ -103,12 +107,14 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
   const stopSpeaking = () => window.speechSynthesis?.cancel();
 
   const resumeAfterReply = () => {
+    if (!mountedRef.current) return;
     setStatusBoth('connected');
     if (!muted && !micBlocked) startListening();
   };
 
   // ---------- Speech recognition ----------
   const startListening = () => {
+    if (!mountedRef.current) return;
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR || statusRef.current === 'ended' || dispatchingRef.current || micBlocked) return;
 
@@ -145,6 +151,7 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
           dispatchSpeech();
         } else {
           window.setTimeout(() => {
+            if (!mountedRef.current) return;
             if (statusRef.current === 'connected' && !micBlocked) {
               try {
                 recognitionRef.current?.start();
@@ -259,8 +266,19 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
 
   useEffect(() => {
     return () => {
+      // Guaranteed cleanup on ANY unmount (not just the End-call button) so the
+      // native speech recognition instance is fully stopped/aborted and the mic
+      // is released. speechSynthesis is cancelled too so no utterance keeps
+      // playing after the widget closes.
+      mountedRef.current = false;
       stopSpeaking();
       clearSilenceTimer();
+      try {
+        recognitionRef.current?.abort();
+      } catch {
+        /* ignore */
+      }
+      recognitionRef.current = null;
     };
   }, []);
 

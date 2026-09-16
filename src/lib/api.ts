@@ -2,7 +2,7 @@
 // current Firebase ID token, and every API call goes through apiFetch so the
 // Authorization header is attached automatically (per the server's C2/C3 fix).
 
-import { auth } from './firebase';
+import { getFirebase, wakeFirebase } from './firebase';
 
 type TokenGetter = () => Promise<string | null>;
 
@@ -15,14 +15,17 @@ export const setAuthTokenGetter = (getter: TokenGetter | null): void => {
 // Resolve a current ID token. Prefers the registered getter, but falls back
 // to the live Firebase session so calls made before the getter-effect runs
 // (e.g. the auth-sync + dashboard fetches on first render) still authenticate.
+// Firebase is bootstrapped lazily on demand (never at page load).
 export const getAuthToken = async (): Promise<string | null> => {
   if (tokenGetter) return tokenGetter();
-  if (auth.currentUser) {
-    try {
+  wakeFirebase();
+  try {
+    const { auth } = await getFirebase();
+    if (auth.currentUser) {
       return await auth.currentUser.getIdToken(false);
-    } catch {
-      return null;
     }
+  } catch {
+    return null;
   }
   return null;
 };

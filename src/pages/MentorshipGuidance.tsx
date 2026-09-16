@@ -108,9 +108,7 @@ export default function MentorshipGuidance() {
         handler.openIframe();
         setProcessing(false);
       } else {
-        const ref = `DEMO-${Date.now()}`;
-        await submitRequest('demo', ref);
-        setConfirmed({ reference: ref });
+        setError('Payments are not enabled yet. Please try again later.');
       }
     } catch (err: any) {
       setError(err?.message || 'Payment failed. Please try again.');
@@ -266,7 +264,7 @@ export default function MentorshipGuidance() {
 
             {config && !config.paystackPublicKey && (
               <p className="text-[10px] leading-relaxed text-gray-500 mt-3 border-t border-white/10 pt-3">
-                Demo mode — no live payment is taken. Add <span className="font-mono text-gray-400">PAYSTACK_PUBLIC_KEY</span> to the server .env to enable real card payments.
+                Payments are not enabled yet. Add <span className="font-mono text-gray-400">PAYSTACK_PUBLIC_KEY</span> to the server .env to enable card payments.
               </p>
             )}
           </div>
