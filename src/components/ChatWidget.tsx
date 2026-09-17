@@ -377,9 +377,11 @@ export default function ChatWidget() {
                 onClick={handleSend}
                 disabled={isLoading || !input.trim()}
                 aria-label="Send message"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#84cc16] text-[#070e0a] hover:bg-[#84cc16]/90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(132,204,22,0.3)]"
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#84cc16] text-[#070e0a] transition-all shadow-[0_0_15px_rgba(132,204,22,0.3)] ${
+                  isLoading ? 'btn-busy cursor-wait' : 'hover:bg-[#84cc16]/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed'
+                }`}
               >
-                {isLoading ? <BreathingLoader size="md" dots={3} /> : <Send className="h-5 w-5" />}
+                {isLoading ? <BreathingLoader size="md" dots={3} tone="dark" /> : <Send className="h-5 w-5" />}
               </button>
             </div>
             {user && (

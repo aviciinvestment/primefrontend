@@ -140,7 +140,7 @@ export default function Register() {
             <button
               type="submit"
               disabled={submitting}
-              className="btn-primary h-12 w-full"
+              className="btn-primary btn-busy h-12 w-full"
             >
               {submitting ? <BreathingLoader size="md" dots={3} /> : <UserPlus className="h-5 w-5" />}
               Create Account

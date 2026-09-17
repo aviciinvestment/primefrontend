@@ -254,10 +254,10 @@ export default function MentorshipGuidance() {
             <button
               onClick={handlePay}
               disabled={!config || processing}
-              className="btn-primary w-full h-12 text-sm"
+              className="btn-primary btn-busy w-full h-12 text-sm"
             >
               {processing ? (
-                <><BreathingLoader size="sm" dots={3} /> Processing…</>
+                <><BreathingLoader size="sm" dots={3} tone="dark" /> Processing…</>
               ) : (
                 <><Lock className="h-4 w-4" /> Pay & Apply for Guidance</>
               )}

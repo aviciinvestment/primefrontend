@@ -322,7 +322,7 @@ export default function AdminPage() {
               <button
                 onClick={handleSyncNow}
                 disabled={syncBusy}
-                className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] btn-busy disabled:pointer-events-none disabled:opacity-60"
               >
                 {syncBusy ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
                 {syncBusy ? 'Syncing…' : 'Sync Now'}
@@ -367,9 +367,9 @@ export default function AdminPage() {
                   <button
                     onClick={handleAddOpportunity}
                     disabled={addBusy}
-                    className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16] text-[#070e0a] text-xs font-bold px-4 transition-all duration-200 active:scale-[0.97] hover:brightness-110 disabled:pointer-events-none disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16] text-[#070e0a] text-xs font-bold px-4 transition-all duration-200 active:scale-[0.97] hover:brightness-110 btn-busy disabled:pointer-events-none disabled:opacity-60"
                   >
-                    {addBusy ? <><BreathingLoader size="sm" dots={3} /> Creating…</> : <><PlusCircle className="h-3.5 w-3.5" /> Create opportunity</>}
+                    {addBusy ? <><BreathingLoader size="sm" dots={3} tone="dark" /> Creating…</> : <><PlusCircle className="h-3.5 w-3.5" /> Create opportunity</>}
                   </button>
                 </div>
               </div>

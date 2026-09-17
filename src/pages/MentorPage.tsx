@@ -275,9 +275,9 @@ function ApplicationFlow(props: {
         <button
           onClick={onSubmit}
           disabled={saving}
-          className="btn-primary w-full h-11 text-sm"
+          className="btn-primary btn-busy w-full h-11 text-sm"
         >
-          {saving ? <><BreathingLoader size="sm" dots={3} /> Submitting…</> : <>Submit Application</>}
+          {saving ? <><BreathingLoader size="sm" dots={3} tone="dark" /> Submitting…</> : <>Submit Application</>}
         </button>
       </div>
     </div>

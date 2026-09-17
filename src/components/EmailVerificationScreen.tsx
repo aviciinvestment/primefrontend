@@ -75,16 +75,16 @@ export default function EmailVerificationScreen() {
             <button
               onClick={resend}
               disabled={sending}
-              className="btn-primary h-12 w-full"
+              className="btn-primary btn-busy h-12 w-full"
             >
-              {sending ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-4 w-4" />}
+              {sending ? <BreathingLoader size="sm" dots={3} tone="dark" /> : <RefreshCw className="h-4 w-4" />}
               {sending ? 'Sending…' : 'Resend verification email'}
             </button>
 
             <button
               onClick={checkNow}
               disabled={checking}
-              className="btn-secondary h-12 w-full"
+              className="btn-secondary btn-busy h-12 w-full"
             >
               {checking ? <BreathingLoader size="sm" dots={3} /> : <CheckCircle2 className="h-4 w-4" />}
               {checking ? 'Checking…' : "I've verified — continue"}

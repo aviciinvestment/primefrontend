@@ -403,16 +403,16 @@ export default function Profile() {
                 <button
                   onClick={() => handleCvDownload(latestCv._id)}
                   disabled={cvsBusy !== null}
-                  className="btn-primary h-11 w-full text-sm"
+                  className={`btn-primary btn-busy h-11 w-full text-sm`}
                 >
-                  {cvsBusy === 'download' ? <BreathingLoader size="md" dots={3} /> : <Download className="h-4 w-4" />}
+                  {cvsBusy === 'download' ? <BreathingLoader size="md" dots={3} tone="dark" /> : <Download className="h-4 w-4" />}
                   Download CV
                 </button>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => cvInputRef.current?.click()}
                     disabled={cvsBusy !== null}
-                    className="btn-secondary h-11 text-xs"
+                    className={`btn-secondary btn-busy h-11 text-xs`}
                   >
                     {cvsBusy === 'change' ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
                     Change
@@ -420,7 +420,7 @@ export default function Profile() {
                   <button
                     onClick={() => handleCvDelete(latestCv._id)}
                     disabled={cvsBusy !== null}
-                    className="btn-danger h-11 text-xs"
+                    className={`btn-danger btn-busy h-11 text-xs`}
                   >
                     {cvsBusy === 'delete' ? <BreathingLoader size="sm" dots={3} /> : <Trash2 className="h-3.5 w-3.5" />}
                     Delete

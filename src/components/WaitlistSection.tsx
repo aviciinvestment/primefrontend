@@ -166,9 +166,9 @@ export default function WaitlistSection({ launch, loading, onCountChange }: Prop
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="btn-primary h-11 shrink-0 px-6 whitespace-nowrap"
+                  className={`btn-primary btn-busy h-11 shrink-0 px-6 whitespace-nowrap`}
                 >
-                  {submitting ? <BreathingLoader size="sm" dots={3} /> : <>
+                  {submitting ? <><BreathingLoader size="sm" dots={3} tone="dark" /> Joining…</> : <>
                     Join the waitlist <ArrowRight className="h-4 w-4" />
                   </>}
                 </button>

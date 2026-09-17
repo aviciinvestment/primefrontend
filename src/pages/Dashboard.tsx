@@ -1355,7 +1355,7 @@ export default function Dashboard() {
                   onClick={handleRefreshAiAnalysis}
                   disabled={aiRefreshing}
                   title="Re-run the analysis against the latest opportunities"
-                  className="inline-flex items-center gap-1.5 h-9 rounded-lg bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3 transition-all duration-200 active:scale-[0.97] hover:bg-[#84cc16]/20 disabled:pointer-events-none disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60"
+                  className="inline-flex items-center gap-1.5 h-9 rounded-lg bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3 transition-all duration-200 active:scale-[0.97] hover:bg-[#84cc16]/20 btn-busy disabled:pointer-events-none disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60"
                 >
                   {aiRefreshing ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
                   {aiRefreshing ? 'Refreshing…' : 'Refresh analysis'}
