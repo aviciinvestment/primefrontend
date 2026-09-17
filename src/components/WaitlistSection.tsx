@@ -120,7 +120,15 @@ export default function WaitlistSection({ launch, loading, onCountChange }: Prop
               key={unit.l}
               className="flex min-w-0 flex-1 flex-col items-center rounded-xl border border-white/10 bg-white/[0.03] px-1 py-2.5 transition-colors hover:border-white/20 sm:px-3 sm:py-3"
             >
-              <span className="w-full truncate text-center text-xl tabular-nums font-bold text-white sm:text-3xl">{unit.v}</span>
+              <span className="w-full min-h-[1.75rem]">
+                {ready ? (
+                  <span className="block w-full truncate text-center text-xl tabular-nums font-bold text-white sm:text-3xl">{unit.v}</span>
+                ) : (
+                  <span className="flex h-7 w-full items-center justify-center sm:h-9" aria-hidden="true">
+                    <BreathingLoader size="sm" dots={3} />
+                  </span>
+                )}
+              </span>
               <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500">{unit.l}</span>
             </div>
           ))}

@@ -1283,6 +1283,15 @@ export default function Dashboard() {
             </div>
           </div>
           
+          {loading && page === 1 && visibleOpportunities.length === 0 && (
+            <div className="py-16 text-center" role="status" aria-live="polite">
+              <div className="inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-gray-400">
+                <BreathingLoader size="md" dots={3} />
+                {searchQuery ? 'Searching...' : 'Loading opportunities...'}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {visibleOpportunities.map(opp => {
               const record = appRecords.get(opp._id);

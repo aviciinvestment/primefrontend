@@ -94,7 +94,7 @@ export default function MentorshipInterest() {
                   className="btn-primary w-full h-12 text-sm px-6"
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  {saving ? 'Saving...' : 'Yes, I’m interested'}
+                  {saving ? <><BreathingLoader size="sm" dots={3} /> Saving…</> : 'Yes, I’m interested'}
                 </button>
                 <button
                   onClick={() => answer('no')}
@@ -102,7 +102,7 @@ export default function MentorshipInterest() {
                   className="btn-secondary w-full h-12 text-sm px-6"
                 >
                   <XCircle className="h-4 w-4" />
-                  {saving ? 'Saving...' : 'No, not right now'}
+                  {saving ? <><BreathingLoader size="sm" dots={3} /> Saving…</> : 'No, not right now'}
                 </button>
               </div>
             ) : (
