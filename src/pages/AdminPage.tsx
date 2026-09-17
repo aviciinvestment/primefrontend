@@ -94,6 +94,12 @@ export default function AdminPage() {
   const [mentees, setMentees] = useState<MenteeRow[]>([]);
   const [complaints, setComplaints] = useState<ComplaintRow[]>([]);
   const [launch, setLaunch] = useState<LaunchAdmin | null>(null);
+  // Server-side pagination for the three big list tabs (B-05): the server now
+  // returns page/page-size slices + total/page count instead of the whole table.
+  const [usersPg, setUsersPg] = useState({ page: 1, pages: 1 });
+  const [mentorsPg, setMentorsPg] = useState({ page: 1, pages: 1 });
+  const [menteesPg, setMenteesPg] = useState({ page: 1, pages: 1 });
+  const [tabLoading, setTabLoading] = useState<'' | 'users' | 'mentors' | 'mentees'>('');
   const [timerInput, setTimerInput] = useState('5');
   const [waInput, setWaInput] = useState('');
   const [launchBusy, setLaunchBusy] = useState(false);
@@ -132,9 +138,18 @@ export default function AdminPage() {
         apiFetch(`${API_BASE}/admin/launch`).then(r => r.json()),
       ]);
       if (o.success) setOverview(o);
-      if (u.success) setUsers(u.users);
-      if (m.success) setMentors(m.mentors);
-      if (e.success) setMentees(e.mentees);
+      if (u.success) {
+        setUsers(u.users);
+        setUsersPg({ page: u.page || 1, pages: u.pages || 1 });
+      }
+      if (m.success) {
+        setMentors(m.mentors);
+        setMentorsPg({ page: m.page || 1, pages: m.pages || 1 });
+      }
+      if (e.success) {
+        setMentees(e.mentees);
+        setMenteesPg({ page: e.page || 1, pages: e.pages || 1 });
+      }
       if (c.success) setComplaints(c.complaints);
       if (l.success) {
         setLaunch(l);
@@ -159,6 +174,34 @@ export default function AdminPage() {
       await load();
     } else {
       setNotice(data.error || 'Action failed.');
+    }
+  };
+
+  const loadMoreTab = async (tab: 'users' | 'mentors' | 'mentees') => {
+    if (!user || tabLoading) return;
+    const nextPage =
+      tab === 'users' ? usersPg.page + 1
+      : tab === 'mentors' ? mentorsPg.page + 1
+      : menteesPg.page + 1;
+    setTabLoading(tab);
+    try {
+      const res = await apiFetch(`${API_BASE}/admin/${tab}?page=${nextPage}`);
+      const data = await res.json();
+      if (!data.success) return;
+      if (tab === 'users') {
+        setUsers(prev => [...prev, ...(data.users || [])]);
+        setUsersPg({ page: nextPage, pages: data.pages || nextPage });
+      } else if (tab === 'mentors') {
+        setMentors(prev => [...prev, ...(data.mentors || [])]);
+        setMentorsPg({ page: nextPage, pages: data.pages || nextPage });
+      } else {
+        setMentees(prev => [...prev, ...(data.mentees || [])]);
+        setMenteesPg({ page: nextPage, pages: data.pages || nextPage });
+      }
+    } catch {
+      // Keep the list as-is; the button stays available to retry.
+    } finally {
+      setTabLoading('');
     }
   };
 
@@ -592,6 +635,18 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+            {usersPg.page < usersPg.pages && (
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={() => loadMoreTab('users')}
+                  disabled={tabLoading === 'users'}
+                  className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-4 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+                >
+                  {tabLoading === 'users' ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  Load more users ({users.length} shown)
+                </button>
+              </div>
+            )}
           </Section>
 
           {/* Mentors */}
@@ -648,10 +703,22 @@ export default function AdminPage() {
                           )}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+))}
+                </tbody>
+              </table>
               </div>
+              {mentorsPg.page < mentorsPg.pages && (
+                <div className="mt-4 flex justify-center">
+                  <button
+                    onClick={() => loadMoreTab('mentors')}
+                    disabled={tabLoading === 'mentors'}
+                    className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-4 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+                  >
+                    {tabLoading === 'mentors' ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    Load more mentors ({mentors.length} shown)
+                  </button>
+                </div>
+              )}
             </Section>
           </div>
 
@@ -691,6 +758,18 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+            {menteesPg.page < menteesPg.pages && (
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={() => loadMoreTab('mentees')}
+                  disabled={tabLoading === 'mentees'}
+                  className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-4 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+                >
+                  {tabLoading === 'mentees' ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  Load more mentees ({mentees.length} shown)
+                </button>
+              </div>
+            )}
           </Section>
 
           {/* Complaints / escalations */}

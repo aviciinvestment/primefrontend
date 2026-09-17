@@ -116,11 +116,12 @@ export const STATUS_META: Record<ApplicationStatus, { label: string; icon: Lucid
   },
 };
 
+// The server resolves the user from the verified Firebase token (never from a
+// client-supplied id — applications are scoped to the authenticated uid).
 export async function fetchApplications(
-  userId: string,
   opts?: { signal?: AbortSignal }
 ): Promise<ApplicationRecord[]> {
-  const res = await apiFetch(`${API_BASE}/applications?userId=${encodeURIComponent(userId)}`, {
+  const res = await apiFetch(`${API_BASE}/applications`, {
     signal: opts?.signal,
   });
   const data = await res.json();
@@ -129,14 +130,13 @@ export async function fetchApplications(
 }
 
 export async function upsertApplication(
-  userId: string,
   opportunityId: string,
   payload: { status?: ApplicationStatus; clicked?: boolean }
 ): Promise<ApplicationRecord> {
   const res = await apiFetch(`${API_BASE}/applications`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, opportunityId, ...payload }),
+    body: JSON.stringify({ opportunityId, ...payload }),
   });
   const data = await res.json();
   if (!data.success) throw new Error(data.message || 'Failed to update application');

@@ -20,13 +20,11 @@ import {
   Handshake,
   Sparkles,
   Share2,
-  RefreshCw,
   Check
 } from 'lucide-react';
 import { useRef, type MouseEvent as ReactMouseEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import MarkdownView from '../components/MarkdownView';
 import WaitlistSection from '../components/WaitlistSection';
 import { STATUSES, STATUS_META, fetchApplications, upsertApplication, API_BASE, API_ORIGIN, isAdminPreviewEnabled, fetchLaunchStatus, type ApplicationRecord, type LaunchStatus } from '../lib/applications';
 import { apiFetch } from '../lib/api';
@@ -214,10 +212,10 @@ function AiAdvisorCard({ user, fileInputRef, isAnalyzing, onChangeFile }: AiAdvi
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-2">
             <BrainCircuit className="h-5 w-5 sm:h-6 sm:w-6" />
-            <h3 className="font-bold text-base sm:text-lg">AI Career Advisor</h3>
+            <h3 className="font-bold text-base sm:text-lg">CV Match</h3>
           </div>
           <p className="text-white/80 text-xs sm:text-sm mb-4">
-            Upload your CV (PDF) and our AI will analyze your profile to find perfect matches.
+            Upload your CV (PDF) to filter the feed by your best matches. Matches update automatically as new opportunities arrive.
           </p>
           
           <input 
@@ -234,7 +232,7 @@ function AiAdvisorCard({ user, fileInputRef, isAnalyzing, onChangeFile }: AiAdvi
             className="btn-primary h-11 w-full text-sm"
           >
             {isAnalyzing ? (
-              <><BreathingLoader size="sm" dots={3} /> Analyzing CV...</>
+              <><BreathingLoader size="sm" dots={3} /> Matching CV...</>
             ) : (
               <><UploadCloud className="h-4 w-4" /> Upload CV</>
             )}
@@ -249,10 +247,10 @@ function AiAdvisorCard({ user, fileInputRef, isAnalyzing, onChangeFile }: AiAdvi
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-2">
             <BrainCircuit className="h-5 w-5 sm:h-6 sm:w-6" />
-            <h3 className="font-bold text-base sm:text-lg">AI Career Advisor</h3>
+            <h3 className="font-bold text-base sm:text-lg">CV Match</h3>
           </div>
           <p className="text-white/80 text-xs sm:text-sm mb-4">
-            Upload your CV (PDF) and our AI will analyze your profile to find perfect matches.
+            Upload your CV (PDF) to filter the feed by your best matches. Matches update automatically as new opportunities arrive.
           </p>
           <button 
             onClick={() => window.location.href = '/login'}
@@ -600,16 +598,15 @@ export default function Dashboard() {
     return () => controller.abort();
   }, []);
   
-  // AI CV Advisor State
+  // CV Match State. Latest CV keeps just matched opportunities — there is no
+  // AI-generated profile summary anymore. Matches are recomputed server-side in
+  // the background after every opportunity sync AND on a daily cron, so the
+  // "CV Match" feed stays current without users re-uploading.
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
-  const [aiMatches, setAiMatches] = useState<Opportunity[]>([]);
   // Saved CV state (persisted in MongoDB per user)
-  const [latestCv, setLatestCv] = useState<{ analysis: string; matches: Opportunity[] } | null>(null);
+  const [latestCv, setLatestCv] = useState<{ matches: Opportunity[] } | null>(null);
   // Hydrated from localStorage so a CV-match flow survives full refreshes.
   const [cvFilterActive, setCvFilterActive] = useState<boolean>(() => readCvMatchActive());
-  const [aiSummaryOpen, setAiSummaryOpen] = useState(false);
-  const [aiRefreshing, setAiRefreshing] = useState(false);
   // App status per opportunity, keyed by opportunityId (overlay on the feed).
   const [appRecords, setAppRecords] = useState<Map<string, ApplicationRecord>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -736,8 +733,7 @@ export default function Dashboard() {
     if (!file) return;
 
     setIsAnalyzing(true);
-    setAiAnalysis(null);
-    setAiMatches([]);
+    setLatestCv(null);
 
     const formData = new FormData();
     formData.append('cv', file);
@@ -750,14 +746,12 @@ export default function Dashboard() {
       
       const data = await response.json();
       if (data.success) {
-        setAiAnalysis(data.analysis);
-        setAiMatches(data.matches);
-        setLatestCv({ analysis: data.analysis, matches: data.matches });
+        setLatestCv({ matches: data.matches });
         setCvFilterActive(true);
       } else {
         openModal(
           'Upload Failed',
-          (data.message || 'Failed to analyze CV. Please try again.') + (data.error ? ` — ${data.error}` : '')
+          data.message || 'Failed to match your CV. Please try again.'
         );
       }
     } catch (error) {
@@ -859,7 +853,7 @@ export default function Dashboard() {
         const data = await res.json();
         if (data.success && data.cvs.length > 0) {
           const latest = data.cvs[0];
-          setLatestCv({ analysis: latest.analysis, matches: latest.matches });
+          setLatestCv({ matches: latest.matches });
         }
       } catch (error) {
         if (isAbortError(error)) return;
@@ -877,7 +871,7 @@ export default function Dashboard() {
       return;
     }
     const controller = new AbortController();
-    fetchApplications(user.uid, { signal: controller.signal })
+    fetchApplications({ signal: controller.signal })
       .then(records => {
         if (controller.signal.aborted) return;
         setAppRecords(new Map(records.map(rec => [rec.opportunityId, rec])));
@@ -910,12 +904,12 @@ export default function Dashboard() {
   const handleTrackClicked = useCallback((oppId: string) => {
     const record = appRecords.get(oppId);
     upsertLocalRecord(oppId, { clicked: true, clickedAt: new Date().toISOString() });
-    upsertApplication(user!.uid, oppId, { clicked: true })
+    upsertApplication(oppId, { clicked: true })
       .then(rec => setAppRecords(prev => new Map(prev).set(rec.opportunityId, rec)))
       .catch(async err => {
         console.error('Failed to record visit', err);
         try {
-          const records = await fetchApplications(user!.uid);
+          const records = await fetchApplications();
           setAppRecords(new Map(records.map(r => [r.opportunityId, r])));
         } catch { /* keep optimistic state */ }
       });
@@ -928,12 +922,12 @@ export default function Dashboard() {
       return;
     }
     upsertLocalRecord(opp._id, { status });
-    upsertApplication(user.uid, opp._id, { status })
+    upsertApplication(opp._id, { status })
       .then(rec => setAppRecords(prev => new Map(prev).set(rec.opportunityId, rec)))
       .catch(async err => {
         console.error('Failed to update status', err);
         try {
-          const records = await fetchApplications(user.uid);
+          const records = await fetchApplications();
           setAppRecords(new Map(records.map(r => [r.opportunityId, r])));
         } catch { /* keep optimistic state */ }
       });
@@ -989,42 +983,15 @@ export default function Dashboard() {
       // instantly (no refetch, no re-spin); the views in opportunities are
       // whatever the API last delivered.
       setCvFilterActive(false);
-      setAiAnalysis(null);
-      setAiSummaryOpen(false);
     } else {
-      // Apply the saved CV matches — the feed area derives from latestCv —
-      // and show the formatted summary in a modal.
+      // Apply the saved CV matches — the feed area derives from latestCv.
       setCvFilterActive(true);
-      setAiAnalysis(latestCv.analysis);
-      setAiSummaryOpen(true);
     }
   };
 
-  const handleToggleAiSummary = () => {
-    // Turning the AI summary toggle off just hides the summary; keep the CV match filter active
-    setAiSummaryOpen(false);
-    setAiAnalysis(null);
-  };
-
-  const handleRefreshAiAnalysis = async () => {
-    if (!user || aiRefreshing) return;
-    setAiRefreshing(true);
-    try {
-      const res = await apiFetch(`${API_BASE}/ai/reanalyze-cv`, { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        setAiAnalysis(data.analysis);
-        setLatestCv({ analysis: data.analysis, matches: data.matches });
-      } else {
-        console.error('Reanalyze CV failed:', data);
-        openModal('Refresh Failed', `${data.message || 'Could not refresh your AI match analysis.'}${data.error ? `\n\nTechnical detail: ${data.error}` : ''}`);
-      }
-    } catch {
-      openModal('Refresh Failed', 'Network error while refreshing your AI match analysis.');
-    } finally {
-      setAiRefreshing(false);
-    }
-  };
+  // Matches refresh automatically in the background (server re-runs the match
+  // pipeline after every opportunity sync + on a daily cron), so there is no
+  // manual "refresh analysis" step for the user anymore.
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
@@ -1337,61 +1304,6 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-
-      {/* AI Summary Modal (formatted markdown, no raw asterisks) */}
-      {aiSummaryOpen && aiAnalysis && (
-        <div className="fixed inset-0 z-[105] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={handleToggleAiSummary}
-          />
-          <div className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d1410]/95 shadow-2xl">
-            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-              <h3 className="flex items-center gap-2 text-[15px] font-bold text-white">
-                <BrainCircuit className="h-5 w-5 text-[#84cc16]" /> AI Summary
-              </h3>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleRefreshAiAnalysis}
-                  disabled={aiRefreshing}
-                  title="Re-run the analysis against the latest opportunities"
-                  className="inline-flex items-center gap-1.5 h-9 rounded-lg bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3 transition-all duration-200 active:scale-[0.97] hover:bg-[#84cc16]/20 btn-busy disabled:pointer-events-none disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60"
-                >
-                  {aiRefreshing ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
-                  {aiRefreshing ? 'Refreshing…' : 'Refresh analysis'}
-                </button>
-                <button
-                  role="switch"
-                  aria-checked={aiSummaryOpen}
-                  onClick={handleToggleAiSummary}
-                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                    aiSummaryOpen ? 'bg-[#84cc16]' : 'bg-white/15'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                      aiSummaryOpen ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-                <button
-                  onClick={handleToggleAiSummary}
-                  aria-label="Close AI summary"
-                  className="text-gray-400 transition-colors hover:text-white"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            <div className="overflow-y-auto px-5 py-4 text-gray-300">
-              <MarkdownView text={aiAnalysis} />
-            </div>
-            <div className="border-t border-white/10 px-5 py-3 text-[11px] text-gray-500">
-              Showing careers filtered by your CV match. Turn off the toggle to return to the full feed.
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Guidance prompt before leaving for the opportunity site */}
       {guidanceOpp && (

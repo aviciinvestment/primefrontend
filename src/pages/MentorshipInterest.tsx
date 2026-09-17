@@ -5,6 +5,7 @@ import { BreathingLoader } from '../components/BreathingLoader';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../lib/applications';
 import { apiFetch } from '../lib/api';
+import { safeExternalUrl } from '../lib/urlSafety';
 
 export default function MentorshipInterest() {
   const { user } = useAuth();
@@ -12,7 +13,8 @@ export default function MentorshipInterest() {
   const [searchParams] = useSearchParams();
 
   const title = searchParams.get('title') || '';
-  const url = searchParams.get('url') || '';
+  // Never trust a raw ?url= param: only http(s) survives (A-05).
+  const url = safeExternalUrl(searchParams.get('url'));
   const fromOpportunity = !!url;
 
   const [saving, setSaving] = useState(false);

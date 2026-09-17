@@ -42,7 +42,6 @@ interface SavedCv {
   _id: string;
   fileName: string;
   createdAt: string;
-  analysis: string;
   matches: any[];
   highlights?: { roles: string[]; skills: string[]; education: string[] };
 }
@@ -153,10 +152,10 @@ export default function Profile() {
       const res = await apiFetch(`${API_URL}/ai/analyze-cv`, { method: 'POST', body: formData });
       const data = await res.json();
       if (data.success) {
-        showNotice('ok', 'CV updated — new analysis complete.');
+        showNotice('ok', 'CV updated — matches refreshed.');
         await loadCvs();
       } else {
-        showNotice('err', (data.message || 'CV upload failed.') + (data.error ? ` — ${data.error}` : ''));
+        showNotice('err', data.message || 'CV upload failed.');
       }
     } catch {
       showNotice('err', 'Could not connect to server while updating CV.');

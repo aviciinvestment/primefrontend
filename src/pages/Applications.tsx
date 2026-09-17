@@ -77,7 +77,7 @@ export default function Applications() {
     try {
       setLoading(true);
       setError('');
-      const records = await fetchApplications(user.uid);
+      const records = await fetchApplications();
       setApps(records);
     } catch {
       setError('Failed to load your applications. Please try again.');
@@ -97,7 +97,7 @@ export default function Applications() {
       prev.map(a => (a.opportunityId === opportunityId ? { ...a, status: targetStatus } : a))
     );
     try {
-      const updated = await upsertApplication(user.uid, opportunityId, { status: targetStatus });
+      const updated = await upsertApplication(opportunityId, { status: targetStatus });
       setApps(prev => prev.map(a => (a.opportunityId === opportunityId ? updated : a)));
     } catch {
       // Revert to server state on failure.

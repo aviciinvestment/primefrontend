@@ -5,6 +5,7 @@ import { BreathingLoader } from '../components/BreathingLoader';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../lib/applications';
 import { apiFetch } from '../lib/api';
+import { safeExternalUrl } from '../lib/urlSafety';
 
 declare global {
   interface Window {
@@ -40,7 +41,8 @@ export default function MentorshipGuidance() {
 
   const title = searchParams.get('title') || 'this opportunity';
   const org = searchParams.get('org') || '';
-  const url = searchParams.get('url') || '';
+  // Never trust a raw ?url= param: only http(s) survives (A-05).
+  const url = safeExternalUrl(searchParams.get('url'));
   const opportunityId = searchParams.get('id') || undefined;
   const opportunityType = searchParams.get('type') || '';
   const opportunityCategory = searchParams.get('category') || '';
