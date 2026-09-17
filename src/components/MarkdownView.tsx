@@ -5,6 +5,39 @@ import { type ReactNode } from 'react';
  * Renders: bold, italic, headings (as bold), bullet lists, links, inline code.
  * Handles the AI analysis content without showing raw asterisks.
  */
+
+// The assistant sometimes replies with HTML tags (e.g. <a href>, <b>, <br>,
+// <li>) mixed with markdown. Convert the common HTML patterns into equivalent
+// markdown tokens so the renderer below shows clean formatting — never raw tags.
+// Text is only ever rendered as React nodes (no dangerouslySetInnerHTML), so
+// any tag we fail to recognise is simply stripped.
+const stripTags = (s: string): string => s.replace(/<[^>]*>/g, '');
+
+const normalizeHtml = (text: string): string =>
+  text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/<a\s+href=["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_m, href, inner) => {
+      const label = stripTags(inner.trim());
+      return label ? `[${label}](${href})` : href;
+    })
+    .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, (_m, inner) => `**${stripTags(inner)}**`)
+    .replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, (_m, inner) => `**${stripTags(inner)}**`)
+    .replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, (_m, inner) => `*${stripTags(inner)}*`)
+    .replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, (_m, inner) => `*${stripTags(inner)}*`)
+    .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, (_m, inner) => `\`${stripTags(inner)}\``)
+    .replace(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/gi, (_m, inner) => `**${stripTags(inner)}**`)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<\/(ul|ol|div)\s*>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '- ')
+    .replace(/<[^>]+>/g, '');
 const inline = (segment: string, keyPrefix: string): ReactNode[] => {
   const parts: ReactNode[] = [];
   const regex =
@@ -58,7 +91,7 @@ const inline = (segment: string, keyPrefix: string): ReactNode[] => {
 };
 
 export default function MarkdownView({ text, className = '' }: { text: string; className?: string }) {
-  const paragraphs = text.split('\n');
+  const paragraphs = normalizeHtml(text).split('\n');
   const nodes: ReactNode[] = [];
   let listBuffer: ReactNode[] = [];
   let key = 0;
