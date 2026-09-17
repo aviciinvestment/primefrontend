@@ -161,8 +161,9 @@ export default function ChatWidget() {
             if (parsed.type === 'status' && typeof parsed.step === 'string') {
               // Worker tick: show the real current step, keep completed ones in
               // order so the user sees exactly what the assistant is doing.
-              setProgressNote(parsed.step);
-              setProgressSteps(prev => (prev.includes(parsed.step) ? prev : [...prev, parsed.step]));
+              const step = parsed.step;
+              setProgressNote(step);
+              setProgressSteps(prev => (prev.includes(step) ? prev : [...prev, step]));
             } else if (parsed.type === 'delta' && typeof parsed.text === 'string') {
               swallowed = true;
               const chunk = parsed.text;
