@@ -31,6 +31,10 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  // Live progress shown while waiting: completed steps (from the worker's
+  // {type:'status'} frames) plus the current one, so the user is carried along.
+  const [progressSteps, setProgressSteps] = useState<string[]>([]);
+  const [progressNote, setProgressNote] = useState('Preparing your message...');
   const [showCall, setShowCall] = useState(false);
   // Chat is only available once the app has launched — unless an admin is
   // previewing the app while it is still in waitlist mode.
@@ -99,6 +103,8 @@ export default function ChatWidget() {
     setMessages(updated);
     setInput('');
     setIsLoading(true);
+    setProgressSteps([]);
+    setProgressNote('Preparing your message...');
 
     // Build history from the last 10 messages before the new user message
     const history = updated.slice(-10).map(m => ({ role: m.role, content: m.content }));
@@ -145,14 +151,19 @@ export default function ChatWidget() {
             const payload = dataLine.slice(6).trim();
             if (!payload) continue;
 
-            let parsed: { type: string; text?: string; reply?: string; action?: ChatAction };
+            let parsed: { type: string; text?: string; reply?: string; action?: ChatAction; step?: string };
             try {
               parsed = JSON.parse(payload);
             } catch {
               continue;
             }
 
-            if (parsed.type === 'delta' && typeof parsed.text === 'string') {
+            if (parsed.type === 'status' && typeof parsed.step === 'string') {
+              // Worker tick: show the real current step, keep completed ones in
+              // order so the user sees exactly what the assistant is doing.
+              setProgressNote(parsed.step);
+              setProgressSteps(prev => (prev.includes(parsed.step) ? prev : [...prev, parsed.step]));
+            } else if (parsed.type === 'delta' && typeof parsed.text === 'string') {
               swallowed = true;
               const chunk = parsed.text;
               setMessages(prev => {
@@ -351,9 +362,20 @@ export default function ChatWidget() {
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-primary">
                   <Bot className="h-4 w-4 text-white" />
                 </div>
-                <div className="rounded-2xl rounded-bl-sm bg-white/[0.06] border border-white/10 px-4 py-3 flex items-center gap-1.5">
-                  <BreathingLoader size="sm" dots={3} />
-                  <span className="text-sm text-gray-300">Thinking...</span>
+                <div className="rounded-2xl rounded-bl-sm bg-white/[0.06] border border-white/10 px-4 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <BreathingLoader size="sm" dots={3} />
+                    <span className="text-sm text-gray-300">{progressNote}</span>
+                  </div>
+                  {progressSteps.length > 1 && (
+                    <div className="mt-1.5 flex flex-col gap-0.5 border-t border-white/10 pt-1.5">
+                      {progressSteps.slice(0, -1).map(step => (
+                        <span key={step} className="text-[11px] leading-snug text-gray-400">
+                          {step}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
