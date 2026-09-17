@@ -156,7 +156,7 @@ export default function Profile() {
         showNotice('ok', 'CV updated — new analysis complete.');
         await loadCvs();
       } else {
-        showNotice('err', data.message || 'CV upload failed.');
+        showNotice('err', (data.message || 'CV upload failed.') + (data.error ? ` — ${data.error}` : ''));
       }
     } catch {
       showNotice('err', 'Could not connect to server while updating CV.');
@@ -175,9 +175,12 @@ export default function Profile() {
       const data = await res.json();
       if (data.success) {
         showNotice('ok', 'CV deleted.');
+        // Drop it locally first so the UI never keeps a ghost entry even if
+        // the follow-up list refresh silently fails (e.g. rate limited).
+        setCvs(prev => prev.filter(c => c._id !== cvId));
         await loadCvs();
       } else {
-        showNotice('err', data.message || 'Could not delete the CV.');
+        showNotice('err', (data.message || 'Could not delete the CV.') + (data.error ? ` — ${data.error}` : ''));
       }
     } catch {
       showNotice('err', 'Could not connect to server while deleting CV.');

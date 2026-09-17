@@ -755,7 +755,10 @@ export default function Dashboard() {
         setLatestCv({ analysis: data.analysis, matches: data.matches });
         setCvFilterActive(true);
       } else {
-        openModal('Upload Failed', data.message || 'Failed to analyze CV. Please try again.');
+        openModal(
+          'Upload Failed',
+          (data.message || 'Failed to analyze CV. Please try again.') + (data.error ? ` — ${data.error}` : '')
+        );
       }
     } catch (error) {
       console.error('Error uploading CV:', error);
