@@ -70,10 +70,10 @@ export default function Navbar() {
           </div>
 
           {[
-            { to: '/applications', label: 'My Applications' },
-            { to: '/mentors', label: 'Mentors' },
+            { to: '/applications', label: 'Application', show: !!user },
+            { to: '/mentors', label: 'Mentors', show: !!user },
             { to: '/admin', label: 'Admin', show: isAdmin },
-            { to: '/profile', label: 'Profile' },
+            { to: '/profile', label: 'Profile', show: !!user },
           ].filter(l => l.show !== false).map(link => (
             <Link
               key={link.to}
@@ -104,8 +104,8 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/login" className="btn-secondary h-10 px-4">Log in</Link>
-              <Link to="/register" className="btn-primary h-10 px-6">Sign up</Link>
+              <Link to="/login" className={`${currentPath === '/login' ? 'btn-primary' : 'btn-secondary'} h-10 px-4`}>Log in</Link>
+              <Link to="/register" className={`${currentPath === '/register' ? 'btn-primary' : 'btn-secondary'} h-10 px-6`}>Sign up</Link>
             </>
           )}
         </div>
@@ -142,10 +142,10 @@ export default function Navbar() {
 
           <div className="flex flex-col">
             {[
-              { to: '/applications', label: 'My Applications' },
-              { to: '/mentors', label: 'Mentors' },
+              { to: '/applications', label: 'Application', show: !!user },
+              { to: '/mentors', label: 'Mentors', show: !!user },
               { to: '/admin', label: 'Admin', show: isAdmin },
-              { to: '/profile', label: 'Profile' },
+              { to: '/profile', label: 'Profile', show: !!user },
             ].filter(l => l.show !== false).map(link => (
               <Link
                 key={link.to}
@@ -177,8 +177,8 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link onClick={toggleMobileMenu} to="/login" className="btn-secondary h-12 text-base">Log in</Link>
-                <Link onClick={toggleMobileMenu} to="/register" className="btn-primary h-12 text-base">Sign up</Link>
+                <Link onClick={toggleMobileMenu} to="/login" className={`${currentPath === '/login' ? 'btn-primary' : 'btn-secondary'} h-12 text-base`}>Log in</Link>
+                <Link onClick={toggleMobileMenu} to="/register" className={`${currentPath === '/register' ? 'btn-primary' : 'btn-secondary'} h-12 text-base`}>Sign up</Link>
               </>
             )}
           </div>
