@@ -113,7 +113,7 @@ export default function ChatWidget() {
       const res = await apiFetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history, stream: true }),
+        body: JSON.stringify({ message, history, stream: true, userName: user?.displayName || undefined }),
       });
 
       const contentType = res.headers.get('content-type') || '';
@@ -261,7 +261,10 @@ export default function ChatWidget() {
     }
   };
 
-  if (!launched && !adminPreview) return null;
+  // Signed-out visitors don't get the chat launcher at all — the assistant is
+  // for members. On top of that, chat only appears once the app has launched
+  // (unless an admin is previewing while the app is still in waitlist mode).
+  if (!user || (!launched && !adminPreview)) return null;
 
   return (
     <>

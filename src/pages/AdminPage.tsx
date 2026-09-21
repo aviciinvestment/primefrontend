@@ -66,6 +66,11 @@ interface ComplaintRow {
   createdAt: string;
   payments: Array<{ reference: string; amount: number; currency: string; mentorName: string; createdAt: string }>;
 }
+interface ChatLogRow {
+  _id: string; userId?: string; userEmail?: string; userName?: string;
+  message: string; reply: string; source: 'server' | 'worker';
+  createdAt: string;
+}
 
 interface AddOpportunityForm {
   title: string; organization: string; officialUrl: string; description: string;
@@ -93,13 +98,15 @@ export default function AdminPage() {
   const [mentors, setMentors] = useState<MentorRow[]>([]);
   const [mentees, setMentees] = useState<MenteeRow[]>([]);
   const [complaints, setComplaints] = useState<ComplaintRow[]>([]);
+  const [chats, setChats] = useState<ChatLogRow[]>([]);
   const [launch, setLaunch] = useState<LaunchAdmin | null>(null);
   // Server-side pagination for the three big list tabs (B-05): the server now
   // returns page/page-size slices + total/page count instead of the whole table.
   const [usersPg, setUsersPg] = useState({ page: 1, pages: 1 });
   const [mentorsPg, setMentorsPg] = useState({ page: 1, pages: 1 });
   const [menteesPg, setMenteesPg] = useState({ page: 1, pages: 1 });
-  const [tabLoading, setTabLoading] = useState<'' | 'users' | 'mentors' | 'mentees'>('');
+  const [chatsPg, setChatsPg] = useState({ page: 1, pages: 1 });
+  const [tabLoading, setTabLoading] = useState<'' | 'users' | 'mentors' | 'mentees' | 'chats'>('');
   const [timerInput, setTimerInput] = useState('5');
   const [waInput, setWaInput] = useState('');
   const [launchBusy, setLaunchBusy] = useState(false);
@@ -129,13 +136,14 @@ export default function AdminPage() {
     if (!user || !isAdmin) return;
     setLoading(true);
     try {
-      const [o, u, m, e, c, l] = await Promise.all([
+      const [o, u, m, e, c, l, ch] = await Promise.all([
         apiFetch(`${API_BASE}/admin/overview`).then(r => r.json()),
         apiFetch(`${API_BASE}/admin/users`).then(r => r.json()),
         apiFetch(`${API_BASE}/admin/mentors`).then(r => r.json()),
         apiFetch(`${API_BASE}/admin/mentees`).then(r => r.json()),
         apiFetch(`${API_BASE}/admin/complaints`).then(r => r.json()),
         apiFetch(`${API_BASE}/admin/launch`).then(r => r.json()),
+        apiFetch(`${API_BASE}/admin/chats`).then(r => r.json()),
       ]);
       if (o.success) setOverview(o);
       if (u.success) {
@@ -151,6 +159,10 @@ export default function AdminPage() {
         setMenteesPg({ page: e.page || 1, pages: e.pages || 1 });
       }
       if (c.success) setComplaints(c.complaints);
+      if (ch.success) {
+        setChats(ch.chats || []);
+        setChatsPg({ page: ch.page || 1, pages: ch.pages || 1 });
+      }
       if (l.success) {
         setLaunch(l);
         setTimerInput(String(Math.round((l.countdownMs || 0) / (24 * 60 * 60 * 1000))));
@@ -198,6 +210,23 @@ export default function AdminPage() {
         setMentees(prev => [...prev, ...(data.mentees || [])]);
         setMenteesPg({ page: nextPage, pages: data.pages || nextPage });
       }
+} catch {
+        // Keep the list as-is; the button stays available to retry.
+      } finally {
+        setTabLoading('');
+      }
+  };
+
+  const loadMoreChats = async () => {
+    if (!user || tabLoading) return;
+    const nextPage = chatsPg.page + 1;
+    setTabLoading('chats');
+    try {
+      const res = await apiFetch(`${API_BASE}/admin/chats?page=${nextPage}`);
+      const data = await res.json();
+      if (!data.success) return;
+      setChats(prev => [...prev, ...(data.chats || [])]);
+      setChatsPg({ page: nextPage, pages: data.pages || nextPage });
     } catch {
       // Keep the list as-is; the button stays available to retry.
     } finally {
@@ -365,7 +394,7 @@ export default function AdminPage() {
               <button
                 onClick={handleSyncNow}
                 disabled={syncBusy}
-                className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] btn-busy disabled:pointer-events-none disabled:opacity-60"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] btn-busy disabled:pointer-events-none disabled:opacity-60 sm:flex-none"
               >
                 {syncBusy ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
                 {syncBusy ? 'Syncing…' : 'Sync Now'}
@@ -373,7 +402,7 @@ export default function AdminPage() {
               <button
                 onClick={() => setAddOpen(v => !v)}
                 disabled={addBusy}
-                className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60 sm:flex-none"
               >
                 <PlusCircle className="h-3.5 w-3.5" />
                 {addOpen ? 'Close form' : 'Add Opportunity'}
@@ -486,7 +515,7 @@ export default function AdminPage() {
                   <p className="text-[10px] uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
                     <Timer className="h-3.5 w-3.5" /> Auto-launch countdown
                   </p>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2 items-center flex-wrap">
                     <input
                       type="number"
                       min={1}
@@ -522,7 +551,7 @@ export default function AdminPage() {
                     placeholder="https://chat.whatsapp.com/…"
                     className="input-base"
                   />
-                  <div className="flex items-center justify-between gap-2.5">
+                  <div className="flex items-center justify-between gap-2.5 flex-wrap">
                     <p className="text-xs text-gray-500">Users go here right after joining the waitlist.</p>
                     <button
                       disabled={launchBusy}
@@ -580,7 +609,7 @@ export default function AdminPage() {
           {/* Users */}
           <Section title="All Users" subtitle="Including mentors and admins">
             <div className="overflow-x-auto -mx-5 px-5 sm:-mx-6 sm:px-6">
-              <table className="w-full text-left text-sm">
+              <table className="w-full min-w-[720px] text-left text-sm">
                 <thead>
                   <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-white/10">
                     <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">User</th>
@@ -653,7 +682,7 @@ export default function AdminPage() {
           <div id="mentors">
             <Section title="Mentors" subtitle="Approved mentors, their mentee count, and account balance (90% of mentee payments).">
               <div className="overflow-x-auto -mx-5 px-5 sm:-mx-6 sm:px-6">
-                <table className="w-full text-left text-sm">
+                <table className="w-full min-w-[720px] text-left text-sm">
                   <thead>
                     <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-white/10">
                       <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Mentor</th>
@@ -725,7 +754,7 @@ export default function AdminPage() {
           {/* Mentees */}
           <Section title="Mentees & Payments" subtitle="Every paid mentorship request with the platform's 10% share and the mentor's 90% share.">
             <div className="overflow-x-auto -mx-5 px-5 sm:-mx-6 sm:px-6">
-              <table className="w-full text-left text-sm">
+              <table className="w-full min-w-[720px] text-left text-sm">
                 <thead>
                   <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-white/10">
                     <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Student</th>
@@ -825,6 +854,61 @@ export default function AdminPage() {
                       )}
                     </div>
                   ))}
+                </div>
+              )}
+            </Section>
+          </div>
+
+          {/* Chat activity */}
+          <div id="chats">
+            <Section title="Chat Activity" subtitle="Every exchange the AI assistant had with a member — the exact message sent and the reply received. Newest first.">
+              {chats.length === 0 ? (
+                <p className="text-gray-400 text-sm">No chat messages yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {chats.map(ch => (
+                    <div
+                      key={ch._id}
+                      className={`rounded-xl border p-4 ${ch.source === 'worker' ? 'border-indigo-400/30 bg-indigo-400/5' : 'border-white/10 bg-white/[0.02]'}`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-200 text-sm">
+                            {ch.userName || ch.userEmail || 'Anonymous'}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase border border-white/10 bg-white/[0.05] text-gray-300">
+                            {ch.source === 'worker' ? 'Worker' : 'API'}
+                          </span>
+                        </div>
+                        <span className="text-gray-500 text-xs">{formatDate(ch.createdAt)}</span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+                          <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">User</p>
+                          <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">{ch.message}</p>
+                        </div>
+                        <div className="rounded-lg border border-[#84cc16]/20 bg-[#84cc16]/5 p-3">
+                          <p className="text-[10px] uppercase tracking-wider text-[#84cc16]/70 mb-1">Assistant</p>
+                          <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">{ch.reply}</p>
+                        </div>
+                      </div>
+                      {ch.userId && (
+                        <p className="mt-2 text-[11px] text-gray-500">uid: {ch.userId}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {chatsPg.page < chatsPg.pages && (
+                <div className="mt-4 flex justify-center">
+                  <button
+                    onClick={loadMoreChats}
+                    disabled={tabLoading === 'chats'}
+                    className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-4 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+                  >
+                    {tabLoading === 'chats' ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    Load more chats ({chats.length} shown)
+                  </button>
                 </div>
               )}
             </Section>

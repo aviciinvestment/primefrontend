@@ -202,17 +202,43 @@ interface AiAdvisorCardProps {
   user: { uid: string } | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   isAnalyzing: boolean;
+  cvFilterActive: boolean;
+  hasCv: boolean;
   onChangeFile: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onToggleCvFilter: () => void;
+  // When true, the card also shows the CV-filter toggle. Used on the mobile
+  // card so the CV controls live in ONE place (the mobile filter bar used to
+  // duplicate them, which read as constant re-rendering "noise").
+  withFilterToggle?: boolean;
 }
 
-function AiAdvisorCard({ user, fileInputRef, isAnalyzing, onChangeFile }: AiAdvisorCardProps) {
+// Memoized so unrelated Dashboard renders (infinite scroll, filters, sort)
+// never re-render the CV card — its props only change when user state actually
+// changes (the handlers are stable useCallbacks).
+const AiAdvisorCard = memo(function AiAdvisorCard({
+  user,
+  fileInputRef,
+  isAnalyzing,
+  cvFilterActive,
+  hasCv,
+  onChangeFile,
+  onToggleCvFilter,
+  withFilterToggle = false,
+}: AiAdvisorCardProps) {
   return (
     user ? (
       <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-primary rounded-2xl p-5 sm:p-6 text-white shadow-lg relative overflow-hidden">
         <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <BrainCircuit className="h-5 w-5 sm:h-6 sm:w-6" />
-            <h3 className="font-bold text-base sm:text-lg">CV Match</h3>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <BrainCircuit className="h-5 w-5 sm:h-6 sm:w-6" />
+              <h3 className="font-bold text-base sm:text-lg">CV Match</h3>
+            </div>
+            {cvFilterActive && (
+              <span className="shrink-0 rounded-full border border-white/40 bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                Filtering by CV
+              </span>
+            )}
           </div>
           <p className="text-white/80 text-xs sm:text-sm mb-4">
             Upload your CV (PDF) to filter the feed by your best matches. Matches update automatically as new opportunities arrive.
@@ -226,17 +252,29 @@ function AiAdvisorCard({ user, fileInputRef, isAnalyzing, onChangeFile }: AiAdvi
             onChange={onChangeFile} 
           />
           
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isAnalyzing}
-            className="btn-primary h-11 w-full text-sm"
-          >
-            {isAnalyzing ? (
-              <><BreathingLoader size="sm" dots={3} /> Matching CV...</>
-            ) : (
-              <><UploadCloud className="h-4 w-4" /> Upload CV</>
+          <div className="flex flex-col gap-2">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isAnalyzing}
+              className="btn-primary h-11 w-full text-sm"
+            >
+              {isAnalyzing ? (
+                <><BreathingLoader size="sm" dots={3} /> Matching CV...</>
+              ) : (
+                <><UploadCloud className="h-4 w-4" /> Upload CV</>
+              )}
+            </button>
+            {withFilterToggle && hasCv && (
+              <button
+                onClick={onToggleCvFilter}
+                disabled={isAnalyzing}
+                className="btn-secondary h-11 w-full text-sm"
+              >
+                <BrainCircuit className="h-4 w-4" />
+                {cvFilterActive ? 'Turn off CV filter' : 'Filter by my CV'}
+              </button>
             )}
-          </button>
+          </div>
         </div>
         <div className="absolute -right-4 -bottom-4 opacity-10">
           <BrainCircuit className="h-32 w-32" />
@@ -265,7 +303,7 @@ function AiAdvisorCard({ user, fileInputRef, isAnalyzing, onChangeFile }: AiAdvi
       </div>
     )
   );
-}
+});
 
 // Module-scope pure helpers (stable identity -> cheap memo comparisons in the
 // extracted OpportunityCard / HeroSection children below).
@@ -351,7 +389,7 @@ const OpportunityCard = memo(function OpportunityCard({
     <div
       id={`opp-${opp._id}`}
       onClick={() => onPromptGuidance(opp)}
-      className={`group card-surface card-hover relative flex flex-col rounded-2xl p-4 sm:p-6 cursor-pointer text-center sm:text-left ${record?.clicked ? 'border-[#84cc16]/40 ring-1 ring-[#84cc16]/50' : ''}`}
+      className={`group card-surface card-hover relative flex h-full min-w-0 flex-col rounded-2xl p-4 sm:p-6 cursor-pointer text-center sm:text-left ${record?.clicked ? 'border-[#84cc16]/40 ring-1 ring-[#84cc16]/50' : ''}`}
     >
       <button
         type="button"
@@ -371,7 +409,7 @@ const OpportunityCard = memo(function OpportunityCard({
         {opp.opportunityType === 'Scholarship' ? <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" /> : <Briefcase className="h-5 w-5 sm:h-6 sm:w-6" />}
       </div>
 
-      <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 sm:mb-2 leading-tight group-hover:text-primary transition-colors">
+      <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 sm:mb-2 leading-tight line-clamp-2 group-hover:text-primary transition-colors">
         {cleanText(opp.title)}
       </h3>
       <div className="flex items-center justify-center sm:justify-start gap-2 text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4">
@@ -387,23 +425,28 @@ const OpportunityCard = memo(function OpportunityCard({
 
       <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 flex-grow">
         <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
-          <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 shrink-0" /> <span className="truncate">{cleanText(opp.location)}</span>
+          <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 shrink-0" /> <span className="min-w-0 truncate">{cleanText(opp.location)}</span>
         </div>
         <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
-          <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 shrink-0" /> <span className="truncate">{cleanText(opp.category)}</span>
+          <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 shrink-0" /> <span className="min-w-0 truncate">{cleanText(opp.category)}</span>
         </div>
         <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
-          <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 shrink-0" /> <span className="text-red-400/80 truncate">{formatDeadline(opp.deadline)}</span>
+          <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 shrink-0" /> <span className="min-w-0 truncate text-red-400/80">{formatDeadline(opp.deadline)}</span>
         </div>
       </div>
 
       {opp.tags && opp.tags.length > 0 && (
         <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 sm:gap-2 mb-4 sm:mb-6">
-          {opp.tags.map((tag: string, i: number) => (
+          {opp.tags.slice(0, 4).map((tag: string, i: number) => (
             <span key={i} className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-white/5 text-gray-300 text-[10px] sm:text-xs font-medium border border-white/10">
               {cleanText(tag)}
             </span>
           ))}
+          {opp.tags.length > 4 && (
+            <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-[#84cc16]/10 text-[#84cc16] text-[10px] sm:text-xs font-semibold border border-[#84cc16]/30">
+              +{opp.tags.length - 4}
+            </span>
+          )}
         </div>
       )}
 
@@ -728,7 +771,9 @@ export default function Dashboard() {
     }
   }, [cvFilterActive]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Stable identity (useCallback) + memoized AiAdvisorCard: the CV card only
+  // re-renders when its real props change, never on every Dashboard render.
+  const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -763,7 +808,7 @@ export default function Dashboard() {
         fileInputRef.current.value = '';
       }
     }
-  };
+  }, [openModal]);
 
   // cleanText / formatDeadline live at module scope (stable identity, shared
   // with the memoized OpportunityCard + HeroSection children).
@@ -956,7 +1001,6 @@ export default function Dashboard() {
     const opp = guidanceOpp;
     setGuidanceOpp(null);
     if (!opp) return;
-    if (user) handleTrackClicked(opp._id);
     const params = new URLSearchParams({
       title: opp.title,
       org: opp.organization || '',
@@ -965,10 +1009,18 @@ export default function Dashboard() {
       category: opp.category || '',
     });
     if (opp._id) params.set('id', opp._id);
+    if (!user) {
+      // Not signed in: go to login first, and remember the EXACT mentorship-
+      // interest destination (with query string) so post-login the user lands
+      // back on the guidance question and then straight on the opportunity.
+      navigate('/login', { state: { from: `/mentorship/interest?${params.toString()}` } });
+      return;
+    }
+    handleTrackClicked(opp._id);
     navigate(`/mentorship/interest?${params.toString()}`);
   };
 
-  const handleCvFilterToggle = () => {
+  const handleCvFilterToggle = useCallback(() => {
     if (!user) {
       openModal('Login Required', 'Please log in to upload a CV and get personalized matches.');
       return;
@@ -987,7 +1039,7 @@ export default function Dashboard() {
       // Apply the saved CV matches — the feed area derives from latestCv.
       setCvFilterActive(true);
     }
-  };
+  }, [user, latestCv, cvFilterActive, openModal]);
 
   // Matches refresh automatically in the background (server re-runs the match
   // pipeline after every opportunity sync + on a daily cron), so there is no
@@ -1048,8 +1100,19 @@ export default function Dashboard() {
   const visibleOpportunities = cvMatches ?? opportunities;
   const visibleHasMore = cvFilterActive && latestCv ? false : hasMore;
 
-  const showWaitlist = launch ? !launch.launched && !adminPreview : true;
+  // Never flash the waitlist before the launch status resolves: a launched app
+  // must go straight to the dashboard. The waitlist only appears once we KNOW
+  // the app is unlaunched (and the admin isn't previewing).
+  const showWaitlist = !!launch && !launch.launched && !adminPreview;
   const showWelcome = !!launch?.launched && !!launch.welcomeUntil && new Date(launch.welcomeUntil).getTime() >= Date.now();
+
+  if (launchLoading && !showWaitlist) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <BreathingLoader size="lg" dots={3} label="Loading…" />
+      </div>
+    );
+  }
 
   if (showWaitlist) {
     return (
@@ -1082,7 +1145,16 @@ export default function Dashboard() {
 
       {/* Mobile: CV Upload at top (visible only on lg below) */}
       <div className="lg:hidden">
-        <AiAdvisorCard user={user} fileInputRef={fileInputRef} isAnalyzing={isAnalyzing} onChangeFile={handleFileUpload} />
+        <AiAdvisorCard
+          user={user}
+          fileInputRef={fileInputRef}
+          isAnalyzing={isAnalyzing}
+          cvFilterActive={cvFilterActive}
+          hasCv={!!latestCv}
+          onChangeFile={handleFileUpload}
+          onToggleCvFilter={handleCvFilterToggle}
+          withFilterToggle
+        />
       </div>
 
       {/* Mobile: Filter & Sort Bar */}
@@ -1103,20 +1175,6 @@ export default function Dashboard() {
             </span>
           )}
         </button>
-
-        {user && (
-          <button
-            onClick={handleCvFilterToggle}
-            className={`focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors border flex-1 justify-center ${
-              cvFilterActive
-                ? 'bg-[#84cc16] text-[#070e0a] border-[#84cc16] shadow-[0_0_15px_rgba(132,204,22,0.4)]'
-                : 'bg-white/[0.04] text-white border-white/10 hover:bg-white/[0.08]'
-            }`}
-          >
-            <BrainCircuit className="h-4 w-4" />
-            {cvFilterActive ? 'CV Active' : 'CV Match'}
-          </button>
-        )}
 
         <div className="relative flex-1">
           <button 
@@ -1175,7 +1233,15 @@ export default function Dashboard() {
           </div>
 
           {/* AI Advisor Card (desktop) */}
-          <AiAdvisorCard user={user} fileInputRef={fileInputRef} isAnalyzing={isAnalyzing} onChangeFile={handleFileUpload} />
+          <AiAdvisorCard
+            user={user}
+            fileInputRef={fileInputRef}
+            isAnalyzing={isAnalyzing}
+            cvFilterActive={cvFilterActive}
+            hasCv={!!latestCv}
+            onChangeFile={handleFileUpload}
+            onToggleCvFilter={handleCvFilterToggle}
+          />
         </div>
         
         {/* Right Content - Feed */}
@@ -1259,7 +1325,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-4 sm:gap-6">
             {visibleOpportunities.map(opp => {
               const record = appRecords.get(opp._id);
               return (

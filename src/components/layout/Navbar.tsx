@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Radar, Search, Menu, X, LogOut } from 'lucide-react';
+import { Radar, Search, Menu, X, LogOut, ChevronDown, User as UserIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar() {
@@ -8,6 +8,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user, isAdmin, logout } = useAuth();
 
   // Search drives the dashboard feed via ?q= in the URL, so the Navbar input
@@ -20,6 +21,20 @@ export default function Navbar() {
   }, [searchParams]);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
+  // Close the user dropdown on any outside click / route change. The trigger
+  // button stops propagation so clicking it toggles instead of instantly closing.
+  useEffect(() => {
+    if (!isUserMenuOpen) return;
+    const close = () => setIsUserMenuOpen(false);
+    window.addEventListener('click', close);
+    return () => window.removeEventListener('click', close);
+  }, [isUserMenuOpen]);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsUserMenuOpen(false);
+  }, [location.pathname]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +88,6 @@ export default function Navbar() {
             { to: '/applications', label: 'Application', show: !!user },
             { to: '/mentors', label: 'Mentors', show: !!user },
             { to: '/admin', label: 'Admin', show: isAdmin },
-            { to: '/profile', label: 'Profile', show: !!user },
           ].filter(l => l.show !== false).map(link => (
             <Link
               key={link.to}
@@ -87,21 +101,45 @@ export default function Navbar() {
           ))}
 
           {user ? (
-            <>
-              <div className="flex items-center gap-2.5 text-sm font-semibold text-gray-300">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#84cc16]/40 bg-[#84cc16]/20 font-bold text-[#84cc16]">
+            <div className="relative">
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsUserMenuOpen(v => !v); }}
+                aria-expanded={isUserMenuOpen}
+                aria-haspopup="menu"
+                className={`focus-ring flex items-center gap-2.5 rounded-xl border px-3 py-2 text-sm font-semibold text-gray-300 transition-colors ${
+                  isUserMenuOpen ? 'border-white/20 bg-white/[0.06] text-white' : 'border-transparent hover:bg-white/[0.05]'
+                }`}
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#84cc16]/40 bg-[#84cc16]/20 font-bold text-[#84cc16]">
                   {userInitial}
                 </span>
-                <span className="max-w-[140px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="btn-secondary h-10 px-4"
-              >
-                <LogOut className="h-4 w-4" />
-                Log out
+                <span className="max-w-[130px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
+                <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
               </button>
-            </>
+
+              {isUserMenuOpen && (
+                <div role="menu" className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-[#0d1410] shadow-2xl">
+                  <Link
+                    to="/profile"
+                    role="menuitem"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className={`flex items-center gap-2.5 px-4 py-3 text-sm font-semibold transition-colors hover:bg-white/[0.05] ${
+                      currentPath === '/profile' ? 'text-[#84cc16]' : 'text-gray-300 hover:text-white'
+                    }`}
+                  >
+                    <UserIcon className="h-4 w-4" /> Profile
+                  </Link>
+                  <div className="h-px bg-white/10" />
+                  <button
+                    onClick={handleLogout}
+                    role="menuitem"
+                    className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm font-semibold text-rose-300 transition-colors hover:bg-rose-400/10"
+                  >
+                    <LogOut className="h-4 w-4" /> Log out
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <>
               <Link to="/login" className={`${currentPath === '/login' ? 'btn-primary' : 'btn-secondary'} h-10 px-4`}>Log in</Link>
