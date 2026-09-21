@@ -136,14 +136,24 @@ export default function AdminPage() {
     if (!user || !isAdmin) return;
     setLoading(true);
     try {
+      // Each endpoint is fetched independently: if one is missing/errors (e.g.
+      // a section the backend version doesn't expose yet), the others still load
+      // instead of the whole page blanking on a Promise.all rejection.
+      const tryGet = async (path: string): Promise<any> => {
+        try {
+          return await apiFetch(`${API_BASE}${path}`).then(r => r.json());
+        } catch {
+          return {};
+        }
+      };
       const [o, u, m, e, c, l, ch] = await Promise.all([
-        apiFetch(`${API_BASE}/admin/overview`).then(r => r.json()),
-        apiFetch(`${API_BASE}/admin/users`).then(r => r.json()),
-        apiFetch(`${API_BASE}/admin/mentors`).then(r => r.json()),
-        apiFetch(`${API_BASE}/admin/mentees`).then(r => r.json()),
-        apiFetch(`${API_BASE}/admin/complaints`).then(r => r.json()),
-        apiFetch(`${API_BASE}/admin/launch`).then(r => r.json()),
-        apiFetch(`${API_BASE}/admin/chats`).then(r => r.json()),
+        tryGet('/admin/overview'),
+        tryGet('/admin/users'),
+        tryGet('/admin/mentors'),
+        tryGet('/admin/mentees'),
+        tryGet('/admin/complaints'),
+        tryGet('/admin/launch'),
+        tryGet('/admin/chats'),
       ]);
       if (o.success) setOverview(o);
       if (u.success) {
