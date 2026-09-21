@@ -244,6 +244,28 @@ export default function AdminPage() {
     }
   };
 
+  // Keep Chat Activity fresh: admins usually leave this page open while testing
+  // the chat widget, and chats load only on mount — so refetch the newest page
+  // whenever the admin refocuses the tab.
+  const refreshChats = useCallback(async () => {
+    try {
+      const res = await apiFetch(`${API_BASE}/admin/chats`);
+      const data = await res.json();
+      if (!data.success) return;
+      setChats(data.chats || []);
+      setChatsPg({ page: data.page || 1, pages: data.pages || 1 });
+    } catch {
+      // Keep the current list on transient failures.
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const onFocus = () => { void refreshChats(); };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [user, refreshChats]);
+
   const launchPost = async (path: string, body: Record<string, unknown>, okMsg: string) => {
     if (!user || launchBusy) return;
     setLaunchBusy(true);
