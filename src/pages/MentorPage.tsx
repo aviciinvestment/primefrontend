@@ -152,7 +152,7 @@ export default function MentorPage() {
       </div>
 
       {notice && (
-        <div className="flex items-center gap-2.5 rounded-xl border border-[#84cc16]/30 bg-[#84cc16]/10 px-4 py-3 text-sm font-medium text-[#84cc16] mb-6">
+        <div className="flex items-center gap-2.5 rounded-xl border border-brand-solid/30 bg-brand/10 px-4 py-3 text-sm font-medium text-brand mb-6">
           <CheckCircle2 className="h-4 w-4 shrink-0" /> {notice}
         </div>
       )}
@@ -229,8 +229,8 @@ function ApplicationFlow(props: {
   return (
     <div className="card-surface p-6 sm:p-8 max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-full bg-[#84cc16]/10 border border-[#84cc16]/30 flex items-center justify-center shrink-0">
-          <UserPlus className="h-6 w-6 text-[#84cc16]" />
+        <div className="w-12 h-12 rounded-full bg-brand/10 border border-brand-solid/30 flex items-center justify-center shrink-0">
+          <UserPlus className="h-6 w-6 text-brand" />
         </div>
         <div>
           <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-white">Become a Mentor</h2>
@@ -253,7 +253,7 @@ function ApplicationFlow(props: {
           <select
             value={roleType}
             onChange={e => setRoleType(e.target.value)}
-            className="input-base mt-1.5 appearance-none [&>option]:bg-[#0d1308]"
+            className="input-base mt-1.5 appearance-none [&>option]:bg-panel"
           >
             <option value="">Select your industry…</option>
             {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
@@ -295,7 +295,7 @@ function ApprovedDashboard({ dashboard, mentor }: { dashboard: any; mentor: Ment
       <div className="card-surface p-5 sm:p-6 overflow-hidden">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
           <h2 className="flex items-center gap-2 text-sm font-bold text-white uppercase tracking-wide">
-            <Users className="h-4 w-4 text-[#84cc16]" /> My Mentees
+            <Users className="h-4 w-4 text-brand" /> My Mentees
           </h2>
           <span className="text-xs text-gray-500">{mentor.company} · {mentor.roleType}</span>
         </div>
@@ -312,7 +312,7 @@ function ApprovedDashboard({ dashboard, mentor }: { dashboard: any; mentor: Ment
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="card-surface p-5 min-w-0">
-      <span className="p-2 rounded-lg bg-[#84cc16]/10 border border-[#84cc16]/20 text-[#84cc16] inline-flex mb-2">{icon}</span>
+      <span className="p-2 rounded-lg bg-brand/10 border border-brand-solid/20 text-brand inline-flex mb-2">{icon}</span>
       <p className="text-2xl font-extrabold text-white tabular-nums">{value}</p>
       <p className="text-gray-400 text-xs mt-1">{label}</p>
     </div>
@@ -344,7 +344,7 @@ function MenteeTable({ rows }: { rows: MenteeRequest[] }) {
                 {r.opportunityOrg && <p className="text-gray-500 text-xs">{r.opportunityOrg}</p>}
               </td>
               <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">{r.opportunityType || '—'}</td>
-              <td className="py-3 pr-4 text-[#84cc16] font-semibold tabular-nums whitespace-nowrap">{formatMoney(r.amount, r.currency)}</td>
+              <td className="py-3 pr-4 text-brand font-semibold tabular-nums whitespace-nowrap">{formatMoney(r.amount, r.currency)}</td>
               <td className="py-3 text-gray-500 text-xs whitespace-nowrap">{formatDate(r.createdAt)}</td>
             </tr>
           ))}

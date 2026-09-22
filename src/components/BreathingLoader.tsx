@@ -29,7 +29,7 @@ export function BreathingLoader({ size = 'md', dots = 3, label, className, tone 
           key={i}
           className={cn(
             'animate-breath rounded-full',
-            tone === 'dark' ? 'bg-[#0d1308]' : 'bg-[#84cc16]',
+            tone === 'dark' ? 'bg-[#0d1308]' : 'bg-brand-solid',
             dotSizes[size]
           )}
           style={{ animationDelay: `${i * 160}ms` }}

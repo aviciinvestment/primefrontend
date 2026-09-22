@@ -55,7 +55,7 @@ export default function MentorshipInterest() {
     <div className="w-full max-w-xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
       <div className="card-surface p-6 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
         {done ? (
-          <div className="flex items-center justify-center gap-3 text-[#84cc16] py-4">
+          <div className="flex items-center justify-center gap-3 text-brand py-4">
             <BreathingLoader size="lg" dots={3} />
             <span className="font-semibold">
               {fromOpportunity ? 'Taking you to the opportunity...' : 'Redirecting you home...'}
@@ -63,8 +63,8 @@ export default function MentorshipInterest() {
           </div>
         ) : (
           <>
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#84cc16]/10 border border-[#84cc16]/30 flex items-center justify-center mb-6 shadow-[0_0_40px_-12px_rgba(132,204,22,0.5)]">
-              <Construction className="h-8 w-8 text-[#84cc16]" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-brand/10 border border-brand-solid/30 flex items-center justify-center mb-6 shadow-[0_0_40px_-12px_rgba(132,204,22,0.5)]">
+              <Construction className="h-8 w-8 text-brand" />
             </div>
             <span className="eyebrow mb-5">
               <Rocket className="h-3.5 w-3.5" /> Coming Soon

@@ -281,7 +281,7 @@ export default function Profile() {
         <div
           className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-[13px] font-medium ${
             notice.kind === 'ok'
-              ? 'border-[#84cc16]/40 bg-[#84cc16]/10 text-[#84cc16]'
+              ? 'border-brand-solid/40 bg-brand/10 text-brand'
               : 'border-red-500/40 bg-red-500/10 text-red-400'
           }`}
         >
@@ -301,7 +301,7 @@ export default function Profile() {
                 className="h-24 w-24 rounded-full border-4 border-white/10 object-cover shadow-[0_0_25px_rgba(132,204,22,0.25)]"
               />
             ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white/10 bg-[#84cc16]/20 text-3xl font-bold text-[#84cc16] shadow-[0_0_25px_rgba(132,204,22,0.25)]">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white/10 bg-brand/20 text-3xl font-bold text-brand shadow-[0_0_25px_rgba(132,204,22,0.25)]">
                 {(user.displayName || user.email || '?')[0]?.toUpperCase()}
               </div>
             )}
@@ -309,7 +309,7 @@ export default function Profile() {
               onClick={() => photoInputRef.current?.click()}
               aria-label="Change profile picture"
               title="Change photo"
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-[#84cc16] text-[#070e0a] border-2 border-[#0a100d] shadow-md transition-all hover:scale-110 active:scale-95 focus-ring"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-brand-solid text-[#070e0a] border-2 border-[#0a100d] shadow-md transition-all hover:scale-110 active:scale-95 focus-ring"
             >
               <Camera className="h-4 w-4" />
             </button>
@@ -329,7 +329,7 @@ export default function Profile() {
             <p className="mt-1 text-sm text-gray-400">
               {user.email}
               {user.emailVerified ? (
-                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-[#84cc16]/30 bg-[#84cc16]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#84cc16]">
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-brand-solid/30 bg-brand/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand">
                   <CheckCircle2 className="h-3 w-3" /> Verified
                 </span>
               ) : (
@@ -349,7 +349,7 @@ export default function Profile() {
         {/* ---- CV card ---- */}
         <section className="card-surface flex h-full flex-col p-6 sm:p-8">
           <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-white">
-            <Briefcase className="h-5 w-5 text-[#84cc16]" /> CV Highlights
+            <Briefcase className="h-5 w-5 text-brand" /> CV Highlights
           </h2>
 
           {cvsLoading ? (
@@ -440,7 +440,7 @@ export default function Profile() {
         {/* ---- Mentorship card ---- */}
         <section className="card-surface flex h-full flex-col p-6 sm:p-8">
           <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-white">
-            <GraduationCap className="h-5 w-5 text-[#84cc16]" /> Mentorship
+            <GraduationCap className="h-5 w-5 text-brand" /> Mentorship
           </h2>
           <div className="flex flex-1 flex-col">
             {mentorLoading ? (
@@ -520,7 +520,7 @@ export default function Profile() {
         {/* ---- Account card ---- */}
         <section className="card-surface flex h-full flex-col p-6 sm:p-8">
           <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-white">
-            <UserIcon className="h-5 w-5 text-[#84cc16]" /> Account
+            <UserIcon className="h-5 w-5 text-brand" /> Account
           </h2>
           <dl className="space-y-3 text-sm">
             <div className="flex items-center justify-between gap-3">
@@ -542,10 +542,10 @@ export default function Profile() {
           </dl>
           <div className="mt-6 card-surface p-4">
             <h3 className="mb-2 flex items-center gap-2 text-[13px] font-bold text-white">
-              <BookOpen className="h-4 w-4 text-[#84cc16]" /> AI Scout
+              <BookOpen className="h-4 w-4 text-brand" /> AI Scout
             </h3>
             <div className="mb-1.5 flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#84cc16] animate-pulse"></span>
+              <span className="h-2.5 w-2.5 rounded-full bg-brand-solid animate-pulse"></span>
               <span className="text-xs text-gray-400">Actively scanning for matches</span>
             </div>
             <p className="text-xs text-gray-500">
@@ -562,7 +562,7 @@ export default function Profile() {
           onClick={() => !saving && setShowModal(false)}
         >
           <div
-            className="relative w-full max-w-lg space-y-5 rounded-2xl border border-white/10 bg-[#0d1712] bg-gradient-to-b from-white/[0.06] to-transparent p-6 shadow-2xl sm:p-8"
+            className="relative w-full max-w-lg space-y-5 rounded-2xl border border-white/10 bg-panel bg-gradient-to-b from-white/[0.06] to-transparent p-6 shadow-2xl sm:p-8"
             onClick={e => e.stopPropagation()}
           >
             <button
@@ -576,7 +576,7 @@ export default function Profile() {
             <div>
               <h2 className="text-xl font-bold text-white">Become a Mentor</h2>
               <p className="mt-1 text-sm text-gray-400">
-                Your profile will be updated to <span className="font-semibold text-[#84cc16]">Mentor</span> once registered.
+                Your profile will be updated to <span className="font-semibold text-brand">Mentor</span> once registered.
               </p>
             </div>
 
@@ -598,11 +598,11 @@ export default function Profile() {
                   onChange={e => setRoleType(e.target.value)}
                   className="input-base appearance-none"
                 >
-                  <option value="" disabled className="bg-[#0d1712] text-gray-400">
+                  <option value="" disabled className="bg-panel text-gray-400">
                     Select your industry…
                   </option>
                   {ROLE_OPTIONS.map(opt => (
-                    <option key={opt} value={opt} className="bg-[#0d1712] text-white">
+                    <option key={opt} value={opt} className="bg-panel text-white">
                       {opt}
                     </option>
                   ))}
@@ -618,7 +618,7 @@ export default function Profile() {
                   onChange={e => setCareerStory(e.target.value)}
                   rows={4}
                   placeholder="Share a brief version of your career journey…"
-                  className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-gray-500 transition-all duration-200 focus:border-[#84cc16]/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#84cc16]/25"
+                  className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder:text-gray-500 transition-all duration-200 focus:border-brand-solid/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-brand/25"
                 />
                 <p className="mt-1 text-right text-[11px] text-gray-500 tabular-nums">
                   {careerStory.length.toLocaleString()} / 2,000

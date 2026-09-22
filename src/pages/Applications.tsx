@@ -306,7 +306,7 @@ export default function Applications() {
                   }}
                   onDrop={(e) => handleDrop(e, status)}
                   className={`p-3 flex-1 overflow-y-auto space-y-3 rounded-b-2xl transition-colors ${
-                    dragOver === status ? 'bg-[#84cc16]/10 ring-1 ring-inset ring-[#84cc16]/40' : ''
+                    dragOver === status ? 'bg-brand/10 ring-1 ring-inset ring-brand/40' : ''
                   }`}
                 >
                   {grouped[colIndex].map(app => (
@@ -355,7 +355,7 @@ export default function Applications() {
                       </div>
 
                       {app.clicked && (
-                        <div className="mt-3 inline-flex items-center text-[11px] font-semibold text-[#84cc16] bg-[#84cc16]/10 border border-[#84cc16]/30 px-2 py-0.5 rounded-md">
+                        <div className="mt-3 inline-flex items-center text-[11px] font-semibold text-brand bg-brand/10 border border-brand-solid/30 px-2 py-0.5 rounded-md">
                           ✓ Visited
                         </div>
                       )}

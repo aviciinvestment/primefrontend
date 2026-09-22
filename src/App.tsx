@@ -5,6 +5,7 @@ import Footer from './components/layout/Footer';
 import EmailVerificationScreen from './components/EmailVerificationScreen';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { BreathingLoader } from './components/BreathingLoader';
 import Dashboard from './pages/Dashboard';
 import { API_BASE } from './lib/applications';
@@ -93,20 +94,23 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 function App() {
   useTrackVisit();
   return (
+    <ThemeProvider>
     <Router>
       <AuthProvider>
         <AuthGate>
-        <div className="relative min-h-screen overflow-x-clip bg-[#070e0a] font-sans antialiased text-white selection:bg-[#84cc16]/30">
-          {/* Subtle Ambient Green Glow — static gradient, compositor-cheap */}
-          <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_rgba(132,204,22,0.10),_transparent_60%)]"></div>
+        <div className="relative min-h-screen overflow-x-clip bg-canvas font-sans antialiased text-white selection:bg-brand/30">
+          {/* Subtle Ambient Glow — static gradient, compositor-cheap; the tint
+              (green in dark, faint olive in light, none in midnight) comes from
+              --c-glow so it follows the active theme. */}
+          <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_var(--c-glow),_transparent_60%)]"></div>
 
-          {/* Global Grid Line Pattern - Faint Green */}
+          {/* Global Grid Line Pattern - Faint, theme-aware */}
           <div
             className="pointer-events-none absolute inset-0 z-0"
             style={{
               backgroundImage: `
-                linear-gradient(to right, rgba(132, 204, 34, 0.04) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(132, 204, 34, 0.04) 1px, transparent 1px)
+                linear-gradient(to right, var(--c-grid) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--c-grid) 1px, transparent 1px)
               `,
               backgroundSize: '60px 60px',
             }}
@@ -141,6 +145,7 @@ function App() {
         </AuthGate>
       </AuthProvider>
     </Router>
+    </ThemeProvider>
   );
 }
 

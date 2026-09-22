@@ -9,7 +9,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh] gap-3 text-[#84cc16]">
+      <div className="flex items-center justify-center min-h-[50vh] gap-3 text-brand">
         <BreathingLoader size="lg" dots={3} label="Loading…" />
       </div>
     );

@@ -55,12 +55,12 @@ export default function Navbar() {
   const userInitial = user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?';
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#070e0a]/85 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-canvas/85 backdrop-blur-md">
       <div className="section-shell flex h-16 items-center justify-between md:h-20">
 
         {/* Logo */}
         <Link to="/" className="focus-ring group z-50 mr-6 flex items-center gap-3 rounded-lg">
-          <div className="rounded-xl bg-[#84cc16] p-2.5 text-[#0d1308] font-bold shadow-[0_0_15px_rgba(132,204,34,0.6)] transition-all duration-200 group-hover:scale-110 group-active:scale-95">
+          <div className="rounded-xl bg-brand-solid p-2.5 text-[#0d1308] font-bold shadow-[0_0_15px_rgba(132,204,34,0.6)] transition-all duration-200 group-hover:scale-110 group-active:scale-95">
             <Radar className="h-6 w-6" />
           </div>
           <div className="flex flex-col">
@@ -79,7 +79,7 @@ export default function Navbar() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search opportunities..."
                 aria-label="Search opportunities"
-                className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-9 pr-4 text-sm text-white transition-all duration-200 placeholder:text-gray-500 focus:border-[#84cc16]/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#84cc16]/25"
+                className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-9 pr-4 text-sm text-white transition-all duration-200 placeholder:text-gray-500 focus:border-brand-solid/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-brand/25"
               />
             </form>
           </div>
@@ -93,7 +93,7 @@ export default function Navbar() {
               key={link.to}
               to={link.to}
               className={`focus-ring rounded-lg px-1 py-2 text-sm font-semibold transition-colors duration-200 ${
-                currentPath === link.to ? 'text-[#84cc16]' : 'text-gray-400 hover:text-white'
+                currentPath === link.to ? 'text-brand' : 'text-gray-400 hover:text-white'
               }`}
             >
               {link.label}
@@ -110,7 +110,7 @@ export default function Navbar() {
                   isUserMenuOpen ? 'border-white/20 bg-white/[0.06] text-white' : 'border-transparent hover:bg-white/[0.05]'
                 }`}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#84cc16]/40 bg-[#84cc16]/20 font-bold text-[#84cc16]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brand-solid/40 bg-brand/20 font-bold text-brand">
                   {userInitial}
                 </span>
                 <span className="max-w-[130px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
@@ -118,13 +118,13 @@ export default function Navbar() {
               </button>
 
               {isUserMenuOpen && (
-                <div role="menu" className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-[#0d1410] shadow-2xl">
+                <div role="menu" className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-panel shadow-2xl">
                   <Link
                     to="/profile"
                     role="menuitem"
                     onClick={() => setIsUserMenuOpen(false)}
                     className={`flex items-center gap-2.5 px-4 py-3 text-sm font-semibold transition-colors hover:bg-white/[0.05] ${
-                      currentPath === '/profile' ? 'text-[#84cc16]' : 'text-gray-300 hover:text-white'
+                      currentPath === '/profile' ? 'text-brand' : 'text-gray-300 hover:text-white'
                     }`}
                   >
                     <UserIcon className="h-4 w-4" /> Profile
@@ -165,7 +165,7 @@ export default function Navbar() {
       {/* Mobile Nav Dropdown — solid surface (no backdrop blur over scrolling
           content, keeps low-end devices smooth) */}
       {isMobileMenuOpen && (
-        <div id="mobile-nav" className="absolute top-16 right-0 left-0 z-40 flex flex-col gap-2 border-b border-white/5 bg-[#070e0a]/[0.98] px-4 py-5 shadow-2xl md:hidden sm:px-6">
+        <div id="mobile-nav" className="absolute top-16 right-0 left-0 z-40 flex flex-col gap-2 border-b border-white/5 bg-canvas/[0.98] px-4 py-5 shadow-2xl md:hidden sm:px-6">
           <form onSubmit={handleSearchSubmit} role="search" className="mb-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
@@ -175,7 +175,7 @@ export default function Navbar() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search opportunities..."
                 aria-label="Search opportunities"
-                className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.05] pl-11 pr-4 text-base text-white placeholder:text-gray-500 focus:border-[#84cc16]/50 focus:outline-none focus:ring-2 focus:ring-[#84cc16]/25"
+                className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.05] pl-11 pr-4 text-base text-white placeholder:text-gray-500 focus:border-brand-solid/50 focus:outline-none focus:ring-2 focus:ring-brand/25"
               />
             </div>
           </form>
@@ -192,7 +192,7 @@ export default function Navbar() {
                 onClick={toggleMobileMenu}
                 to={link.to}
                 className={`focus-ring rounded-xl px-3 py-3 text-lg font-semibold transition-colors ${
-                  currentPath === link.to ? 'text-[#84cc16]' : 'text-gray-300 hover:text-white'
+                  currentPath === link.to ? 'text-brand' : 'text-gray-300 hover:text-white'
                 }`}
               >
                 {link.label}
@@ -204,7 +204,7 @@ export default function Navbar() {
             {user ? (
               <>
                 <div className="flex items-center gap-3 px-1">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[#84cc16]/40 bg-[#84cc16]/20 font-bold text-[#84cc16]">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-brand-solid/40 bg-brand/20 font-bold text-brand">
                     {userInitial}
                   </span>
                   <div className="min-w-0">

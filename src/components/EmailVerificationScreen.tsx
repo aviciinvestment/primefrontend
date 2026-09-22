@@ -41,11 +41,11 @@ export default function EmailVerificationScreen() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#070e0a] px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-canvas px-4 py-10">
       <div className="w-full max-w-md">
         <div className="card-surface p-6 text-center animate-in fade-in zoom-in-95 duration-200 sm:p-8">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-[#84cc16]/40 bg-[#84cc16]/10 shadow-[0_8px_24px_-12px_rgba(132,204,22,0.5)]">
-            <Mail className="h-8 w-8 text-[#84cc16]" />
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-brand-solid/40 bg-brand/10 shadow-[0_8px_24px_-12px_rgba(132,204,22,0.5)]">
+            <Mail className="h-8 w-8 text-brand" />
           </div>
 
           <span className="eyebrow mb-4">
@@ -56,11 +56,11 @@ export default function EmailVerificationScreen() {
           <p className="mb-6 text-sm leading-relaxed text-gray-400 sm:text-base">
             Before you can use PrimeOpportunity, please verify your email address.
             We sent a link to{' '}
-            <span className="break-all font-semibold text-[#84cc16]">{user?.email}</span>.
+            <span className="break-all font-semibold text-brand">{user?.email}</span>.
           </p>
 
           {sent && (
-            <div className="mb-4 rounded-lg border border-[#84cc16]/30 bg-[#84cc16]/10 px-4 py-2.5 text-sm text-[#84cc16]">
+            <div className="mb-4 rounded-lg border border-brand-solid/30 bg-brand/10 px-4 py-2.5 text-sm text-brand">
               <CheckCircle2 className="inline h-4 w-4 -mt-0.5 mr-1" />
               Verification email sent. Check your inbox (and spam folder).
             </div>

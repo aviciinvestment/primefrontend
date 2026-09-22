@@ -58,7 +58,7 @@ export default function Register() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="mb-4 inline-flex rounded-2xl bg-[#84cc16] p-3 text-[#070e0a] shadow-[0_8px_24px_-10px_rgba(132,204,22,0.8)] ring-1 ring-[#84cc16]/30">
+          <div className="mb-4 inline-flex rounded-2xl bg-brand-solid p-3 text-[#070e0a] shadow-[0_8px_24px_-10px_rgba(132,204,22,0.8)] ring-1 ring-brand/30">
             <Radar className="h-8 w-8" />
           </div>
           <span className="eyebrow mb-3">Get Started</span>
@@ -71,7 +71,7 @@ export default function Register() {
           <button
             onClick={handleGoogle}
             disabled={submitting}
-            className="focus-ring flex h-11 w-full items-center justify-center gap-3 rounded-xl bg-white font-bold text-[#1f2937] transition-colors hover:bg-gray-100 active:scale-[0.97] disabled:opacity-50"
+            className="focus-ring flex h-11 w-full items-center justify-center gap-3 rounded-xl bg-[#ffffff] font-bold text-[#1f2937] border border-[#d1d5db] transition-colors hover:bg-[#f3f4f6] active:scale-[0.97] disabled:opacity-50"
           >
             <GoogleIcon className="h-5 w-5" />
             Sign up with Google
@@ -87,7 +87,7 @@ export default function Register() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                <User className="inline h-4 w-4 mr-1 text-[#84cc16]" /> Full Name
+                <User className="inline h-4 w-4 mr-1 text-brand" /> Full Name
               </label>
               <input
                 type="text"
@@ -101,7 +101,7 @@ export default function Register() {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                <Mail className="inline h-4 w-4 mr-1 text-[#84cc16]" /> Email
+                <Mail className="inline h-4 w-4 mr-1 text-brand" /> Email
               </label>
               <input
                 type="email"
@@ -115,7 +115,7 @@ export default function Register() {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                <Lock className="inline h-4 w-4 mr-1 text-[#84cc16]" /> Password
+                <Lock className="inline h-4 w-4 mr-1 text-brand" /> Password
               </label>
               <input
                 type="password"
@@ -149,7 +149,7 @@ export default function Register() {
 
           <p className="text-center text-sm text-gray-400 mt-6">
             Already have an account?{' '}
-            <Link to="/login" className="focus-ring rounded font-semibold text-[#84cc16] hover:text-[#a3e635] hover:underline">
+            <Link to="/login" className="focus-ring rounded font-semibold text-brand hover:text-brand-bright hover:underline">
               Log in
             </Link>
           </p>

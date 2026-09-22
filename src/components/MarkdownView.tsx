@@ -64,7 +64,7 @@ const inline = (segment: string, keyPrefix: string): ReactNode[] => {
             href={linkMatch[2]}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#84cc16] underline underline-offset-2 hover:text-white transition-colors break-all"
+            className="text-brand underline underline-offset-2 hover:text-white transition-colors break-all"
           >
             {linkMatch[1]}
           </a>
@@ -72,7 +72,7 @@ const inline = (segment: string, keyPrefix: string): ReactNode[] => {
       }
     } else if (token.startsWith('`')) {
       parts.push(
-        <code key={`${keyPrefix}-c${innerKey++}`} className="rounded bg-white/10 px-1.5 py-0.5 text-xs text-[#84cc16]">
+        <code key={`${keyPrefix}-c${innerKey++}`} className="rounded bg-white/10 px-1.5 py-0.5 text-xs text-brand">
           {token.slice(1, -1)}
         </code>
       );

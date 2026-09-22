@@ -81,10 +81,10 @@ export default function WaitlistSection({ launch, loading, onCountChange }: Prop
   return (
     <div className="relative overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] px-4 py-12 text-center shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.08)] sm:px-8 md:px-12 md:py-16">
       {/* Decorative top accent line — premium, compositor-free */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#84cc16]/60 to-transparent" aria-hidden="true"></div>
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/60 to-transparent" aria-hidden="true"></div>
 
       {/* Soft radial glow behind hero content */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(132,204,22,0.06),transparent_60%)]" aria-hidden="true"></div>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--c-glow-soft),transparent_60%)]" aria-hidden="true"></div>
 
       <div className="relative z-10">
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -92,13 +92,13 @@ export default function WaitlistSection({ launch, loading, onCountChange }: Prop
             <Gift className="h-3.5 w-3.5" aria-hidden="true" /> Coming soon
           </span>
           <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-gray-300">
-            <Users className="h-3.5 w-3.5 text-[#84cc16]" aria-hidden="true" />
+            <Users className="h-3.5 w-3.5 text-brand" aria-hidden="true" />
             {launch?.waitlistCount ?? 0} person{launch?.waitlistCount === 1 ? '' : 's'} on the waitlist
           </span>
         </div>
 
         <h1 className="mx-auto mt-8 max-w-2xl text-3xl leading-tight font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl">
-          Prime Opportunity is <span className="text-[#84cc16]">launching soon</span>
+          Prime Opportunity is <span className="text-brand">launching soon</span>
         </h1>
         <p className="mx-auto mt-4 max-w-lg text-base leading-relaxed text-gray-400 sm:text-lg">
           Scholarships, internships, and graduate programs matched to you — with AI guidance to help you apply.
@@ -137,9 +137,9 @@ export default function WaitlistSection({ launch, loading, onCountChange }: Prop
         {/* Join form */}
         <div className="mx-auto mt-10 max-w-md">
           {joined ? (
-            <div className="rounded-2xl border border-[#84cc16]/40 bg-[#84cc16]/10 p-5 text-left" role="status">
-              <CheckCircle2 className="mb-2 h-6 w-6 text-[#84cc16]" aria-hidden="true" />
-              <p className="text-sm font-medium text-[#e5ffd9]">
+            <div className="rounded-2xl border border-brand-solid/40 bg-brand/10 p-5 text-left" role="status">
+              <CheckCircle2 className="mb-2 h-6 w-6 text-brand" aria-hidden="true" />
+              <p className="text-sm font-medium text-brand">
                 You're on the waitlist{launch?.whatsappGroupUrl ? ' — opening the WhatsApp group…' : ". We'll notify you when we launch."}
               </p>
             </div>

@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
-/* Tailwind responds to the .dark class (class-based dark mode). */
-@custom-variant dark (&:is(.dark *));
+/* Tailwind responds to the .dark class (class-based dark mode). The global
+   theme is driven by [data-theme] on <html> (set before paint in index.html);
+   'dark' and 'midnight' both count as dark for `dark:`-variant utilities. */
+@custom-variant dark (&:is(.dark, [data-theme="dark"], [data-theme="midnight"]) *);
 
 /* Map shadcn-style tokens to the runtime CSS variables (dark overrides apply). */
 @theme inline {
@@ -27,6 +29,14 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* Runtime theme tokens: every component drives its colors from these, so the
+     admin's global theme (light/dark/midnight) re-skins the whole app. */
+  --color-brand: var(--c-brand);
+  --color-brand-solid: var(--c-brand-solid);
+  --color-brand-bright: var(--c-brand-bright);
+  --color-canvas: var(--c-canvas);
+  --color-panel: var(--c-panel);
 }
 
 :root {
@@ -61,6 +71,125 @@
   --ring: 82 100% 50%;
 
   --radius: 0.75rem;
+
+  /* ------------------------------------------------------------------ */
+  /* Runtime theme tokens (defaults = the shipped dark theme, exact        */
+  /* current values). [data-theme] on <html> overrides them per theme.    */
+  /* ------------------------------------------------------------------ */
+  --c-canvas: #070e0a;        /* page background                        */
+  --c-panel: #0d1712;         /* raised surfaces: menus, modals         */
+  --c-brand: #84cc16;         /* tint/links tint accents                */
+  --c-brand-solid: #84cc16;   /* solid brand fills (buttons, badge)     */
+  --c-brand-bright: #a3e635;  /* brand hover/lift                       */
+  --c-glow: rgba(132, 204, 22, 0.10);      /* ambient top glow           */
+  --c-glow-soft: rgba(132, 204, 22, 0.06); /* soft radial glows          */
+  --c-grid: rgba(132, 204, 34, 0.04);      /* global grid lines          */
+  --c-row: rgba(255, 255, 255, 0.03);      /* collapsed admin rows       */
+}
+
+/* ---------------------------------------------------------------------- */
+/* LIGHT — bright, high-contrast. Tailwind palette stops are re-mapped     */
+/* so the app's dark-first classes (text-white, bg-white/x, gray-*, the     */
+/* colored -300/-400 semantics) read correctly on a near-white canvas.     */
+/* ---------------------------------------------------------------------- */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --background: 82 22% 96%;
+  --foreground: 220 24% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 24% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 24% 12%;
+  --primary: 82 84% 28%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 18% 90%;
+  --secondary-foreground: 220 24% 12%;
+  --muted: 210 18% 90%;
+  --muted-foreground: 218 15% 42%;
+  --accent: 82 84% 28%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 40%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 16% 86%;
+  --input: 220 16% 86%;
+  --ring: 82 70% 40%;
+
+  --c-canvas: #f2f4f0;
+  --c-panel: #ffffff;
+  --c-brand: #4c7a12;
+  --c-brand-solid: #84cc16;
+  --c-brand-bright: #3f620e;
+  --c-glow: rgba(132, 204, 22, 0.07);
+  --c-glow-soft: rgba(132, 204, 22, 0.05);
+  --c-grid: rgba(0, 0, 0, 0.045);
+  --c-row: rgba(0, 0, 0, 0.02);
+
+  /* App dark-first classes: text-white => near-black ink on light. */
+  --color-white: #141a12;
+  --color-gray-50: #111827;
+  --color-gray-100: #1f2937;
+  --color-gray-200: #1f2937;
+  --color-gray-300: #374151;
+  --color-gray-400: #4b5563;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #9ca3af;
+  --color-gray-700: #d1d5db;
+  --color-gray-800: #e5e7eb;
+  --color-gray-900: #f3f4f6;
+
+  /* Colored semantics read as their dark-700/800 equivalents for contrast. */
+  --color-emerald-300: #047857;
+  --color-emerald-400: #047857;
+  --color-emerald-500: #065f46;
+  --color-rose-200: #be123c;
+  --color-rose-300: #be123c;
+  --color-rose-400: #be123c;
+  --color-rose-500: #be123c;
+  --color-amber-300: #b45309;
+  --color-amber-400: #b45309;
+  --color-amber-500: #92400e;
+  --color-sky-300: #0369a1;
+  --color-sky-400: #0369a1;
+  --color-sky-500: #0c4a6e;
+  --color-indigo-300: #4338ca;
+  --color-indigo-400: #4338ca;
+  --color-purple-300: #7e22ce;
+  --color-purple-400: #7e22ce;
+  --color-slate-200: #334155;
+  --color-slate-300: #334155;
+  --color-orange-400: #c2410c;
+  --color-orange-500: #c2410c;
+}
+
+/* ---------------------------------------------------------------------- */
+/* MIDNIGHT — pure black, no green blend. Everything inherits the dark      */
+/* accents (lime stays), but the canvas is dead black and glows/grid-      */
+/* greens are removed for a clean monochrome screen.                       */
+/* ---------------------------------------------------------------------- */
+[data-theme="midnight"] {
+  color-scheme: dark;
+
+  /* Neutralize every green-tinted token — pure black, no green blend. */
+  --background: 0 0% 0%;
+  --foreground: 210 40% 98%;
+  --card: 0 0% 3%;
+  --card-foreground: 210 40% 98%;
+  --popover: 0 0% 3%;
+  --popover-foreground: 210 40% 98%;
+  --secondary: 0 0% 10%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --border: 0 0% 12%;
+  --input: 0 0% 12%;
+
+  --c-canvas: #000000;
+  --c-panel: #050505;
+  --c-glow: transparent;
+  --c-glow-soft: transparent;
+  --c-grid: rgba(255, 255, 255, 0.03);
+  --c-row: rgba(255, 255, 255, 0.02);
 }
 
 .dark {
@@ -108,19 +237,26 @@
      "glow" without GPU cost.
      ===================================================================== */
 
-  /* Primary action — lime on deep green-black, AA-compliant pairing. */
+  /* Button placed ON a vivid gradient surface (indigo/purple cards): the
+     palette-remap flips `bg-white/15 text-gray-200` to dark ink in light mode,
+     so gradient-hosted buttons opt into literal white instead. */
+  .btn-on-vivid {
+    @apply inline-flex items-center justify-center gap-2 h-11 w-full rounded-xl border border-[#fff]/30 bg-[#fff]/15 text-sm font-semibold text-[#fff] transition-all duration-200 hover:bg-[#fff]/25 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fff]/60;
+  }
+
+  /* Primary action — brand fill on the canvas, AA-compliant pairing. */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-[#84cc16] font-bold text-[#0d1308] shadow-[0_8px_24px_-10px_rgba(132,204,22,0.8)] transition-all duration-200 hover:bg-[#a3e635] hover:shadow-[0_10px_28px_-10px_rgba(132,204,22,0.9)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-solid font-bold text-[#0d1308] shadow-[0_8px_24px_-10px_rgba(132,204,22,0.8)] transition-all duration-200 hover:bg-brand-bright hover:shadow-[0_10px_28px_-10px_rgba(132,204,22,0.9)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/70 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50;
   }
 
   /* Quiet secondary action — dashed border invites "soft yet clickable". */
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] font-semibold text-gray-200 transition-all duration-200 hover:border-white/25 hover:bg-white/[0.09] hover:text-white active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] font-semibold text-gray-200 transition-all duration-200 hover:border-white/25 hover:bg-white/[0.09] hover:text-white active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50;
   }
 
   /* Destructive / soft-danger text variant. */
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-rose-400/30 bg-rose-400/10 font-semibold text-rose-200 transition-all duration-200 hover:border-rose-400/50 hover:bg-rose-400/15 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-rose-400/30 bg-rose-400/10 font-semibold text-rose-200 transition-all duration-200 hover:border-rose-400/50 hover:bg-rose-400/15 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50;
   }
 
   /* Busy buttons — while awaited (a spinner is shown inside), keep full
@@ -133,7 +269,7 @@
 
   /* Text fields — consistent height so adjacent buttons never shift. */
   .input-base {
-    @apply h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white placeholder:text-gray-500 transition-all duration-200 focus:border-[#84cc16]/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#84cc16]/25 disabled:pointer-events-none disabled:opacity-50;
+    @apply h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white placeholder:text-gray-500 transition-all duration-200 focus:border-brand/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-brand/25 disabled:pointer-events-none disabled:opacity-50;
   }
 
   /* Card surface — static gradient (no blur), crisp border, soft shadow. */
@@ -148,7 +284,7 @@
 
   /* Generic focus ring for links and icon buttons. */
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a];
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
   }
 
   /* Section rhythm — keep every surface breathing on the 4/8px grid. */
@@ -158,7 +294,7 @@
 
   /* Eyebrow label above section headings. */
   .eyebrow {
-    @apply inline-flex items-center gap-2 rounded-full border border-[#84cc16]/30 bg-[#84cc16]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#84cc16];
+    @apply inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-brand;
   }
 }
 
@@ -297,7 +433,7 @@
     padding: 0.75rem 1rem;
     border: 1px solid hsl(var(--border));
     border-radius: 0.75rem;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--c-row);
   }
   .table-responsive tbody > tr:last-child {
     margin-bottom: 0;

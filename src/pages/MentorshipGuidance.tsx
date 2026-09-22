@@ -124,8 +124,8 @@ export default function MentorshipGuidance() {
     return (
       <div className="w-full max-w-xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <div className="card-surface p-6 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
-          <div className="w-16 h-16 mx-auto rounded-full bg-[#84cc16]/10 border border-[#84cc16]/30 flex items-center justify-center mb-6 shadow-[0_0_40px_-12px_rgba(132,204,22,0.5)]">
-            <CheckCircle2 className="h-8 w-8 text-[#84cc16]" />
+          <div className="w-16 h-16 mx-auto rounded-full bg-brand/10 border border-brand-solid/30 flex items-center justify-center mb-6 shadow-[0_0_40px_-12px_rgba(132,204,22,0.5)]">
+            <CheckCircle2 className="h-8 w-8 text-brand" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">Request received!</h1>
           <p className="text-gray-300 text-sm leading-relaxed mb-1">
@@ -168,8 +168,8 @@ export default function MentorshipGuidance() {
 
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 shrink-0 rounded-xl bg-[#84cc16]/10 border border-[#84cc16]/30 flex items-center justify-center">
-            <Handshake className="h-5 w-5 text-[#84cc16]" />
+          <div className="w-10 h-10 shrink-0 rounded-xl bg-brand/10 border border-brand-solid/30 flex items-center justify-center">
+            <Handshake className="h-5 w-5 text-brand" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Mentorship Guidance</h1>
         </div>
@@ -181,7 +181,7 @@ export default function MentorshipGuidance() {
       <div className="grid md:grid-cols-5 gap-6 items-start">
         <div className="md:col-span-3 space-y-4 min-w-0">
           <div className="card-surface p-6 sm:p-8">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-[#84cc16] mb-4">Opportunity you're applying to</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-brand mb-4">Opportunity you're applying to</h2>
             <div className="flex items-start gap-3 min-w-0">
               <div className="w-9 h-9 shrink-0 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
                 <Briefcase className="h-4 w-4 text-gray-300" />
@@ -196,7 +196,7 @@ export default function MentorshipGuidance() {
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-[#84cc16] hover:text-[#a3e635] focus-ring rounded-md transition-colors"
+                className="inline-flex items-center gap-1.5 mt-4 text-xs font-medium text-brand hover:text-brand-bright focus-ring rounded-md transition-colors"
               >
                 View listing <ArrowRight className="h-3 w-3" />
               </a>
@@ -232,13 +232,13 @@ export default function MentorshipGuidance() {
         <div className="md:col-span-2 min-w-0">
           <div className="card-surface p-6 sm:p-8 sticky top-6">
             <div className="flex items-center gap-2 mb-3">
-              <GraduationCap className="h-4 w-4 text-[#84cc16]" />
+              <GraduationCap className="h-4 w-4 text-brand" />
               <h2 className="text-xs font-bold uppercase tracking-widest text-gray-300">Application Guidance</h2>
             </div>
             <ul className="space-y-3 mb-6 text-sm leading-relaxed text-gray-400">
-              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 mt-0.5 text-[#84cc16] shrink-0" /> Review your application so it stands out</li>
-              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 mt-0.5 text-[#84cc16] shrink-0" /> 1-on-1 session with an industry mentor</li>
-              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 mt-0.5 text-[#84cc16] shrink-0" /> Actionable feedback on your chances & next steps</li>
+              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 mt-0.5 text-brand shrink-0" /> Review your application so it stands out</li>
+              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 mt-0.5 text-brand shrink-0" /> 1-on-1 session with an industry mentor</li>
+              <li className="flex items-start gap-2"><ShieldCheck className="h-4 w-4 mt-0.5 text-brand shrink-0" /> Actionable feedback on your chances & next steps</li>
             </ul>
             <div className="flex items-baseline gap-2 mb-6">
               {config ? (

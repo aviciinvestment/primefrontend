@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Pre-paint theme apply: block render until data-theme is set so the page
+         never flashes the wrong theme. The server value (applied later by
+         ThemeProvider) is the source of truth; this just seeds the last-used
+         theme instantly. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('po_theme');
+          if (t !== 'light' && t !== 'dark' && t !== 'midnight') t = 'dark';
+          document.documentElement.dataset.theme = t;
+        } catch (e) {}
+      })();
+    </script>
     <title>primeopportunity</title>
     <meta name="description" content="Prime Opportunity — Scholarships, internships, and graduate programs for Nigerian students and early-career professionals." />
     <meta property="og:type" content="website" />

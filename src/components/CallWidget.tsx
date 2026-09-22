@@ -317,17 +317,17 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
 
   return (
     <>
-      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#050a07] text-white">
+      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-canvas text-white">
         {/* Background glow */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#122a1d] via-[#06100b] to-[#050a07]"></div>
-        <div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-[#84cc16]/15 blur-3xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.06] to-transparent"></div>
+        <div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-brand/15 blur-3xl"></div>
         <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl"></div>
 
         <div className="relative flex h-full w-full max-w-md flex-col items-center px-6 py-8 overflow-hidden fade-in-call">
           {/* Top status bar */}
           <div className="flex w-full items-center justify-between text-[11px] text-white/60">
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[#84cc16] animate-pulse"></span>
+              <span className="h-2 w-2 rounded-full bg-brand-solid animate-pulse"></span>
               On call
             </span>
             <span className="tabular-nums">
@@ -340,8 +340,8 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
             <div className="relative flex h-28 w-28 items-center justify-center">
               {isListening && (
                 <>
-                  <span className="absolute inset-0 rounded-full bg-[#84cc16]/30 animate-ping"></span>
-                  <span className="absolute inset-0 rounded-full bg-[#84cc16]/20 animate-ping" style={{ animationDelay: '0.5s' }}></span>
+                  <span className="absolute inset-0 rounded-full bg-brand/30 animate-ping"></span>
+                  <span className="absolute inset-0 rounded-full bg-brand/20 animate-ping" style={{ animationDelay: '0.5s' }}></span>
                 </>
               )}
               {status === 'speaking' && (
@@ -351,11 +351,11 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
                 </>
               )}
               <div
-                className={`relative flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-[#84cc16] border-4 border-white/10 shadow-[0_0_40px_rgba(132,204,22,0.35)] ${
+                className={`relative flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-brand border-4 border-white/10 shadow-[0_0_40px_rgba(132,204,22,0.35)] ${
                   status === 'speaking' ? 'talk-glow' : ''
                 }`}
               >
-                <Bot className="h-14 w-14 text-white" />
+                <Bot className="h-14 w-14 text-[#fff]" />
               </div>
             </div>
             <h2 className="mt-5 text-xl font-bold">PrimeOpportunity AI</h2>
@@ -366,10 +366,10 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
               {status === 'thinking' && <BreathingLoader size="sm" dots={3} />}
               {isListening && (
                 <span className="flex items-end gap-0.5" aria-hidden>
-                  <span className="eq-bar h-2 w-0.5 rounded bg-[#84cc16]"></span>
-                  <span className="eq-bar h-3 w-0.5 rounded bg-[#84cc16]" style={{ animationDelay: '0.15s' }}></span>
-                  <span className="eq-bar h-1.5 w-0.5 rounded bg-[#84cc16]" style={{ animationDelay: '0.3s' }}></span>
-                  <span className="eq-bar h-2.5 w-0.5 rounded bg-[#84cc16]" style={{ animationDelay: '0.45s' }}></span>
+                  <span className="eq-bar h-2 w-0.5 rounded bg-brand-solid"></span>
+                  <span className="eq-bar h-3 w-0.5 rounded bg-brand-solid" style={{ animationDelay: '0.15s' }}></span>
+                  <span className="eq-bar h-1.5 w-0.5 rounded bg-brand-solid" style={{ animationDelay: '0.3s' }}></span>
+                  <span className="eq-bar h-2.5 w-0.5 rounded bg-brand-solid" style={{ animationDelay: '0.45s' }}></span>
                 </span>
               )}
               <span>{micBlocked ? 'Mic blocked — please allow access' : STATUS_TEXT[status]}</span>
@@ -386,7 +386,7 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
             )}
             {lastTurns.map((t, idx) =>
               t.role === 'user' ? (
-                <div key={`u-${idx}`} className="w-full rounded-2xl rounded-br-sm bg-[#84cc16] px-3.5 py-2.5 text-[13px] font-medium text-[#070e0a]">
+                <div key={`u-${idx}`} className="w-full rounded-2xl rounded-br-sm bg-brand-solid px-3.5 py-2.5 text-[13px] font-medium text-[#070e0a]">
                   {t.content}
                 </div>
               ) : (
@@ -397,7 +397,7 @@ export default function CallWidget({ initialHistory, onHistoryChange, onEnd }: C
             )}
             {interim && (
               <p className="text-[12px] italic text-gray-400">
-                <Mic className="mr-1 inline h-3 w-3 text-[#84cc16]" />
+                <Mic className="mr-1 inline h-3 w-3 text-brand" />
                 {interim}
               </p>
             )}

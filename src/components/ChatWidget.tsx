@@ -273,14 +273,14 @@ export default function ChatWidget() {
         onClick={handleOpen}
         aria-label="Open AI chat assistant"
         className={`fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-[90] flex items-center justify-center rounded-full shadow-[0_0_25px_rgba(132,204,22,0.45)] transition-all duration-300 hover:scale-110 active:scale-95 ${
-          isOpen ? 'w-12 h-12 bg-white/10 border border-white/20' : 'w-14 h-14 bg-[#84cc16] text-[#070e0a]'
+          isOpen ? 'w-12 h-12 bg-white/10 border border-white/20' : 'w-14 h-14 bg-brand-solid text-[#070e0a]'
         }`}
       >
         {isOpen ? (
           <X className="h-6 w-6 text-white" />
         ) : (
           <>
-            <span className="absolute inset-0 rounded-full bg-[#84cc16] opacity-40 animate-ping pointer-events-none"></span>
+            <span className="absolute inset-0 rounded-full bg-brand-solid opacity-40 animate-ping pointer-events-none"></span>
             <MessageCircle className="h-7 w-7 relative" />
           </>
         )}
@@ -288,18 +288,18 @@ export default function ChatWidget() {
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-[95] flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d1410]/[0.98] backdrop-blur-md shadow-2xl w-[calc(100vw-2rem)] sm:w-[400px] h-[70vh] sm:h-[560px] max-h-[75vh] fade-in-slide-up">
+        <div className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-[95] flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-panel/[0.98] backdrop-blur-md shadow-2xl w-[calc(100vw-2rem)] sm:w-[400px] h-[70vh] sm:h-[560px] max-h-[75vh] fade-in-slide-up">
           
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/10 bg-gradient-to-br from-indigo-500 via-purple-500 to-primary">
             <div className="flex items-center gap-3">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/15 border border-white/20">
-                <Bot className="h-5 w-5 text-white" />
-                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-[#84cc16] border-2 border-[#070e0a]"></span>
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#fff]/15 border border-[#fff]/20">
+                <Bot className="h-5 w-5 text-[#fff]" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-brand-solid border-2 border-[#070e0a]"></span>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white leading-tight">PrimeOpportunity AI</h3>
-                <p className="text-[11px] text-white/70 leading-tight">Career Advisor • RAG-powered</p>
+                <h3 className="text-sm font-bold text-[#fff] leading-tight">PrimeOpportunity AI</h3>
+                <p className="text-[11px] text-[#fff]/70 leading-tight">Career Advisor • RAG-powered</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -307,14 +307,14 @@ export default function ChatWidget() {
                 onClick={() => setShowCall(true)}
                 aria-label="Voice call with AI"
                 title="Voice call"
-                className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg text-[#fff]/80 hover:text-[#fff] hover:bg-[#fff]/10 transition-colors"
               >
                 <Phone className="h-5 w-5" />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
                 aria-label="Close chat"
-                className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-lg text-[#fff]/80 hover:text-[#fff] hover:bg-[#fff]/10 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -333,13 +333,13 @@ export default function ChatWidget() {
               >
                 {msg.role === 'assistant' && (
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-primary">
-                    <Bot className="h-4 w-4 text-white" />
+                    <Bot className="h-4 w-4 text-[#fff]" />
                   </div>
                 )}
                 <div
                   className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${
                     msg.role === 'user'
-                      ? 'bg-[#84cc16] text-[#070e0a] font-medium rounded-br-sm'
+                      ? 'bg-brand-solid text-[#070e0a] font-medium rounded-br-sm'
                       : 'bg-white/[0.06] border border-white/10 text-gray-200 rounded-bl-sm'
                   }`}
                 >
@@ -347,14 +347,14 @@ export default function ChatWidget() {
                   {msg.action?.type === 'mentorship' && (
                     <button
                       onClick={() => navigate('/mentorship/interest')}
-                      className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#84cc16] px-3.5 py-2 text-[13px] font-bold text-[#070e0a] shadow-[0_0_15px_rgba(132,204,22,0.35)] transition-all hover:scale-[1.02] hover:bg-[#a3e635] active:scale-95"
+                      className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-solid px-3.5 py-2 text-[13px] font-bold text-[#070e0a] shadow-[0_0_15px_rgba(132,204,22,0.35)] transition-all hover:scale-[1.02] hover:bg-brand-bright active:scale-95"
                     >
                       Get Mentorship Guidance <ArrowRight className="h-4 w-4" />
                     </button>
                   )}
                 </div>
                 {msg.role === 'user' && (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#84cc16]/20 border border-[#84cc16]/40 text-[#84cc16]">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/20 border border-brand-solid/40 text-brand">
                     {user?.displayName?.[0]?.toUpperCase() || <UserIcon className="h-4 w-4" />}
                   </div>
                 )}
@@ -364,7 +364,7 @@ export default function ChatWidget() {
             {isLoading && (
               <div className="flex items-end gap-2 justify-start">
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-primary">
-                  <Bot className="h-4 w-4 text-white" />
+                  <Bot className="h-4 w-4 text-[#fff]" />
                 </div>
                 <div className="rounded-2xl rounded-bl-sm bg-white/[0.06] border border-white/10 px-4 py-3">
                   <div className="flex items-center gap-1.5">
@@ -387,7 +387,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-white/10 p-3 bg-[#0d1410]/80">
+          <div className="border-t border-white/10 p-3 bg-panel/80">
             <div className="flex items-center gap-2">
               <input
                 ref={inputRef}
@@ -397,14 +397,14 @@ export default function ChatWidget() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about scholarships, internships..."
                 disabled={isLoading}
-                className="flex-1 h-11 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-[#84cc16]/60 focus:ring-1 focus:ring-[#84cc16]/40 disabled:opacity-60 transition-colors"
+                className="flex-1 h-11 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-brand-solid/60 focus:ring-1 focus:ring-brand/40 disabled:opacity-60 transition-colors"
               />
               <button
                 onClick={handleSend}
                 disabled={isLoading || !input.trim()}
                 aria-label="Send message"
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#84cc16] text-[#070e0a] transition-all shadow-[0_0_15px_rgba(132,204,22,0.3)] ${
-                  isLoading ? 'btn-busy cursor-wait' : 'hover:bg-[#84cc16]/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed'
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-solid text-[#070e0a] transition-all shadow-[0_0_15px_rgba(132,204,22,0.3)] ${
+                  isLoading ? 'btn-busy cursor-wait' : 'hover:bg-brand-solid/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed'
                 }`}
               >
                 {isLoading ? <BreathingLoader size="md" dots={3} tone="dark" /> : <Send className="h-5 w-5" />}
@@ -415,14 +415,14 @@ export default function ChatWidget() {
                 <button
                   onClick={() => setInput('What internships suit my CV?')}
                   disabled={isLoading}
-                  className="flex-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-gray-300 hover:border-[#84cc16]/50 hover:text-white transition-colors disabled:opacity-50 truncate"
+                  className="flex-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-gray-300 hover:border-brand-solid/50 hover:text-white transition-colors disabled:opacity-50 truncate"
                 >
                   What matches my CV?
                 </button>
                 <button
                   onClick={() => setInput('Summarize my CV and highlight my strengths')}
                   disabled={isLoading}
-                  className="flex-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-gray-300 hover:border-[#84cc16]/50 hover:text-white transition-colors disabled:opacity-50 truncate"
+                  className="flex-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-gray-300 hover:border-brand-solid/50 hover:text-white transition-colors disabled:opacity-50 truncate"
                 >
                   Summarize my CV
                 </button>

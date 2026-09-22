@@ -3,6 +3,7 @@ import {
   Activity,
   AlertTriangle,
   BarChart3,
+  Check,
   CheckCircle2,
   Eye,
   EyeOff,
@@ -19,6 +20,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { THEME_IDS, THEME_META, type ThemeId } from '../lib/theme';
 import { BreathingLoader } from '../components/BreathingLoader';
 import { API_BASE, isAdminPreviewEnabled, setAdminPreviewEnabled } from '../lib/applications';
 import { apiFetch } from '../lib/api';
@@ -100,6 +103,7 @@ const statusBadge = (status: string) =>
 
 export default function AdminPage() {
   const { user, isAdmin, role } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const [overview, setOverview] = useState<Overview | null>(null);
   const [visits, setVisits] = useState<VisitStats | null>(null);
@@ -122,6 +126,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState('');
   const [adminPreview, setAdminPreview] = useState(() => isAdminPreviewEnabled());
+  const [themeBusy, setThemeBusy] = useState<ThemeId | null>(null);
 
   // Opportunity ingestion: manual sync trigger + manual add form.
   const [syncBusy, setSyncBusy] = useState(false);
@@ -139,6 +144,21 @@ export default function AdminPage() {
         ? 'Preview mode ON — browse the app at "/" yourself while everyone else still sees the waitlist. Launch state untouched.'
         : 'Preview mode OFF — you will see the waitlist again like everyone else.'
     );
+  };
+
+  // Global appearance: switch the theme for the WHOLE platform. On success the
+  // change is stored server-side and every visitor's page picks it up on their
+  // next load; we always apply it to this browser instantly.
+  const changeTheme = async (id: ThemeId) => {
+    if (themeBusy) return;
+    setThemeBusy(id);
+    const ok = await setTheme(id);
+    setNotice(
+      ok
+        ? `Theme switched to ${THEME_META[id].label} — every page now uses it globally.`
+        : 'Could not reach the server — this browser uses the new theme, but it does not yet apply to everyone else.'
+    );
+    setThemeBusy(null);
   };
 
   const load = useCallback(async () => {
@@ -384,7 +404,7 @@ export default function AdminPage() {
             </p>
             <p className="text-gray-300 mt-1">
               <span className="font-semibold text-gray-200">Resolved role:</span>{' '}
-              <span className={role === 'admin' ? 'text-[#84cc16]' : 'text-amber-300'}>
+              <span className={role === 'admin' ? 'text-brand' : 'text-amber-300'}>
                 {role ?? 'unknown (role not synced yet)'}
               </span>
             </p>
@@ -409,10 +429,58 @@ export default function AdminPage() {
       </div>
 
       {notice && (
-        <div className="flex items-center gap-2.5 rounded-xl border border-[#84cc16]/30 bg-[#84cc16]/10 px-4 py-3 text-sm font-medium text-[#84cc16] mb-6">
+        <div className="flex items-center gap-2.5 rounded-xl border border-brand-solid/30 bg-brand/10 px-4 py-3 text-sm font-medium text-brand mb-6">
           <CheckCircle2 className="h-4 w-4 shrink-0" /> {notice}
         </div>
       )}
+
+      {/* Global appearance — the theme every visitor's page follows */}
+      <Section
+        title="Appearance"
+        subtitle="Pick the theme for the entire platform. It applies to you instantly and is picked up by every other visitor on their next page load."
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {THEME_IDS.map(id => {
+            const meta = THEME_META[id];
+            const active = theme === id;
+            const busy = themeBusy === id;
+            return (
+              <button
+                key={id}
+                onClick={() => void changeTheme(id)}
+                disabled={themeBusy !== null}
+                aria-pressed={active}
+                className={`text-left rounded-xl border p-4 transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-70 ${
+                  active ? 'border-brand-solid/60 ring-2 ring-brand/30 bg-white/[0.05]' : 'border-white/10 bg-white/[0.03] hover:border-white/25'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className={`text-xs font-bold uppercase tracking-wide ${active ? 'text-brand' : 'text-gray-300'}`}>
+                    {meta.label}
+                  </span>
+                  {active && (
+                    <span className="inline-flex items-center gap-1 text-brand text-xs font-semibold">
+                      <Check className="h-3.5 w-3.5" /> Active
+                    </span>
+                  )}
+                </div>
+                <div
+                  className="flex h-10 w-full items-center justify-center rounded-lg border border-white/10 overflow-hidden"
+                  style={{ backgroundColor: meta.swatchBg }}
+                >
+                  <span className="h-4 w-4 rounded-full" style={{ backgroundColor: meta.swatchAccent }} />
+                </div>
+                <p className="mt-2.5 text-xs text-gray-400 leading-relaxed">{meta.description}</p>
+                {busy && (
+                  <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-brand">
+                    {themeBusy && <BreathingLoader size="sm" dots={3} />} Applying…
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </Section>
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-gray-400">
@@ -440,7 +508,7 @@ export default function AdminPage() {
               <button
                 onClick={handleSyncNow}
                 disabled={syncBusy}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] btn-busy disabled:pointer-events-none disabled:opacity-60 sm:flex-none"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 h-10 rounded-xl bg-brand/10 text-brand border border-brand-solid/30 text-xs font-semibold px-3.5 hover:bg-brand/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas btn-busy disabled:pointer-events-none disabled:opacity-60 sm:flex-none"
               >
                 {syncBusy ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
                 {syncBusy ? 'Syncing…' : 'Sync Now'}
@@ -448,7 +516,7 @@ export default function AdminPage() {
               <button
                 onClick={() => setAddOpen(v => !v)}
                 disabled={addBusy}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60 sm:flex-none"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 h-10 rounded-xl bg-brand/10 text-brand border border-brand-solid/30 text-xs font-semibold px-3.5 hover:bg-brand/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-60 sm:flex-none"
               >
                 <PlusCircle className="h-3.5 w-3.5" />
                 {addOpen ? 'Close form' : 'Add Opportunity'}
@@ -456,7 +524,7 @@ export default function AdminPage() {
             </div>
 
             {ingestNotice && (
-              <div className={`rounded-lg border px-3.5 py-2.5 text-sm mb-4 ${ingestNotice.includes('required') || ingestNotice.includes('already exists') || ingestNotice.includes('Failed') || ingestNotice.includes('Could not') ? 'border-rose-400/30 bg-rose-400/10 text-rose-300' : 'border-[#84cc16]/30 bg-[#84cc16]/10 text-[#84cc16]'}`}>
+              <div className={`rounded-lg border px-3.5 py-2.5 text-sm mb-4 ${ingestNotice.includes('required') || ingestNotice.includes('already exists') || ingestNotice.includes('Failed') || ingestNotice.includes('Could not') ? 'border-rose-400/30 bg-rose-400/10 text-rose-300' : 'border-brand-solid/30 bg-brand/10 text-brand'}`}>
                 {ingestNotice}
               </div>
             )}
@@ -485,7 +553,7 @@ export default function AdminPage() {
                   <button
                     onClick={handleAddOpportunity}
                     disabled={addBusy}
-                    className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16] text-[#070e0a] text-xs font-bold px-4 transition-all duration-200 active:scale-[0.97] hover:brightness-110 btn-busy disabled:pointer-events-none disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-brand-solid text-[#070e0a] text-xs font-bold px-4 transition-all duration-200 active:scale-[0.97] hover:brightness-110 btn-busy disabled:pointer-events-none disabled:opacity-60"
                   >
                     {addBusy ? <><BreathingLoader size="sm" dots={3} tone="dark" /> Creating…</> : <><PlusCircle className="h-3.5 w-3.5" /> Create opportunity</>}
                   </button>
@@ -498,7 +566,7 @@ export default function AdminPage() {
           <section className="card-surface p-6 overflow-hidden">
             <div className="mb-4">
               <h2 className="flex items-center gap-2 text-sm font-bold text-white uppercase tracking-wide">
-                <Rocket className="h-4 w-4 text-[#84cc16]" /> App Launch & Waitlist
+                <Rocket className="h-4 w-4 text-brand" /> App Launch & Waitlist
               </h2>
               <p className="text-gray-500 text-xs mt-0.5">Launch/unlaunch the app, tune the countdown, set the WhatsApp group, and see who's on the waitlist.</p>
             </div>
@@ -509,7 +577,7 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">App status</p>
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${launch?.launched ? 'border border-[#84cc16]/40 bg-[#84cc16]/10 text-[#84cc16]' : 'border border-amber-400/40 bg-amber-400/10 text-amber-300'}`}>
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${launch?.launched ? 'border border-brand-solid/40 bg-brand/10 text-brand' : 'border border-amber-400/40 bg-amber-400/10 text-amber-300'}`}>
                         {launch?.launched ? <><Rocket className="h-3.5 w-3.5" /> Launched</> : <><Timer className="h-3.5 w-3.5" /> Waitlist mode</>}
                       </span>
                     </div>
@@ -520,7 +588,7 @@ export default function AdminPage() {
                         { launched: !launch?.launched },
                         launch?.launched ? 'App unlaunched — waitlist is back.' : 'App launched — opportunities are live.'
                       )}
-                      className={`inline-flex items-center gap-1.5 h-10 rounded-xl px-3.5 text-xs font-semibold transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-50 ${launch?.launched ? 'bg-amber-400/10 text-amber-300 border border-amber-400/30 hover:bg-amber-400/20' : 'bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 hover:bg-[#84cc16]/20'}`}
+                      className={`inline-flex items-center gap-1.5 h-10 rounded-xl px-3.5 text-xs font-semibold transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50 ${launch?.launched ? 'bg-amber-400/10 text-amber-300 border border-amber-400/30 hover:bg-amber-400/20' : 'bg-brand/10 text-brand border border-brand-solid/30 hover:bg-brand/20'}`}
                     >
                       {launch?.launched ? <><XCircle className="h-3.5 w-3.5" /> Unlaunch app</> : <><Rocket className="h-3.5 w-3.5" /> Launch app</>}
                     </button>
@@ -537,20 +605,20 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Admin-only preview</p>
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${adminPreview ? 'border border-[#84cc16]/40 bg-[#84cc16]/10 text-[#84cc16]' : 'border border-white/10 bg-white/5 text-gray-400'}`}>
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${adminPreview ? 'border border-brand-solid/40 bg-brand/10 text-brand' : 'border border-white/10 bg-white/5 text-gray-400'}`}>
                         {adminPreview ? <><Eye className="h-3.5 w-3.5" /> Preview on</> : <><EyeOff className="h-3.5 w-3.5" /> Preview off</>}
                       </span>
                     </div>
                     <button
                       onClick={toggleAdminPreview}
-                      className={`inline-flex items-center gap-1.5 h-10 rounded-xl px-3.5 text-xs font-semibold transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] ${adminPreview ? 'bg-amber-400/10 text-amber-300 border border-amber-400/30 hover:bg-amber-400/20' : 'bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 hover:bg-[#84cc16]/20'}`}
+                      className={`inline-flex items-center gap-1.5 h-10 rounded-xl px-3.5 text-xs font-semibold transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas ${adminPreview ? 'bg-amber-400/10 text-amber-300 border border-amber-400/30 hover:bg-amber-400/20' : 'bg-brand/10 text-brand border border-brand-solid/30 hover:bg-brand/20'}`}
                     >
                       {adminPreview ? <><EyeOff className="h-3.5 w-3.5" /> Turn preview off</> : <><Eye className="h-3.5 w-3.5" /> Preview the app</>}
                     </button>
                   </div>
                   <p className="mt-3 text-xs text-gray-500 leading-relaxed">
                     Lets only <span className="text-gray-300">you</span> browse the live app at
-                    <span className="text-[#84cc16] font-semibold"> "/" </span>
+                    <span className="text-brand font-semibold"> "/" </span>
                     while everyone else still sees the waitlist. This only sets a flag in your browser —
                     the launch state, countdown, deadline, and waitlist are never modified.
                   </p>
@@ -567,13 +635,13 @@ export default function AdminPage() {
                       min={1}
                       value={timerInput}
                       onChange={e => setTimerInput(e.target.value)}
-                      className="h-11 w-24 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-[#84cc16]/50 focus:ring-2 focus:ring-[#84cc16]/25 transition-all duration-200"
+                      className="h-11 w-24 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none focus:border-brand-solid/50 focus:ring-2 focus:ring-brand/25 transition-all duration-200"
                     />
                     <span className="text-sm text-gray-400 self-center">day(s)</span>
                     <button
                       disabled={launchBusy}
                       onClick={() => launchPost('launch/timer', { days: Number(timerInput) }, `Countdown set to ${timerInput} day(s).`)}
-                      className="ml-auto inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-50"
+                      className="ml-auto inline-flex items-center gap-1.5 h-10 rounded-xl bg-brand/10 text-brand border border-brand-solid/30 text-xs font-semibold px-3.5 hover:bg-brand/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" /> Set timer
                     </button>
@@ -602,7 +670,7 @@ export default function AdminPage() {
                     <button
                       disabled={launchBusy}
                       onClick={() => launchPost('launch/whatsapp', { url: waInput.trim() }, 'WhatsApp group link saved.')}
-                      className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3.5 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-50 shrink-0"
+                      className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-brand/10 text-brand border border-brand-solid/30 text-xs font-semibold px-3.5 hover:bg-brand/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50 shrink-0"
                     >
                       <Link2 className="h-3.5 w-3.5" /> Save link
                     </button>
@@ -633,7 +701,7 @@ export default function AdminPage() {
 
           {/* Pending mentor applications */}
           {overview && (overview.pendingMentorApplications || 0) > 0 && (
-            <div className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-4 flex items-center justify-between gap-4">
+            <div className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <p className="text-amber-300 text-sm">
                 {overview.pendingMentorApplications} mentor application{overview.pendingMentorApplications === 1 ? '' : 's'} awaiting review.
               </p>
@@ -643,7 +711,7 @@ export default function AdminPage() {
 
           {/* Open complaints */}
           {complaints.filter(c => c.status === 'open').length > 0 && (
-            <div className="rounded-xl border border-rose-400/30 bg-rose-400/5 p-4 flex items-center justify-between gap-4">
+            <div className="rounded-xl border border-rose-400/30 bg-rose-400/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <p className="flex items-center gap-2 text-rose-300 text-sm">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 {complaints.filter(c => c.status === 'open').length} user escalation{complaints.filter(c => c.status === 'open').length === 1 ? '' : 's'} awaiting follow-up.
@@ -674,7 +742,7 @@ export default function AdminPage() {
                       <td data-label="Mentorship" className="py-3 pr-4">
                         {u.mentorshipInterest ? (
                           <>
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${u.mentorshipInterest.choice === 'yes' ? 'border border-[#84cc16]/40 bg-[#84cc16]/10 text-[#84cc16]' : 'border border-white/10 bg-white/5 text-gray-400'}`}>
+                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${u.mentorshipInterest.choice === 'yes' ? 'border border-brand-solid/40 bg-brand/10 text-brand' : 'border border-white/10 bg-white/5 text-gray-400'}`}>
                               {u.mentorshipInterest.choice === 'yes' ? 'Interested in paid mentorship' : 'Declined mentorship'}
                             </span>
                             {u.mentorshipInterest.opportunityTitle && (
@@ -688,7 +756,7 @@ export default function AdminPage() {
                         )}
                       </td>
                       <td data-label="Role" className="py-3 pr-4">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${u.role === 'admin' ? 'border border-[#84cc16]/40 bg-[#84cc16]/10 text-[#84cc16]' : 'border border-white/10 bg-white/5 text-gray-400'}`}>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${u.role === 'admin' ? 'border border-brand-solid/40 bg-brand/10 text-brand' : 'border border-white/10 bg-white/5 text-gray-400'}`}>
                           {u.role === 'admin' ? 'Admin' : 'User'}
                         </span>
                       </td>
@@ -699,7 +767,7 @@ export default function AdminPage() {
                         ) : (
                           <button
                             onClick={() => act(`users/${u.uid}/promote`, `${u.displayName || u.email || 'User'} promoted to admin.`)}
-                            className="inline-flex items-center h-9 rounded-lg bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a]"
+                            className="inline-flex items-center h-9 rounded-lg bg-brand/10 text-brand border border-brand-solid/30 text-xs font-semibold px-3 hover:bg-brand/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
                           >
                             Make admin
                           </button>
@@ -715,7 +783,7 @@ export default function AdminPage() {
                 <button
                   onClick={() => loadMoreTab('users')}
                   disabled={tabLoading === 'users'}
-                  className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-4 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-brand/10 text-brand border border-brand-solid/30 text-xs font-semibold px-4 hover:bg-brand/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-60"
                 >
                   {tabLoading === 'users' ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
                   Load more users ({users.length} shown)
@@ -756,19 +824,19 @@ export default function AdminPage() {
                           </span>
                         </td>
                         <td data-label="Mentees" className="py-3 pr-4 text-gray-200 whitespace-nowrap tabular-nums">{m.menteesCount}</td>
-                        <td data-label="Account Balance" className="py-3 pr-4 text-[#84cc16] font-semibold tabular-nums whitespace-nowrap">{formatMoney(m.accountBalance)}</td>
+                        <td data-label="Account Balance" className="py-3 pr-4 text-brand font-semibold tabular-nums whitespace-nowrap">{formatMoney(m.accountBalance)}</td>
                         <td data-label="Action" className="py-3 text-right">
                           {m.status === 'pending' ? (
                             <div className="flex gap-2 justify-end">
                               <button
                                 onClick={() => act(`mentors/${m.userId}/approve`, `${m.name || 'Mentor'} approved.`)}
-                                className="inline-flex items-center gap-1 h-9 rounded-lg bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-3 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a]"
+                                className="inline-flex items-center gap-1 h-9 rounded-lg bg-brand/10 text-brand border border-brand-solid/30 text-xs font-semibold px-3 hover:bg-brand/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
                               >
                                 <CheckCircle2 className="h-3.5 w-3.5" /> Approve
                               </button>
                               <button
                                 onClick={() => act(`mentors/${m.userId}/reject`, `${m.name || 'Mentor'} application rejected.`)}
-                                className="inline-flex items-center gap-1 h-9 rounded-lg bg-rose-400/10 text-rose-300 border border-rose-400/30 text-xs font-semibold px-3 hover:bg-rose-400/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a]"
+                                className="inline-flex items-center gap-1 h-9 rounded-lg bg-rose-400/10 text-rose-300 border border-rose-400/30 text-xs font-semibold px-3 hover:bg-rose-400/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
                               >
                                 <XCircle className="h-3.5 w-3.5" /> Reject
                               </button>
@@ -787,7 +855,7 @@ export default function AdminPage() {
                   <button
                     onClick={() => loadMoreTab('mentors')}
                     disabled={tabLoading === 'mentors'}
-                    className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-4 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-brand/10 text-brand border border-brand-solid/30 text-xs font-semibold px-4 hover:bg-brand/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-60"
                   >
                     {tabLoading === 'mentors' ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
                     Load more mentors ({mentors.length} shown)
@@ -824,7 +892,7 @@ export default function AdminPage() {
                         {e.opportunityType && <p className="text-gray-500 text-xs">{e.opportunityType}</p>}
                       </td>
                       <td data-label="Mentor" className="py-3 pr-4 text-gray-400 whitespace-nowrap">{e.mentorName || 'Unassigned'}</td>
-                      <td data-label="Paid" className="py-3 pr-4 text-[#84cc16] font-semibold tabular-nums whitespace-nowrap">{formatMoney(e.amount, e.currency)}</td>
+                      <td data-label="Paid" className="py-3 pr-4 text-brand font-semibold tabular-nums whitespace-nowrap">{formatMoney(e.amount, e.currency)}</td>
                       <td data-label="Platform 10%" className="py-3 pr-4 text-gray-300 tabular-nums whitespace-nowrap">{formatMoney(e.platformCut, e.currency)}</td>
                       <td data-label="Mentor 90%" className="py-3 pr-4 text-gray-300 tabular-nums whitespace-nowrap">{formatMoney(e.mentorCut, e.currency)}</td>
                       <td data-label="Date" className="py-3 text-gray-500 text-xs whitespace-nowrap">{formatDate(e.createdAt)}</td>
@@ -838,7 +906,7 @@ export default function AdminPage() {
                 <button
                   onClick={() => loadMoreTab('mentees')}
                   disabled={tabLoading === 'mentees'}
-                  className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-4 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-brand/10 text-brand border border-brand-solid/30 text-xs font-semibold px-4 hover:bg-brand/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-60"
                 >
                   {tabLoading === 'mentees' ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
                   Load more mentees ({mentees.length} shown)
@@ -876,7 +944,7 @@ export default function AdminPage() {
                         <span className="inline-flex rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5">{c.userEmail || 'no email'}</span>
                         <span className="inline-flex rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5">uid: {c.userId || '—'}</span>
                         {c.payments && c.payments.length > 0 && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-[#84cc16]/40 bg-[#84cc16]/10 px-2.5 py-0.5 text-[#84cc16]">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-brand-solid/40 bg-brand/10 px-2.5 py-0.5 text-brand">
                             <Wallet className="h-3 w-3" /> {c.payments.length} paid record{c.payments.length === 1 ? '' : 's'}
                           </span>
                         )}
@@ -893,7 +961,7 @@ export default function AdminPage() {
                       {c.status === 'open' && (
                         <button
                           onClick={() => act(`complaints/${c.id}/resolve`, `${c.ticket} marked as resolved.`)}
-                          className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-400/10 text-emerald-300 border border-emerald-400/30 text-xs font-semibold px-3 py-2 hover:bg-emerald-400/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a]"
+                          className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-400/10 text-emerald-300 border border-emerald-400/30 text-xs font-semibold px-3 py-2 hover:bg-emerald-400/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
                         >
                           <CheckCircle2 className="h-3.5 w-3.5" /> Mark resolved
                         </button>
@@ -933,8 +1001,8 @@ export default function AdminPage() {
                           <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">User</p>
                           <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">{ch.message}</p>
                         </div>
-                        <div className="rounded-lg border border-[#84cc16]/20 bg-[#84cc16]/5 p-3">
-                          <p className="text-[10px] uppercase tracking-wider text-[#84cc16]/70 mb-1">Assistant</p>
+                        <div className="rounded-lg border border-brand-solid/20 bg-brand/5 p-3">
+                          <p className="text-[10px] uppercase tracking-wider text-brand/70 mb-1">Assistant</p>
                           <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">{ch.reply}</p>
                         </div>
                       </div>
@@ -950,7 +1018,7 @@ export default function AdminPage() {
                   <button
                     onClick={loadMoreChats}
                     disabled={tabLoading === 'chats'}
-                    className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] border border-[#84cc16]/30 text-xs font-semibold px-4 hover:bg-[#84cc16]/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070e0a] disabled:pointer-events-none disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 h-10 rounded-xl bg-brand/10 text-brand border border-brand-solid/30 text-xs font-semibold px-4 hover:bg-brand/20 transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-60"
                   >
                     {tabLoading === 'chats' ? <BreathingLoader size="sm" dots={3} /> : <RefreshCw className="h-3.5 w-3.5" />}
                     Load more chats ({chats.length} shown)
@@ -968,7 +1036,7 @@ export default function AdminPage() {
 function Stat({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
   return (
     <div className="card-surface p-5 min-w-0">
-      <span className="p-2 rounded-lg bg-[#84cc16]/10 border border-[#84cc16]/20 text-[#84cc16] inline-flex mb-2">{icon}</span>
+      <span className="p-2 rounded-lg bg-brand/10 border border-brand-solid/20 text-brand inline-flex mb-2">{icon}</span>
       <p className="text-2xl font-extrabold text-white tabular-nums">{value}</p>
       <p className="text-gray-400 text-xs mt-1">{sub ? `${label} · ${sub}` : label}</p>
     </div>
@@ -1025,7 +1093,7 @@ function VisitorsSection({ visits }: { visits: VisitStats | null }) {
               title={`${d.date}: ${d.visits} visit${d.visits === 1 ? '' : 's'}, ${d.unique} unique`}
             >
               <div
-                className="w-full rounded-md bg-[#84cc16]/70 hover:bg-[#a3e635]/90 transition-colors"
+                className="w-full rounded-md bg-brand/70 hover:bg-brand-bright/90 transition-colors"
                 style={{ height: `${Math.max(4, Math.round((d.visits / maxVisits) * 100))}%` }}
               />
             </div>

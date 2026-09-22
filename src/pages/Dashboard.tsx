@@ -126,8 +126,8 @@ function TypewriterHeading() {
   return (
     <>
       {first} <br />
-      <span className="text-[#84cc16]">{second || ''}</span>
-      <span className="animate-pulse font-light text-[#84cc16]">|</span>
+      <span className="text-brand">{second || ''}</span>
+      <span className="animate-pulse font-light text-brand">|</span>
     </>
   );
 }
@@ -154,9 +154,9 @@ function FiltersContent({
     <>
       <div className="flex items-center justify-between mb-2 pb-4 border-b border-white/10">
         <h2 className="flex items-center gap-2 text-lg font-bold text-white">
-          <Filter className="h-5 w-5 text-[#84cc16]" /> Filters
+          <Filter className="h-5 w-5 text-brand" /> Filters
         </h2>
-        <button onClick={onResetFilters} className="focus-ring text-xs font-semibold text-[#84cc16] transition-colors hover:text-[#a3e635]">Reset</button>
+        <button onClick={onResetFilters} className="focus-ring text-xs font-semibold text-brand transition-colors hover:text-brand-bright">Reset</button>
       </div>
       
       <div className="space-y-6">
@@ -169,7 +169,7 @@ function FiltersContent({
                   type="checkbox" 
                   checked={selectedTypes.includes(type)}
                   onChange={() => onToggleType(type)}
-                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/[0.06] text-[#84cc16] accent-[#84cc16] focus:ring-2 focus:ring-[#84cc16]/50" 
+                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/[0.06] text-brand accent-brand focus:ring-2 focus:ring-brand/50" 
                 />
                 <span className="text-sm font-medium text-gray-300 transition-colors group-hover:text-white">{type}</span>
               </label>
@@ -186,7 +186,7 @@ function FiltersContent({
                   type="checkbox" 
                   checked={selectedLevels.includes(level)}
                   onChange={() => onToggleLevel(level)}
-                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/[0.06] text-[#84cc16] accent-[#84cc16] focus:ring-2 focus:ring-[#84cc16]/50" 
+                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/[0.06] text-brand accent-brand focus:ring-2 focus:ring-brand/50" 
                 />
                 <span className="text-sm font-medium text-gray-300 transition-colors group-hover:text-white">{level}</span>
               </label>
@@ -227,7 +227,7 @@ const AiAdvisorCard = memo(function AiAdvisorCard({
 }: AiAdvisorCardProps) {
   return (
     user ? (
-      <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-primary rounded-2xl p-5 sm:p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-primary rounded-2xl p-5 sm:p-6 text-[#fff] shadow-lg relative overflow-hidden">
         <div className="relative z-10">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2">
@@ -235,12 +235,12 @@ const AiAdvisorCard = memo(function AiAdvisorCard({
               <h3 className="font-bold text-base sm:text-lg">CV Match</h3>
             </div>
             {cvFilterActive && (
-              <span className="shrink-0 rounded-full border border-white/40 bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+              <span className="shrink-0 rounded-full border border-[#fff]/40 bg-[#fff]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                 Filtering by CV
               </span>
             )}
           </div>
-          <p className="text-white/80 text-xs sm:text-sm mb-4">
+          <p className="text-[#fff]/80 text-xs sm:text-sm mb-4">
             Upload your CV (PDF) to filter the feed by your best matches. Matches update automatically as new opportunities arrive.
           </p>
           
@@ -268,7 +268,7 @@ const AiAdvisorCard = memo(function AiAdvisorCard({
               <button
                 onClick={onToggleCvFilter}
                 disabled={isAnalyzing}
-                className="btn-secondary h-11 w-full text-sm"
+                className="btn-on-vivid"
               >
                 <BrainCircuit className="h-4 w-4" />
                 {cvFilterActive ? 'Turn off CV filter' : 'Filter by my CV'}
@@ -292,7 +292,7 @@ const AiAdvisorCard = memo(function AiAdvisorCard({
           </p>
           <button 
             onClick={() => window.location.href = '/login'}
-            className="btn-secondary h-11 w-full text-sm"
+            className="btn-on-vivid"
           >
             Log in to Upload CV
           </button>
@@ -389,7 +389,7 @@ const OpportunityCard = memo(function OpportunityCard({
     <div
       id={`opp-${opp._id}`}
       onClick={() => onPromptGuidance(opp)}
-      className={`group card-surface card-hover relative flex min-w-0 flex-col rounded-2xl p-4 sm:p-6 cursor-pointer text-center sm:text-left mb-4 sm:mb-6 break-inside-avoid ${record?.clicked ? 'border-[#84cc16]/40 ring-1 ring-[#84cc16]/50' : ''}`}
+      className={`group card-surface card-hover relative flex min-w-0 flex-col rounded-2xl p-4 sm:p-6 cursor-pointer text-center sm:text-left mb-4 sm:mb-6 break-inside-avoid ${record?.clicked ? 'border-brand-solid/40 ring-1 ring-brand/50' : ''}`}
     >
       <button
         type="button"
@@ -398,18 +398,18 @@ const OpportunityCard = memo(function OpportunityCard({
         aria-label={copied ? 'Link copied' : 'Copy share link'}
         className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-[11px] font-semibold transition-all active:scale-90 ${
           copied
-            ? 'border-[#84cc16]/50 bg-[#84cc16]/15 text-[#84cc16]'
+            ? 'border-brand-solid/50 bg-brand/15 text-brand'
             : 'border-white/10 bg-white/[0.04] text-gray-400 hover:bg-white/10 hover:text-white'
         }`}
       >
         {copied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
         {copied ? 'Copied' : 'Share'}
       </button>
-      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary mb-4 sm:mb-6 mx-auto sm:mx-0">
+      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand/10 flex items-center justify-center border border-brand/20 text-brand mb-4 sm:mb-6 mx-auto sm:mx-0">
         {opp.opportunityType === 'Scholarship' ? <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" /> : <Briefcase className="h-5 w-5 sm:h-6 sm:w-6" />}
       </div>
 
-      <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 sm:mb-2 leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+      <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 sm:mb-2 leading-tight line-clamp-2 group-hover:text-brand transition-colors">
         {cleanText(opp.title)}
       </h3>
       <div className="flex items-center justify-center sm:justify-start gap-2 text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4">
@@ -417,7 +417,7 @@ const OpportunityCard = memo(function OpportunityCard({
           {cleanText(opp.organization)}
         </span>
         {record?.clicked && (
-          <span className="inline-flex items-center rounded bg-[#84cc16]/15 border border-[#84cc16]/40 px-1.5 py-0.5 text-[10px] font-semibold text-[#84cc16]">
+          <span className="inline-flex items-center rounded bg-brand/15 border border-brand-solid/40 px-1.5 py-0.5 text-[10px] font-semibold text-brand">
             ✓ Visited
           </span>
         )}
@@ -443,7 +443,7 @@ const OpportunityCard = memo(function OpportunityCard({
             </span>
           ))}
           {opp.tags.length > 4 && (
-            <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-[#84cc16]/10 text-[#84cc16] text-[10px] sm:text-xs font-semibold border border-[#84cc16]/30">
+            <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md bg-brand/10 text-brand text-[10px] sm:text-xs font-semibold border border-brand-solid/30">
               +{opp.tags.length - 4}
             </span>
           )}
@@ -474,14 +474,14 @@ const OpportunityCard = memo(function OpportunityCard({
       </div>
 
       <div className="pt-3 sm:pt-4 border-t border-white/10 flex items-center justify-center sm:justify-between">
-        <span className="text-primary text-xs sm:text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+        <span className="text-brand text-xs sm:text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
           Read More <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </span>
         <a
           href={opp.officialUrl || `https://www.google.com/search?q=${encodeURIComponent(opp.title + ' ' + (opp.organization || ''))}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="opacity-0 group-hover:opacity-100 p-1.5 sm:p-2 bg-primary/10 rounded-lg text-primary hover:bg-primary hover:text-[#0a0f16] transition-all"
+          className="opacity-0 group-hover:opacity-100 p-1.5 sm:p-2 bg-brand/10 rounded-lg text-brand hover:bg-brand-solid hover:text-[#0a0f16] transition-all"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPromptGuidance(opp); }}
         >
           <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -507,10 +507,10 @@ const HeroSection = memo(function HeroSection({ hasUser, onScrollToPrograms, onL
 
       {/* Falling Background Icons */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-        <GraduationCap className="absolute left-[10%] w-12 h-12 text-[#84cc16]/40 animate-fall-1" />
-        <Book className="absolute left-[30%] w-8 h-8 text-[#84cc16]/30 animate-fall-2" />
+        <GraduationCap className="absolute left-[10%] w-12 h-12 text-brand/40 animate-fall-1" />
+        <Book className="absolute left-[30%] w-8 h-8 text-brand/30 animate-fall-2" />
         <Library className="absolute left-[50%] w-14 h-14 text-white/20 animate-fall-3" />
-        <Microscope className="absolute left-[70%] w-10 h-10 text-[#84cc16]/30 animate-fall-4" />
+        <Microscope className="absolute left-[70%] w-10 h-10 text-brand/30 animate-fall-4" />
         <Palette className="absolute left-[85%] w-12 h-12 text-white/20 animate-fall-5" />
       </div>
 
@@ -518,14 +518,14 @@ const HeroSection = memo(function HeroSection({ hasUser, onScrollToPrograms, onL
       <div className="relative z-10 p-6 sm:p-8 md:p-12 lg:p-16 flex-1 text-center sm:text-left">
 
         {/* Target Reticle "Hello There" */}
-        <div className="relative inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 bg-[#84cc16]/10 border border-[#84cc16]/30 text-[#84cc16] font-bold text-xs sm:text-sm md:text-base tracking-widest uppercase shadow-[0_0_15px_rgba(132,204,22,0.15)] rounded-sm w-fit mx-auto sm:mx-0 mb-3 sm:mb-5">
-          <svg className="absolute -top-2 -left-2 w-4 h-4 text-[#84cc16]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M4 10V4h6" /></svg>
-          <svg className="absolute -top-2 -right-2 w-4 h-4 text-[#84cc16]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M20 10V4h-6" /></svg>
-          <svg className="absolute -bottom-2 -left-2 w-4 h-4 text-[#84cc16]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M4 14v6h6" /></svg>
-          <svg className="absolute -bottom-2 -right-2 w-4 h-4 text-[#84cc16]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M20 14v6h-6" /></svg>
+        <div className="relative inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 bg-brand/10 border border-brand-solid/30 text-brand font-bold text-xs sm:text-sm md:text-base tracking-widest uppercase shadow-[0_0_15px_rgba(132,204,22,0.15)] rounded-sm w-fit mx-auto sm:mx-0 mb-3 sm:mb-5">
+          <svg className="absolute -top-2 -left-2 w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M4 10V4h6" /></svg>
+          <svg className="absolute -top-2 -right-2 w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M20 10V4h-6" /></svg>
+          <svg className="absolute -bottom-2 -left-2 w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M4 14v6h6" /></svg>
+          <svg className="absolute -bottom-2 -right-2 w-4 h-4 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square"><path d="M20 14v6h-6" /></svg>
           <span className="relative flex h-2 w-2 mr-1">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#84cc16] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#84cc16]"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-solid opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-solid"></span>
           </span>
           Hello There!
         </div>
@@ -540,7 +540,7 @@ const HeroSection = memo(function HeroSection({ hasUser, onScrollToPrograms, onL
         <div className="flex flex-wrap gap-3 sm:gap-4 justify-center sm:justify-start mt-6 sm:mt-8">
           <button
             onClick={hasUser ? onScrollToPrograms : onLogin}
-            className="bg-[#84cc16] text-[#070e0a] font-extrabold py-3 sm:py-4 px-6 sm:px-8 rounded-full hover:bg-[#84cc16]/90 transition-all shadow-[0_0_30px_rgba(132,204,34,0.5)] scale-105 text-sm sm:text-base"
+            className="bg-brand-solid text-[#070e0a] font-extrabold py-3 sm:py-4 px-6 sm:px-8 rounded-full hover:bg-brand-solid/90 transition-all shadow-[0_0_30px_rgba(132,204,34,0.5)] scale-105 text-sm sm:text-base"
           >
             Get Started
           </button>
@@ -556,7 +556,7 @@ const HeroSection = memo(function HeroSection({ hasUser, onScrollToPrograms, onL
       {/* Right Content / Image Area */}
       <div className="relative z-10 w-full md:w-[45%] h-[250px] sm:h-[350px] md:h-[500px] flex items-center justify-center p-4 md:p-8 mt-4 md:mt-0">
         <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-[450px] md:h-[450px] flex items-center justify-center">
-          <div className="absolute inset-2 md:inset-4 bg-[#84cc16] animate-blob z-0 shadow-[0_0_40px_rgba(132,204,22,0.4)] overflow-hidden flex items-end justify-center">
+          <div className="absolute inset-2 md:inset-4 bg-brand-solid animate-blob z-0 shadow-[0_0_40px_rgba(132,204,22,0.4)] overflow-hidden flex items-end justify-center">
             {/* LCP hero graphic: AVIF -> WebP (each ~90% smaller than the PNG it
                 replaced) -> PNG fallback. fetchPriority="high" lets the browser
                 pull the hero before any other same-priority subresource. */}
@@ -578,22 +578,22 @@ const HeroSection = memo(function HeroSection({ hasUser, onScrollToPrograms, onL
 
         {/* 4 Floating Tags */}
         <div className="absolute top-4 sm:top-8 right-4 sm:right-8 glass-card bg-black/20 text-white font-semibold py-1.5 sm:py-2 px-3 sm:px-4 rounded-full flex items-center gap-2 animate-float-1 border-white/5 text-xs sm:text-sm">
-          <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#84cc16]" />
+          <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand" />
           Scholarships
         </div>
 
         <div className="absolute bottom-12 sm:bottom-16 left-2 sm:left-4 glass-card bg-black/20 text-white font-semibold py-1.5 sm:py-2 px-3 sm:px-4 rounded-full flex items-center gap-2 animate-float-2 border-white/5 text-xs sm:text-sm">
-          <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#84cc16]" />
+          <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand" />
           Internships
         </div>
 
         <div className="absolute top-1/2 -translate-y-1/2 -left-4 sm:-left-6 md:-left-12 glass-card bg-black/20 text-white font-semibold py-1.5 sm:py-2 px-3 sm:px-4 rounded-full flex items-center gap-2 animate-float-3 z-20 border-white/5 text-xs sm:text-sm">
-          <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#84cc16]" />
+          <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand" />
           Local Roles
         </div>
 
         <div className="absolute bottom-2 sm:bottom-4 right-8 sm:right-12 md:right-20 glass-card bg-black/20 text-white font-semibold py-1.5 sm:py-2 px-3 sm:px-4 rounded-full flex items-center gap-2 animate-float-4 border-white/5 text-xs sm:text-sm">
-          <BrainCircuit className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#84cc16]" />
+          <BrainCircuit className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand" />
           Mentorship
         </div>
       </div>
@@ -604,8 +604,8 @@ const HeroSection = memo(function HeroSection({ hasUser, onScrollToPrograms, onL
 // NeonBanner — fully static; memoized so no Dashboard state change ever re-renders it.
 const NeonBanner = memo(function NeonBanner() {
   return (
-    <div className="w-full bg-primary py-3 sm:py-4 overflow-hidden border-y border-primary/50">
-      <div className="container mx-auto px-4 flex items-center justify-between text-primary-foreground font-bold text-sm sm:text-lg uppercase tracking-wider">
+    <div className="w-full bg-brand-solid py-3 sm:py-4 overflow-hidden border-y border-brand/50">
+      <div className="container mx-auto px-4 flex items-center justify-between text-[#070e0a] font-bold text-sm sm:text-lg uppercase tracking-wider">
         <div className="flex items-center gap-2"><GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" /> Scholarships</div>
         <div className="hidden sm:flex items-center gap-2"><Briefcase className="h-5 w-5 sm:h-6 sm:w-6" /> Internships</div>
         <div className="hidden md:flex items-center gap-2"><MapPin className="h-5 w-5 sm:h-6 sm:w-6" /> Graduate Roles</div>
@@ -1129,9 +1129,9 @@ export default function Dashboard() {
       
       {/* Welcome banner — only visible for the first 2 days after launch */}
       {showWelcome && (
-        <div className="rounded-2xl border border-[#84cc16]/40 bg-[#84cc16]/10 px-5 py-4 flex items-center gap-3 animate-in fade-in duration-500">
-          <Sparkles className="h-5 w-5 text-[#84cc16] shrink-0" />
-          <p className="text-sm text-[#e5ffd9]">
+        <div className="rounded-2xl border border-brand-solid/40 bg-brand/10 px-5 py-4 flex items-center gap-3 animate-in fade-in duration-500">
+          <Sparkles className="h-5 w-5 text-brand shrink-0" />
+          <p className="text-sm text-brand">
             <span className="font-bold text-white">Welcome!</span> Prime Opportunity is live — explore scholarships, internships, and graduate programs below. This welcome note is only available for the first 2 days after launch.
           </p>
         </div>
@@ -1163,14 +1163,14 @@ export default function Dashboard() {
           onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
           className={`focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-colors border flex-1 justify-center ${
             selectedTypes.length > 0 || selectedLevels.length > 0
-              ? 'bg-[#84cc16] text-[#070e0a] border-[#84cc16]'
+              ? 'bg-brand-solid text-[#070e0a] border-brand-solid'
               : 'bg-white/[0.04] text-white border-white/10 hover:bg-white/[0.08]'
           }`}
         >
           <SlidersHorizontal className="h-4 w-4" />
           Filters
           {(selectedTypes.length > 0 || selectedLevels.length > 0) && (
-            <span className="bg-white/20 text-[#070e0a] text-xs font-bold rounded-full px-1.5 py-0.5">
+            <span className="bg-[#ffffff]/20 text-[#070e0a] text-xs font-bold rounded-full px-1.5 py-0.5">
               {selectedTypes.length + selectedLevels.length}
             </span>
           )}
@@ -1179,14 +1179,14 @@ export default function Dashboard() {
         <div className="relative flex-1">
           <button 
             onClick={() => setIsSortOpen(!isSortOpen)}
-            className="bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm font-medium shadow-sm text-white flex items-center justify-center gap-1 w-full transition-all hover:bg-white/[0.08] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60"
+            className="bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm font-medium shadow-sm text-white flex items-center justify-center gap-1 w-full transition-all hover:bg-white/[0.08] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
           >
             {sortBy}
             <ChevronDown className={`w-4 h-4 transition-transform ${isSortOpen ? 'rotate-180' : ''}`} />
           </button>
           
           {isSortOpen && (
-            <div className="absolute right-0 mt-2 w-full min-w-[160px] bg-[#11160f] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+            <div className="absolute right-0 mt-2 w-full min-w-[160px] bg-panel border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
               {['Best Match', 'Newest', 'Deadline Approaching'].map(option => (
                 <button
                   key={option}
@@ -1194,7 +1194,7 @@ export default function Dashboard() {
                     setSortBy(option);
                     setIsSortOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/5 hover:text-primary ${sortBy === option ? 'text-primary bg-primary/5' : 'text-gray-300'}`}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/5 hover:text-brand ${sortBy === option ? 'text-brand bg-brand/5' : 'text-gray-300'}`}
                 >
                   {option}
                 </button>
@@ -1249,11 +1249,11 @@ export default function Dashboard() {
         {/* Right Content - Feed */}
         <div ref={programsRef} className="col-span-1 lg:col-span-3 space-y-4 sm:space-y-6 scroll-mt-24">
           {searchQuery && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#84cc16]/30 bg-[#84cc16]/10 px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-solid/30 bg-brand/10 px-4 py-3">
               <div className="flex items-center gap-2 text-sm font-medium text-white">
-                <Search className="h-4 w-4 text-[#84cc16]" />
+                <Search className="h-4 w-4 text-brand" />
                 <span>
-                  Semantic results for <span className="text-[#84cc16] font-bold">&ldquo;{searchQuery}&rdquo;</span>
+                  Semantic results for <span className="text-brand font-bold">&ldquo;{searchQuery}&rdquo;</span>
                 </span>
               </div>
               <button
@@ -1266,8 +1266,8 @@ export default function Dashboard() {
           )}
           <div className="flex flex-col sm:flex-row sm:items-end items-center justify-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6 relative text-center sm:text-left">
             <div>
-              <div className="flex items-center justify-center sm:justify-start gap-2 text-primary font-bold mb-1 sm:mb-2">
-                <span className="w-8 h-1 bg-primary rounded-full"></span> Opportunities
+              <div className="flex items-center justify-center sm:justify-start gap-2 text-brand font-bold mb-1 sm:mb-2">
+                <span className="w-8 h-1 bg-brand-solid rounded-full"></span> Opportunities
               </div>
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white">Delivering Value Through Our Matches</h2>
             </div>
@@ -1279,7 +1279,7 @@ export default function Dashboard() {
                   onClick={handleCvFilterToggle}
                   className={`focus-ring inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors border ${
                     cvFilterActive
-                      ? 'bg-[#84cc16] text-[#070e0a] border-[#84cc16] shadow-[0_0_15px_rgba(132,204,22,0.4)]'
+                      ? 'bg-brand-solid text-[#070e0a] border-brand-solid shadow-[0_0_15px_rgba(132,204,22,0.4)]'
                       : 'bg-white/[0.04] text-white border-white/10 hover:bg-white/[0.08]'
                   }`}
                 >
@@ -1292,14 +1292,14 @@ export default function Dashboard() {
               <div className="relative">
                 <button 
                   onClick={() => setIsSortOpen(!isSortOpen)}
-                  className="bg-white/[0.04] border border-white/10 rounded-lg px-4 py-2 text-sm font-medium shadow-sm text-white flex items-center justify-between min-w-[180px] transition-all hover:bg-white/[0.08] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#84cc16]/60"
+                  className="bg-white/[0.04] border border-white/10 rounded-lg px-4 py-2 text-sm font-medium shadow-sm text-white flex items-center justify-between min-w-[180px] transition-all hover:bg-white/[0.08] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
                 >
                   {sortBy}
                   <svg className={`w-4 h-4 ml-2 transition-transform ${isSortOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 
                 {isSortOpen && (
-                  <div className="absolute right-0 mt-2 w-full min-w-[180px] bg-[#11160f] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-full min-w-[180px] bg-panel border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
                     {['Best Match', 'Newest', 'Deadline Approaching'].map(option => (
                       <button
                         key={option}
@@ -1307,7 +1307,7 @@ export default function Dashboard() {
                           setSortBy(option);
                           setIsSortOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/5 hover:text-primary ${sortBy === option ? 'text-primary bg-primary/5' : 'text-gray-300'}`}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/5 hover:text-brand ${sortBy === option ? 'text-brand bg-brand/5' : 'text-gray-300'}`}
                       >
                         {option}
                       </button>
@@ -1380,7 +1380,7 @@ export default function Dashboard() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setGuidanceOpp(null)}
           />
-          <div className="relative border border-white/10 rounded-2xl bg-[#0d1712] p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 sm:p-8 max-w-sm w-full">
+          <div className="relative border border-white/10 rounded-2xl bg-panel p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 sm:p-8 max-w-sm w-full">
             <button
               onClick={() => setGuidanceOpp(null)}
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
@@ -1388,8 +1388,8 @@ export default function Dashboard() {
               <X className="h-5 w-5" />
             </button>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <Handshake className="h-5 w-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-brand/20 flex items-center justify-center">
+                <Handshake className="h-5 w-5 text-brand" />
               </div>
               <h3 className="text-lg font-bold text-white">Industry Guidance?</h3>
             </div>
@@ -1425,7 +1425,7 @@ export default function Dashboard() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setModalOpen(false)}
           />
-          <div className="relative border border-white/10 rounded-2xl bg-[#0d1712] p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 sm:p-8 max-w-sm w-full">
+          <div className="relative border border-white/10 rounded-2xl bg-panel p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 sm:p-8 max-w-sm w-full">
             <button 
               onClick={() => setModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
@@ -1433,8 +1433,8 @@ export default function Dashboard() {
               <X className="h-5 w-5" />
             </button>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <BrainCircuit className="h-5 w-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-brand/20 flex items-center justify-center">
+                <BrainCircuit className="h-5 w-5 text-brand" />
               </div>
               <h3 className="text-lg font-bold text-white">{modalTitle}</h3>
             </div>
