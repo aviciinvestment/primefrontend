@@ -26,7 +26,7 @@ import { useRef, type MouseEvent as ReactMouseEvent } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import WaitlistSection from '../components/WaitlistSection';
-import { STATUSES, STATUS_META, fetchApplications, upsertApplication, API_BASE, API_ORIGIN, isAdminPreviewEnabled, fetchLaunchStatus, type ApplicationRecord, type LaunchStatus } from '../lib/applications';
+import { STATUSES, STATUS_META, fetchApplications, upsertApplication, API_BASE, isAdminPreviewEnabled, fetchLaunchStatus, type ApplicationRecord, type LaunchStatus } from '../lib/applications';
 import { apiFetch } from '../lib/api';
 export interface Opportunity {
   _id: string;
@@ -351,10 +351,10 @@ const OpportunityCard = memo(function OpportunityCard({
   onPromptGuidance,
 }: OpportunityCardProps) {
   const meta = record?.status;
-  // Share link: server-rendered OG capsule (same API origin the app already
-  // uses). Crawlers read its tags; a <meta http-equiv="refresh"> bounces humans
-  // to the SPA's /opportunities?id= deep link.
-  const shareUrl = `${API_ORIGIN}/api/opportunities/${opp._id}/share`;
+  // Share link: the app's own frontend deep link, so recipients land straight
+  // on this opportunity via the SPA (/opportunities?id=) without ever touching
+  // the backend API origin.
+  const shareUrl = `${window.location.origin}/opportunities?id=${opp._id}`;
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef<number | null>(null);
   useEffect(
@@ -389,7 +389,7 @@ const OpportunityCard = memo(function OpportunityCard({
     <div
       id={`opp-${opp._id}`}
       onClick={() => onPromptGuidance(opp)}
-      className={`group card-surface card-hover relative flex h-full min-w-0 flex-col rounded-2xl p-4 sm:p-6 cursor-pointer text-center sm:text-left ${record?.clicked ? 'border-[#84cc16]/40 ring-1 ring-[#84cc16]/50' : ''}`}
+      className={`group card-surface card-hover relative flex min-w-0 flex-col rounded-2xl p-4 sm:p-6 cursor-pointer text-center sm:text-left mb-4 sm:mb-6 break-inside-avoid ${record?.clicked ? 'border-[#84cc16]/40 ring-1 ring-[#84cc16]/50' : ''}`}
     >
       <button
         type="button"
@@ -423,7 +423,7 @@ const OpportunityCard = memo(function OpportunityCard({
         )}
       </div>
 
-      <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 flex-grow">
+      <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
         <div className="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
           <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 shrink-0" /> <span className="min-w-0 truncate">{cleanText(opp.location)}</span>
         </div>
@@ -473,7 +473,7 @@ const OpportunityCard = memo(function OpportunityCard({
         })}
       </div>
 
-      <div className="mt-auto pt-3 sm:pt-4 border-t border-white/10 flex items-center justify-center sm:justify-between">
+      <div className="pt-3 sm:pt-4 border-t border-white/10 flex items-center justify-center sm:justify-between">
         <span className="text-primary text-xs sm:text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
           Read More <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </span>
@@ -503,7 +503,7 @@ interface HeroSectionProps {
 
 const HeroSection = memo(function HeroSection({ hasUser, onScrollToPrograms, onLogin }: HeroSectionProps) {
   return (
-    <div className="relative rounded-[2rem] bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.1)] overflow-hidden flex flex-col md:flex-row items-center isolate min-h-[70vh] sm:min-h-[90vh] md:min-h-screen">
+    <div className="relative rounded-[2rem] bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.1)] overflow-hidden flex flex-col md:flex-row items-center isolate py-14 sm:py-20 md:py-16 lg:py-20">
 
       {/* Falling Background Icons */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
@@ -1222,26 +1222,28 @@ export default function Dashboard() {
         
         {/* Left Sidebar - Filters & AI Advisor (desktop only) */}
         <div className="hidden lg:block col-span-1 space-y-6">
-          <div className="glass-card rounded-2xl p-6 sticky top-24 space-y-6">
-            <FiltersContent
-            selectedTypes={selectedTypes}
-            selectedLevels={selectedLevels}
-            onToggleType={toggleType}
-            onToggleLevel={toggleLevel}
-            onResetFilters={handleResetFilters}
-          />
-          </div>
+          <div className="sticky top-24 max-h-[calc(100vh_-_7.5rem)] overflow-y-auto space-y-6 pr-1">
+            <div className="glass-card rounded-2xl p-6 space-y-6">
+              <FiltersContent
+                selectedTypes={selectedTypes}
+                selectedLevels={selectedLevels}
+                onToggleType={toggleType}
+                onToggleLevel={toggleLevel}
+                onResetFilters={handleResetFilters}
+              />
+            </div>
 
-          {/* AI Advisor Card (desktop) */}
-          <AiAdvisorCard
-            user={user}
-            fileInputRef={fileInputRef}
-            isAnalyzing={isAnalyzing}
-            cvFilterActive={cvFilterActive}
-            hasCv={!!latestCv}
-            onChangeFile={handleFileUpload}
-            onToggleCvFilter={handleCvFilterToggle}
-          />
+            {/* AI Advisor Card (desktop) */}
+            <AiAdvisorCard
+              user={user}
+              fileInputRef={fileInputRef}
+              isAnalyzing={isAnalyzing}
+              cvFilterActive={cvFilterActive}
+              hasCv={!!latestCv}
+              onChangeFile={handleFileUpload}
+              onToggleCvFilter={handleCvFilterToggle}
+            />
+          </div>
         </div>
         
         {/* Right Content - Feed */}
@@ -1325,7 +1327,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-4 sm:gap-6">
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-6">
             {visibleOpportunities.map(opp => {
               const record = appRecords.get(opp._id);
               return (

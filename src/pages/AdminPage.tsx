@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
+  Activity,
   AlertTriangle,
+  BarChart3,
   CheckCircle2,
   Eye,
   EyeOff,
@@ -23,6 +25,8 @@ import { apiFetch } from '../lib/api';
 
 const formatMoney = (amount: number, currency: string = 'NGN') =>
   new Intl.NumberFormat('en-NG', { style: 'currency', currency }).format(amount);
+
+const formatCount = (n?: number) => (typeof n === 'number' ? n.toLocaleString('en-US') : '—');
 
 const formatDate = (d?: string | Date | null) =>
   d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
@@ -60,6 +64,10 @@ interface Overview {
   totalUsers: number; totalMentors: number; pendingMentorApplications: number;
   totalMentees: number; paidMenteeCount: number; grossRevenue: number; platformRevenue: number; mentorPayout: number;
 }
+interface VisitStats {
+  totalVisits: number; uniqueVisitors: number; visitsToday: number; uniqueToday: number;
+  daily: Array<{ date: string; visits: number; unique: number }>;
+}
 interface ComplaintRow {
   id: string; ticket: string; userId?: string; userEmail?: string; userName?: string;
   message: string; status: 'open' | 'resolved';
@@ -94,6 +102,7 @@ export default function AdminPage() {
   const { user, isAdmin, role } = useAuth();
 
   const [overview, setOverview] = useState<Overview | null>(null);
+  const [visits, setVisits] = useState<VisitStats | null>(null);
   const [users, setUsers] = useState<AppUserRow[]>([]);
   const [mentors, setMentors] = useState<MentorRow[]>([]);
   const [mentees, setMentees] = useState<MenteeRow[]>([]);
@@ -146,7 +155,7 @@ export default function AdminPage() {
           return {};
         }
       };
-      const [o, u, m, e, c, l, ch] = await Promise.all([
+      const [o, u, m, e, c, l, ch, v] = await Promise.all([
         tryGet('/admin/overview'),
         tryGet('/admin/users'),
         tryGet('/admin/mentors'),
@@ -154,8 +163,10 @@ export default function AdminPage() {
         tryGet('/admin/complaints'),
         tryGet('/admin/launch'),
         tryGet('/admin/chats'),
+        tryGet('/admin/visits'),
       ]);
       if (o.success) setOverview(o);
+      if (v.success) setVisits(v);
       if (u.success) {
         setUsers(u.users);
         setUsersPg({ page: u.page || 1, pages: u.pages || 1 });
@@ -417,6 +428,9 @@ export default function AdminPage() {
             <Stat icon={<Wallet className="h-5 w-5" />} label="Mentor Payouts (90%)" value={formatMoney(overview?.mentorPayout ?? 0)} sub={`${overview?.paidMenteeCount ?? 0} paid mentee${((overview?.paidMenteeCount ?? 0) === 1 ? '' : 's')}`} />
           </div>
 
+          {/* Visitors — how many people opened the app */}
+          <VisitorsSection visits={visits} />
+
           {/* Opportunity ingestion */}
           <Section
             title="Opportunities"
@@ -641,7 +655,7 @@ export default function AdminPage() {
           {/* Users */}
           <Section title="All Users" subtitle="Including mentors and admins">
             <div className="overflow-x-auto -mx-5 px-5 sm:-mx-6 sm:px-6">
-              <table className="w-full min-w-[720px] text-left text-sm">
+              <table className="table-responsive w-full text-left text-sm">
                 <thead>
                   <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-white/10">
                     <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">User</th>
@@ -655,9 +669,9 @@ export default function AdminPage() {
                 <tbody>
                   {users.map(u => (
                     <tr key={u.uid} className="border-b border-white/5">
-                      <td className="py-3 pr-4 font-medium text-gray-200 whitespace-nowrap">{u.displayName || '—'}</td>
-                      <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">{u.email || '—'}</td>
-                      <td className="py-3 pr-4">
+                      <td data-label="User" className="py-3 pr-4 font-medium text-gray-200 whitespace-nowrap">{u.displayName || '—'}</td>
+                      <td data-label="Email" className="py-3 pr-4 text-gray-400 whitespace-nowrap">{u.email || '—'}</td>
+                      <td data-label="Mentorship" className="py-3 pr-4">
                         {u.mentorshipInterest ? (
                           <>
                             <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${u.mentorshipInterest.choice === 'yes' ? 'border border-[#84cc16]/40 bg-[#84cc16]/10 text-[#84cc16]' : 'border border-white/10 bg-white/5 text-gray-400'}`}>
@@ -673,13 +687,13 @@ export default function AdminPage() {
                           <span className="text-gray-600 text-xs whitespace-nowrap">—</span>
                         )}
                       </td>
-                      <td className="py-3 pr-4">
+                      <td data-label="Role" className="py-3 pr-4">
                         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${u.role === 'admin' ? 'border border-[#84cc16]/40 bg-[#84cc16]/10 text-[#84cc16]' : 'border border-white/10 bg-white/5 text-gray-400'}`}>
                           {u.role === 'admin' ? 'Admin' : 'User'}
                         </span>
                       </td>
-                      <td className="py-3 pr-4 text-gray-500 text-xs whitespace-nowrap">{formatDate(u.createdAt)}</td>
-                      <td className="py-3 text-right">
+                      <td data-label="Joined" className="py-3 pr-4 text-gray-500 text-xs whitespace-nowrap">{formatDate(u.createdAt)}</td>
+                      <td data-label="Action" className="py-3 text-right">
                         {u.role === 'admin' ? (
                           <span className="text-gray-600 text-xs whitespace-nowrap">—</span>
                         ) : (
@@ -714,7 +728,7 @@ export default function AdminPage() {
           <div id="mentors">
             <Section title="Mentors" subtitle="Approved mentors, their mentee count, and account balance (90% of mentee payments).">
               <div className="overflow-x-auto -mx-5 px-5 sm:-mx-6 sm:px-6">
-                <table className="w-full min-w-[720px] text-left text-sm">
+                <table className="table-responsive w-full text-left text-sm">
                   <thead>
                     <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-white/10">
                       <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Mentor</th>
@@ -728,22 +742,22 @@ export default function AdminPage() {
                   <tbody>
                     {mentors.map(m => (
                       <tr key={m.userId} className="border-b border-white/5">
-                        <td className="py-3 pr-4 whitespace-nowrap">
+                        <td data-label="Mentor" className="py-3 pr-4 whitespace-nowrap">
                           <p className="font-medium text-gray-200">{m.name || '—'}</p>
                           {m.email && <p className="text-gray-500 text-xs">{m.email}</p>}
                         </td>
-                        <td className="py-3 pr-4 text-gray-400 text-xs">
+                        <td data-label="Industry / Company" className="py-3 pr-4 text-gray-400 text-xs">
                           <p className="text-gray-300 text-sm whitespace-nowrap">{m.roleType}</p>
                           <p>{m.company}</p>
                         </td>
-                        <td className="py-3 pr-4">
+                        <td data-label="Status" className="py-3 pr-4">
                           <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase ${statusBadge(m.status)}`}>
                             {m.status}
                           </span>
                         </td>
-                        <td className="py-3 pr-4 text-gray-200 whitespace-nowrap tabular-nums">{m.menteesCount}</td>
-                        <td className="py-3 pr-4 text-[#84cc16] font-semibold tabular-nums whitespace-nowrap">{formatMoney(m.accountBalance)}</td>
-                        <td className="py-3 text-right">
+                        <td data-label="Mentees" className="py-3 pr-4 text-gray-200 whitespace-nowrap tabular-nums">{m.menteesCount}</td>
+                        <td data-label="Account Balance" className="py-3 pr-4 text-[#84cc16] font-semibold tabular-nums whitespace-nowrap">{formatMoney(m.accountBalance)}</td>
+                        <td data-label="Action" className="py-3 text-right">
                           {m.status === 'pending' ? (
                             <div className="flex gap-2 justify-end">
                               <button
@@ -786,7 +800,7 @@ export default function AdminPage() {
           {/* Mentees */}
           <Section title="Mentees & Payments" subtitle="Every paid mentorship request with the platform's 10% share and the mentor's 90% share.">
             <div className="overflow-x-auto -mx-5 px-5 sm:-mx-6 sm:px-6">
-              <table className="w-full min-w-[720px] text-left text-sm">
+              <table className="table-responsive w-full text-left text-sm">
                 <thead>
                   <tr className="text-gray-500 text-xs uppercase tracking-wide border-b border-white/10">
                     <th className="py-2.5 pr-4 font-semibold whitespace-nowrap">Student</th>
@@ -801,19 +815,19 @@ export default function AdminPage() {
                 <tbody>
                   {mentees.map(e => (
                     <tr key={e.id} className="border-b border-white/5">
-                      <td className="py-3 pr-4 whitespace-nowrap">
+                      <td data-label="Student" className="py-3 pr-4 whitespace-nowrap">
                         <p className="text-gray-200 font-medium">{e.userName || '—'}</p>
                         {e.userEmail && <p className="text-gray-500 text-xs">{e.userEmail}</p>}
                       </td>
-                      <td className="py-3 pr-4">
+                      <td data-label="Opportunity" className="py-3 pr-4">
                         <p className="text-gray-200 max-w-[240px] truncate">{e.opportunityTitle || '—'}</p>
                         {e.opportunityType && <p className="text-gray-500 text-xs">{e.opportunityType}</p>}
                       </td>
-                      <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">{e.mentorName || 'Unassigned'}</td>
-                      <td className="py-3 pr-4 text-[#84cc16] font-semibold tabular-nums whitespace-nowrap">{formatMoney(e.amount, e.currency)}</td>
-                      <td className="py-3 pr-4 text-gray-300 tabular-nums whitespace-nowrap">{formatMoney(e.platformCut, e.currency)}</td>
-                      <td className="py-3 pr-4 text-gray-300 tabular-nums whitespace-nowrap">{formatMoney(e.mentorCut, e.currency)}</td>
-                      <td className="py-3 text-gray-500 text-xs whitespace-nowrap">{formatDate(e.createdAt)}</td>
+                      <td data-label="Mentor" className="py-3 pr-4 text-gray-400 whitespace-nowrap">{e.mentorName || 'Unassigned'}</td>
+                      <td data-label="Paid" className="py-3 pr-4 text-[#84cc16] font-semibold tabular-nums whitespace-nowrap">{formatMoney(e.amount, e.currency)}</td>
+                      <td data-label="Platform 10%" className="py-3 pr-4 text-gray-300 tabular-nums whitespace-nowrap">{formatMoney(e.platformCut, e.currency)}</td>
+                      <td data-label="Mentor 90%" className="py-3 pr-4 text-gray-300 tabular-nums whitespace-nowrap">{formatMoney(e.mentorCut, e.currency)}</td>
+                      <td data-label="Date" className="py-3 text-gray-500 text-xs whitespace-nowrap">{formatDate(e.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -970,5 +984,67 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
       </div>
       {children}
     </div>
+  );
+}
+
+// Visitors — the site-visitor dashboard the /api/admin/visits endpoint feeds.
+// Shows lifetime totals, today's activity, and a zero-filled 14-day bar chart.
+function VisitorsSection({ visits }: { visits: VisitStats | null }) {
+  const daily = visits?.daily ?? [];
+  const total14 = daily.reduce((sum, d) => sum + d.visits, 0);
+  const last7 = daily.slice(-7);
+  const avg7 = last7.length ? Math.round(last7.reduce((s, d) => s + d.visits, 0) / last7.length) : 0;
+  const maxVisits = Math.max(1, ...daily.map(d => d.visits));
+
+  return (
+    <Section
+      title="Visitors"
+      subtitle="Every app session — total, unique visitors, today, and the last 14 days."
+    >
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
+        <Stat icon={<Eye className="h-5 w-5" />} label="Total Visits" value={formatCount(visits?.totalVisits)} />
+        <Stat icon={<Users className="h-5 w-5" />} label="Unique Visitors" value={formatCount(visits?.uniqueVisitors)} />
+        <Stat icon={<Activity className="h-5 w-5" />} label="Visits Today" value={formatCount(visits?.visitsToday)} />
+        <Stat icon={<Timer className="h-5 w-5" />} label="Unique Today" value={formatCount(visits?.uniqueToday)} />
+      </div>
+
+      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <p className="text-[10px] uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" /> Last 14 days — visits
+          </p>
+          <p className="text-xs text-gray-400">
+            {formatCount(total14)} total · {formatCount(avg7)}/day avg (7d)
+          </p>
+        </div>
+        <div className="flex items-end gap-1 sm:gap-1.5 h-32">
+          {daily.map(d => (
+            <div
+              key={d.date}
+              className="flex flex-1 flex-col justify-end min-w-0 h-full cursor-default"
+              title={`${d.date}: ${d.visits} visit${d.visits === 1 ? '' : 's'}, ${d.unique} unique`}
+            >
+              <div
+                className="w-full rounded-md bg-[#84cc16]/70 hover:bg-[#a3e635]/90 transition-colors"
+                style={{ height: `${Math.max(4, Math.round((d.visits / maxVisits) * 100))}%` }}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-1 sm:gap-1.5 mt-1.5">
+          {daily.map(d => (
+            <div key={d.date} className="flex-1 min-w-0 text-center">
+              <span className="text-[9px] text-gray-600">{d.date.slice(5)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {(!visits || visits.totalVisits === 0) && (
+        <p className="text-xs text-gray-500 mt-3">
+          No visits recorded yet — the tracker starts counting the moment someone opens the app.
+        </p>
+      )}
+    </Section>
   );
 }

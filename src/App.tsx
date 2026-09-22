@@ -7,6 +7,32 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { BreathingLoader } from './components/BreathingLoader';
 import Dashboard from './pages/Dashboard';
+import { API_BASE } from './lib/applications';
+
+// Visit tracking key: recorded once per browser tab/session so reopening the
+// app doesn't inflate the count, and a "visit" = a real app session load.
+const VISIT_TRACKED_KEY = 'po_visit_tracked';
+
+function useTrackVisit() {
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(VISIT_TRACKED_KEY)) return;
+      sessionStorage.setItem(VISIT_TRACKED_KEY, '1');
+      fetch(`${API_BASE}/visits`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: (window.location.pathname + window.location.search) || '/',
+          referrer: document.referrer || '',
+        }),
+      }).catch(() => {
+        // A failed visit ping must never affect the app.
+      });
+    } catch {
+      // Storage blocked — skip tracking silently.
+    }
+  }, []);
+}
 
 // Route-level code splitting: heavy admin/mentor pages load lazily.
 const Applications = lazy(() => import('./pages/Applications'));
@@ -65,6 +91,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  useTrackVisit();
   return (
     <Router>
       <AuthProvider>

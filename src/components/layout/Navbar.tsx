@@ -70,7 +70,7 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden flex-1 items-center justify-end space-x-6 md:flex">
-          <div className="mr-2 w-full flex-1 md:w-64 md:flex-none">
+          <div className="mr-2 min-w-0 w-full flex-1 md:w-64 md:flex-none">
             <form onSubmit={handleSearchSubmit} className="relative" role="search">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
               <input
@@ -79,7 +79,7 @@ export default function Navbar() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search opportunities..."
                 aria-label="Search opportunities"
-                className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-9 pr-4 text-sm text-white transition-all duration-200 placeholder:text-gray-500 focus:border-[#84cc16]/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#84cc16]/25 sm:w-64 sm:focus:w-80"
+                className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-9 pr-4 text-sm text-white transition-all duration-200 placeholder:text-gray-500 focus:border-[#84cc16]/50 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#84cc16]/25"
               />
             </form>
           </div>
@@ -141,10 +141,12 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <>
-              <Link to="/login" className={`${currentPath === '/login' ? 'btn-primary' : 'btn-secondary'} h-10 px-4`}>Log in</Link>
-              <Link to="/register" className={`${currentPath === '/register' ? 'btn-primary' : 'btn-secondary'} h-10 px-6`}>Sign up</Link>
-            </>
+            <Link
+              to="/login"
+              className="btn-primary h-10 px-5"
+            >
+              Log in
+            </Link>
           )}
         </div>
 
