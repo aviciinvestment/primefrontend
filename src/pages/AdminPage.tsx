@@ -103,7 +103,7 @@ const statusBadge = (status: string) =>
 
 export default function AdminPage() {
   const { user, isAdmin, role } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { platformTheme, setTheme } = useTheme();
 
   const [overview, setOverview] = useState<Overview | null>(null);
   const [visits, setVisits] = useState<VisitStats | null>(null);
@@ -156,7 +156,7 @@ export default function AdminPage() {
     setNotice(
       ok
         ? `Theme switched to ${THEME_META[id].label} — every page now uses it globally.`
-        : 'Could not reach the server — this browser uses the new theme, but it does not yet apply to everyone else.'
+        : 'Could not reach the server — the platform theme was not saved.'
     );
     setThemeBusy(null);
   };
@@ -434,15 +434,17 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Global appearance — the theme every visitor's page follows */}
+      {/* Global appearance — the theme every visitor's page follows. This is
+          separate from the personal Light/Dark/Midnight pick in the navbar
+          menu: that pick only colors *your* screen and never touches this. */}
       <Section
         title="Appearance"
-        subtitle="Pick the theme for the entire platform. It applies to you instantly and is picked up by every other visitor on their next page load."
+        subtitle="Decide the theme for the entire platform. It is picked up by every visitor on their next page load — your own navbar theme pick is separate."
       >
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {THEME_IDS.map(id => {
             const meta = THEME_META[id];
-            const active = theme === id;
+            const active = platformTheme === id;
             const busy = themeBusy === id;
             return (
               <button

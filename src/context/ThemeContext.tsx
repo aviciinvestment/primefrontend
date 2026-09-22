@@ -81,9 +81,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = useCallback(
     async (id: ThemeId): Promise<boolean> => {
-      // The admin picked this as the platform theme — adopt it here too.
-      setPreferenceState(id);
-      storePreference(id);
+      // The admin's Appearance section owns the GLOBAL theme: it is separate
+      // from the user's personal Navbar pick, so we never touch `preference`
+      // here. The admin's own screen still follows it unless they overrode it.
       setPlatformTheme(id);
       try {
         const res = await apiFetch(`${API_BASE}/admin/theme`, {

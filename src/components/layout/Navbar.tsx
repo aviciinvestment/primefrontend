@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
+  Check,
   Contrast,
   LogOut,
   Menu,
@@ -28,47 +29,48 @@ const PERSONAL_THEMES: Array<{ id: ThemeId; label: string; icon: LucideIcon }> =
 function ThemeMenuItems({ onPick }: { onPick?: () => void }) {
   const { preference, setPreference } = useTheme();
   return (
-    <div className="px-4 py-3">
-      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+    <div className="py-2">
+      <p className="flex items-center gap-1.5 px-4 pt-1 pb-1.5 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
         <Palette className="h-3 w-3" /> Theme
       </p>
-      <div role="group" aria-label="Theme" className="grid grid-cols-3 gap-1.5">
-        {PERSONAL_THEMES.map(({ id, label, icon: Icon }) => {
-          const active = preference === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => {
-                setPreference(id);
-                onPick?.();
-              }}
-              aria-pressed={active}
-              title={label}
-              className={`flex flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-[10px] font-semibold transition-colors ${
-                active
-                  ? 'border-brand-solid/50 bg-brand/10 text-brand'
-                  : 'border-white/10 bg-white/[0.04] text-gray-400 hover:border-white/20 hover:text-white'
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          );
-        })}
-      </div>
+      {PERSONAL_THEMES.map(({ id, label, icon: Icon }) => {
+        const active = preference === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => {
+              setPreference(id);
+              onPick?.();
+            }}
+            aria-pressed={active}
+            className={`flex w-full items-center gap-2.5 px-4 py-2 text-sm font-semibold transition-colors ${
+              active ? 'bg-brand/10 text-brand' : 'text-gray-300 hover:bg-white/[0.05] hover:text-white'
+            }`}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 flex-1 text-left">{label}</span>
+            {active && <Check className="h-4 w-4 shrink-0" />}
+          </button>
+        );
+      })}
+      <div className="my-1.5 h-px bg-white/10" />
       <button
         type="button"
         onClick={() => {
           setPreference('platform');
           onPick?.();
         }}
-        className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-semibold transition-colors ${
-          preference === 'platform' ? 'text-brand' : 'text-gray-500 hover:text-gray-300'
+        aria-pressed={preference === 'platform'}
+        className={`flex w-full items-center gap-2.5 px-4 py-2 text-sm font-semibold transition-colors ${
+          preference === 'platform'
+            ? 'bg-brand/10 text-brand'
+            : 'text-gray-500 hover:bg-white/[0.05] hover:text-gray-300'
         }`}
       >
-        <Sparkles className="h-3.5 w-3.5" />
-        {preference === 'platform' ? 'Following platform theme' : 'Follow platform theme'}
+        <Sparkles className="h-4 w-4 shrink-0" />
+        <span className="min-w-0 flex-1 text-left">Follow platform theme</span>
+        {preference === 'platform' && <Check className="h-4 w-4 shrink-0" />}
       </button>
     </div>
   );
