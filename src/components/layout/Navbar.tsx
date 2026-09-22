@@ -1,7 +1,78 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Radar, Search, Menu, X, LogOut, ChevronDown, User as UserIcon } from 'lucide-react';
+import {
+  Contrast,
+  LogOut,
+  Menu,
+  Moon,
+  Palette,
+  Radar,
+  Search,
+  Sparkles,
+  Sun,
+  X,
+  ChevronDown,
+  User as UserIcon,
+  type LucideIcon,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { type ThemeId } from '../../lib/theme';
+
+const PERSONAL_THEMES: Array<{ id: ThemeId; label: string; icon: LucideIcon }> = [
+  { id: 'light', label: 'Light', icon: Sun },
+  { id: 'dark', label: 'Dark', icon: Moon },
+  { id: 'midnight', label: 'Midnight', icon: Contrast },
+];
+
+function ThemeMenuItems({ onPick }: { onPick?: () => void }) {
+  const { preference, setPreference } = useTheme();
+  return (
+    <div className="px-4 py-3">
+      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+        <Palette className="h-3 w-3" /> Theme
+      </p>
+      <div role="group" aria-label="Theme" className="grid grid-cols-3 gap-1.5">
+        {PERSONAL_THEMES.map(({ id, label, icon: Icon }) => {
+          const active = preference === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => {
+                setPreference(id);
+                onPick?.();
+              }}
+              aria-pressed={active}
+              title={label}
+              className={`flex flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-[10px] font-semibold transition-colors ${
+                active
+                  ? 'border-brand-solid/50 bg-brand/10 text-brand'
+                  : 'border-white/10 bg-white/[0.04] text-gray-400 hover:border-white/20 hover:text-white'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setPreference('platform');
+          onPick?.();
+        }}
+        className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-semibold transition-colors ${
+          preference === 'platform' ? 'text-brand' : 'text-gray-500 hover:text-gray-300'
+        }`}
+      >
+        <Sparkles className="h-3.5 w-3.5" />
+        {preference === 'platform' ? 'Following platform theme' : 'Follow platform theme'}
+      </button>
+    </div>
+  );
+}
 
 export default function Navbar() {
   const location = useLocation();
@@ -9,7 +80,10 @@ export default function Navbar() {
   const currentPath = location.pathname;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const { user, isAdmin, logout } = useAuth();
+  const { theme } = useTheme();
+  const AppliedThemeIcon = theme === 'light' ? Sun : theme === 'midnight' ? Contrast : Moon;
 
   // Search drives the dashboard feed via ?q= in the URL, so the Navbar input
   // stays in sync with whatever query is currently active.
@@ -25,15 +99,19 @@ export default function Navbar() {
   // Close the user dropdown on any outside click / route change. The trigger
   // button stops propagation so clicking it toggles instead of instantly closing.
   useEffect(() => {
-    if (!isUserMenuOpen) return;
-    const close = () => setIsUserMenuOpen(false);
+    if (!isUserMenuOpen && !isThemeMenuOpen) return;
+    const close = () => {
+      setIsUserMenuOpen(false);
+      setIsThemeMenuOpen(false);
+    };
     window.addEventListener('click', close);
     return () => window.removeEventListener('click', close);
-  }, [isUserMenuOpen]);
+  }, [isUserMenuOpen, isThemeMenuOpen]);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsUserMenuOpen(false);
+    setIsThemeMenuOpen(false);
   }, [location.pathname]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -118,7 +196,7 @@ export default function Navbar() {
               </button>
 
               {isUserMenuOpen && (
-                <div role="menu" className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-panel shadow-2xl">
+                <div role="menu" className="absolute top-full right-0 mt-2 w-60 overflow-hidden rounded-xl border border-white/10 bg-panel shadow-2xl">
                   <Link
                     to="/profile"
                     role="menuitem"
@@ -129,6 +207,8 @@ export default function Navbar() {
                   >
                     <UserIcon className="h-4 w-4" /> Profile
                   </Link>
+                  <div className="h-px bg-white/10" />
+                  <ThemeMenuItems />
                   <div className="h-px bg-white/10" />
                   <button
                     onClick={handleLogout}
@@ -141,12 +221,35 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <Link
-              to="/login"
-              className="btn-primary h-10 px-5"
-            >
-              Log in
-            </Link>
+            <>
+              <div className="relative">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsThemeMenuOpen(v => !v); }}
+                  aria-expanded={isThemeMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label="Change theme"
+                  title="Change theme"
+                  className={`focus-ring flex h-10 w-10 items-center justify-center rounded-lg border transition-colors ${
+                    isThemeMenuOpen || theme !== 'dark'
+                      ? 'border-brand-solid/40 bg-brand/15 text-brand'
+                      : 'border-white/10 bg-white/[0.04] text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <AppliedThemeIcon className="h-4 w-4" />
+                </button>
+                {isThemeMenuOpen && (
+                  <div role="menu" className="absolute top-full right-0 mt-2 w-52 overflow-hidden rounded-xl border border-white/10 bg-panel shadow-2xl">
+                    <ThemeMenuItems />
+                  </div>
+                )}
+              </div>
+              <Link
+                to="/login"
+                className="btn-primary h-10 px-5"
+              >
+                Log in
+              </Link>
+            </>
           )}
         </div>
 
@@ -198,6 +301,12 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+          </div>
+
+          <div className="mt-3 border-t border-white/10">
+            <div className="-mx-4 pt-1">
+              <ThemeMenuItems />
+            </div>
           </div>
 
           <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-5">

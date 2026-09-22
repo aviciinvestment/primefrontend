@@ -12,31 +12,51 @@ import { apiFetch } from '../lib/api';
 import {
   applyTheme,
   fetchServerTheme,
+  readStoredPreference,
   readStoredTheme,
+  storePreference,
   storeTheme,
   type ThemeId,
+  type ThemePreference,
 } from '../lib/theme';
 
 interface ThemeContextValue {
+  // The theme currently applied to this browser (personal pick wins over the
+  // platform default).
   theme: ThemeId;
-  // Whether the server's theme has been resolved for this session yet.
+  // The global theme the admin chose for the platform (what "Follow platform
+  // theme" resolves to). Starts from the local cache, then syncs from the server.
+  platformTheme: ThemeId;
+  // 'platform' to follow the admin's global theme, or a ThemeId for a personal pick.
+  preference: ThemePreference;
+  // Whether the server's platform theme has been resolved for this session yet.
   ready: boolean;
-  // Reset this browser's theme locally (no server call).
-  setLocalTheme: (id: ThemeId) => void;
+  // Set THIS browser's personal theme ('platform' = follow the admin's pick).
+  setPreference: (pref: ThemePreference) => void;
   // Switch the GLOBAL theme (admin only) — persists to the server, which then
-  // pushes the change to every other user's page on their next load.
+  // pushes the change to every platform-following user's page on their next load.
+  // Also adopts that theme as this browser's personal pick.
   setTheme: (id: ThemeId) => Promise<boolean>;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeId>(() => {
-    const initial = readStoredTheme();
-    applyTheme(initial);
-    return initial;
-  });
+  const initialPreference = useMemo(() => readStoredPreference(), []);
+  const [preference, setPreferenceState] = useState<ThemePreference>(initialPreference);
+  const [platformTheme, setPlatformTheme] = useState<ThemeId>(readStoredTheme);
   const [ready, setReady] = useState(false);
+
+  // What actually hits <html> — the user's pick when set, otherwise the
+  // platform theme (local cache → server value once it resolves).
+  const theme: ThemeId = preference === 'platform' ? platformTheme : preference;
+
+  useEffect(() => {
+    // Re-apply on every change and keep the flash-guard cache in sync so the
+    // pre-paint script in index.html shows the same colors on next load.
+    applyTheme(theme);
+    storeTheme(theme);
+  }, [theme, preference]);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,11 +64,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     (async () => {
       const serverTheme = await fetchServerTheme(controller.signal);
       if (cancelled) return;
-      if (serverTheme) {
-        setThemeState(serverTheme);
-        applyTheme(serverTheme);
-        storeTheme(serverTheme);
-      }
+      if (serverTheme) setPlatformTheme(serverTheme);
     })().finally(() => {
       if (!cancelled) setReady(true);
     });
@@ -58,15 +74,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const setLocalTheme = useCallback((id: ThemeId) => {
-    setThemeState(id);
-    applyTheme(id);
-    storeTheme(id);
+  const setPreference = useCallback((pref: ThemePreference) => {
+    setPreferenceState(pref);
+    storePreference(pref);
   }, []);
 
   const setTheme = useCallback(
     async (id: ThemeId): Promise<boolean> => {
-      setLocalTheme(id);
+      // The admin picked this as the platform theme — adopt it here too.
+      setPreferenceState(id);
+      storePreference(id);
+      setPlatformTheme(id);
       try {
         const res = await apiFetch(`${API_BASE}/admin/theme`, {
           method: 'POST',
@@ -79,12 +97,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         return false;
       }
     },
-    [setLocalTheme]
+    []
   );
 
   const value = useMemo(
-    () => ({ theme, ready, setLocalTheme, setTheme }),
-    [theme, ready, setLocalTheme, setTheme]
+    () => ({ theme, platformTheme, preference, ready, setPreference, setTheme }),
+    [theme, platformTheme, preference, ready, setPreference, setTheme]
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

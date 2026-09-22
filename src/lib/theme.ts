@@ -1,16 +1,25 @@
 // Global theme switching.
 //
-// The look of the entire app (light / dark / midnight) is decided by the admin
-// from the admin page and persisted server-side as a single ThemeConfig. Every
-// visitor's page fetches /api/theme on load and applies it, so the admin's
-// choice is reflected everywhere. Browsers also cache the last theme under
-// `po_theme` so a returning user sees the right colors before the server reply
-// arrives — the server stays the source of truth.
+// Two layers:
+//   - PLATFORM theme: decided by the admin on the admin page and persisted
+//     server-side as a single ThemeConfig. It is the default every visitor sees.
+//   - PERSONAL theme: any user can pick their own light / dark / midnight from
+//     the user menu (Navbar), stored in their browser. A personal pick always
+//     wins over the platform default for that user's pages until they switch
+//     back to "Follow platform theme".
 import { API_BASE } from './applications';
 
 export type ThemeId = 'light' | 'dark' | 'midnight';
+export type ThemePreference = ThemeId | 'platform';
 
+// Key of the LAST APPLIED theme — cached only to avoid a flash before the
+// server reply lands (written on every applied change).
 export const THEME_STORAGE_KEY = 'po_theme';
+
+// Key of the user's explicit PERSONAL choice ('platform' = follow the admin's
+// global theme). Not written unless the user actually picks something on the
+// Navbar, so brand-new visitors always follow the platform theme.
+export const THEME_PREF_STORAGE_KEY = 'po_theme_pref';
 
 export const THEME_IDS: ThemeId[] = ['light', 'dark', 'midnight'];
 
@@ -63,6 +72,23 @@ export const storeTheme = (id: ThemeId): void => {
     localStorage.setItem(THEME_STORAGE_KEY, id);
   } catch {
     // Storage blocked — ignore, the server value still applies on next load.
+  }
+};
+
+export const readStoredPreference = (): ThemePreference => {
+  try {
+    const stored = localStorage.getItem(THEME_PREF_STORAGE_KEY);
+    return isThemeId(stored) ? stored : 'platform';
+  } catch {
+    return 'platform';
+  }
+};
+
+export const storePreference = (pref: ThemePreference): void => {
+  try {
+    localStorage.setItem(THEME_PREF_STORAGE_KEY, pref);
+  } catch {
+    // Storage blocked — ignore, the platform theme still applies.
   }
 };
 

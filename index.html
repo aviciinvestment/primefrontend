@@ -5,13 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Pre-paint theme apply: block render until data-theme is set so the page
-         never flashes the wrong theme. The server value (applied later by
-         ThemeProvider) is the source of truth; this just seeds the last-used
-         theme instantly. -->
+         never flashes the wrong theme. A personal pick (po_theme_pref) wins;
+         otherwise the last-applied theme seeds the paint and ThemeProvider
+         corrects it with the server value once it resolves. -->
     <script>
       (function () {
         try {
-          var t = localStorage.getItem('po_theme');
+          var t = localStorage.getItem('po_theme_pref') || localStorage.getItem('po_theme');
           if (t !== 'light' && t !== 'dark' && t !== 'midnight') t = 'dark';
           document.documentElement.dataset.theme = t;
         } catch (e) {}
